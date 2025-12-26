@@ -1,0 +1,9 @@
+int main() {
+    int hola;
+    int mundo;
+    int putovictor;
+    
+    hola = 123;
+    mundo = 456;
+    return 0;
+}

@@ -1,0 +1,18 @@
+# Compilados de Java
+*.class
+
+# Carpetas de compilación
+bin/
+build/
+out/
+target/
+# Logs
+*.log
+
+# IDEs
+.idea/
+*.iml
+
+# Sistema
+.DS_Store
+Thumbs.db

@@ -1,0 +1,42 @@
+=== ANÁLISIS LÉXICO - TOKENS ENCONTRADOS ===
+Archivo analizado: input.txt
+Fecha: Fri Dec 26 09:42:36 CST 2025
+=============================================
+
+LÍNEA	COLUMNA	TOKEN			LEXEMA
+------	-------	----------------	------
+1	1	Int                 	int
+1	1	Main                	main
+1	1	Parentesis_a        	(
+1	1	Parentesis_c        	)
+1	1	Llave_a             	{
+2	1	Int                 	int
+2	1	Identificador       	hola
+2	1	P_coma              	;
+3	1	Int                 	int
+3	1	Identificador       	mundo
+3	1	P_coma              	;
+4	1	Int                 	int
+4	1	Identificador       	putovictor
+4	1	P_coma              	;
+6	1	Identificador       	hola
+6	1	Igual               	=
+6	1	Numero              	123
+6	1	P_coma              	;
+7	1	Identificador       	mundo
+7	1	Igual               	=
+7	1	Numero              	456
+7	1	P_coma              	;
+8	1	Identificador       	return
+8	1	Numero              	0
+8	1	P_coma              	;
+9	1	Llave_c             	}
+
+=== FIN DE ARCHIVO ===
+
+=============================================
+ESTADÍSTICAS:
+• Total de tokens: 26
+• Tokens válidos: 26
+• Errores léxicos: 0
+=============================================
