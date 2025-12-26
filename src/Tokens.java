@@ -24,7 +24,7 @@ public enum Tokens {
     Llave_c,
     Corchete_a,
     Corchete_c,
-    Main,
+    Navidad,
     P_coma,
     Identificador,
     Numero,

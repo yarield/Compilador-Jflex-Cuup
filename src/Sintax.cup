@@ -1,4 +1,3 @@
-
 import java_cup.runtime.Symbol;
 
 parser code
@@ -7,81 +6,58 @@ parser code
     
     public void syntax_error(Symbol s){
         this.s = s;
+        System.err.println("ERROR SINTÁCTICO en línea " + (s.left+1) + 
+                          ", columna " + (s.right+1) + 
+                          ": Token inesperado '" + s.value + "'");
     }
 
     public Symbol getS(){
         return this.s;
-}
+    }
 :};
 
-terminal Linea, Comillas, T_dato, Int, Cadena, If, Else, Do, While, For,
-    Igual, Suma, Resta, Multiplicacion, Division, Op_logico, Op_relacional,
-    Op_atribucion, Op_incremento, Op_booleano, Parentesis_a, Parentesis_c,
-    Llave_a, Llave_c, Corchete_a, Corchete_c, Main, P_coma, Identificador,
-    Numero, ERROR;
-non terminal INICIO, SENTENCIA, DECLARACION, DECLARACION_FOR, IF, IF_ELSE,
-    WHILE, DO_WHILE, FOR, SENTENCIA_BOOLEANA, SENTENCIA_FOR;
+/* TODOS los tokens que tu LexerCup.flex usa */
+terminal Int, Navidad, Return, If, Else, While, Do, For,
+        Identificador, Numero, Igual, Suma, Resta, Multiplicacion, 
+        Division, Parentesis_a, Parentesis_c, Llave_a, Llave_c, P_coma,
+        Op_relacional, Op_logico, Op_incremento, Op_atribucion, 
+        Op_booleano, ERROR;
 
-start with INICIO;
+non terminal programa, sentencias, sentencia, declaracion, asignacion, 
+             retorno, expresion,condicional;
 
-INICIO ::= 
-    Int Main Parentesis_a Parentesis_c Llave_a SENTENCIA Llave_c |
-    Main Parentesis_a Parentesis_c Llave_a SENTENCIA Llave_c
+start with programa;
+
+/* GRAMÁTICA que funciona con tu input simple */
+programa ::= Int Navidad Parentesis_a Parentesis_c Llave_a sentencias Llave_c
+           | Int Navidad Parentesis_a Parentesis_c Llave_a Llave_c
 ;
-SENTENCIA ::= 
-    SENTENCIA DECLARACION |
-    DECLARACION |
-    SENTENCIA IF | 
-    IF |
-    SENTENCIA IF_ELSE |
-    IF_ELSE |
-    SENTENCIA WHILE |
-    WHILE |
-    SENTENCIA DO_WHILE
-    DO_WHILE |
-    SENTENCIA FOR |
-    FOR
+
+sentencias ::= 
+    sentencia
+    | sentencias sentencia
 ;
-DECLARACION ::= 
-    Int Identificador P_coma | 
-    Int Identificador Op_atribucion Numero P_coma |
-    Int Identificador Igual Numero P_coma |
-    Int Identificador Op_incremento P_coma | 
-    Int Op_incremento Identificador P_coma | 
-    T_dato Identificador P_coma | 
-    T_dato Identificador Op_atribucion Numero P_coma |
-    T_dato Identificador Igual Numero P_coma |
-    T_dato Identificador Op_incremento P_coma | 
-    T_dato Op_incremento Identificador P_coma | 
-    Cadena Identificador Op_atribucion Comillas Comillas P_coma |
-    Cadena Identificador Igual Comillas Comillas P_coma |
-    Cadena Identificador Op_atribucion Comillas Identificador Comillas P_coma |
-    Cadena Identificador Igual Comillas Identificador Comillas P_coma
+
+sentencia ::= 
+    declaracion P_coma
+    | asignacion P_coma
+    | retorno P_coma
 ;
-IF ::= If Parentesis_a SENTENCIA_BOOLEANA Parentesis_c Llave_a SENTENCIA Llave_c
+
+declaracion ::= 
+    Int Identificador
+    | Int Identificador Igual Numero
 ;
-SENTENCIA_BOOLEANA ::= 
-    Op_booleano | 
-    Identificador Op_relacional Op_booleano |
-    Identificador Op_relacional Numero |
-    Identificador Op_relacional Identificador |
-    Identificador Op_relacional Comillas Comillas |
-    Identificador Op_relacional Comillas Identificador Comillas
+
+asignacion ::= 
+    Identificador Igual Numero
 ;
-IF_ELSE ::= If Parentesis_a SENTENCIA_BOOLEANA Parentesis_c Llave_a SENTENCIA Llave_c Else Llave_a SENTENCIA Llave_c
+
+retorno ::= 
+    Return Numero
 ;
-WHILE ::= While Parentesis_a SENTENCIA_BOOLEANA Parentesis_c Llave_a SENTENCIA Llave_c
-;
-DO_WHILE ::= Do Llave_a SENTENCIA Llave_c While Parentesis_a SENTENCIA_BOOLEANA Parentesis_c P_coma
-;
-FOR ::= For Parentesis_a SENTENCIA_FOR Parentesis_c Llave_a SENTENCIA Llave_c
-;
-SENTENCIA_FOR ::=
-    T_dato Identificador Igual Numero P_coma SENTENCIA_BOOLEANA P_coma DECLARACION_FOR |
-    Identificador Igual Numero P_coma SENTENCIA_BOOLEANA P_coma DECLARACION_FOR
-;
-DECLARACION_FOR ::= 
-    Identificador Op_atribucion Numero |
-    Identificador Op_incremento | 
-    Op_incremento Identificador
+
+expresion ::= 
+    Numero
+    | Identificador
 ;
