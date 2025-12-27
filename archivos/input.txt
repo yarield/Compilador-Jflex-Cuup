@@ -1,5 +1,6 @@
 int navidad() {
 
+    //comentario
     int a;
     int b = 5;
     int numeros[5];

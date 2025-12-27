@@ -54,23 +54,23 @@ public class Principal {
     }
     
 
-private static String obtenerNombreToken(int tipoToken) {
-    try {
-        Tokens[] valores = Tokens.values();
-        
-        // Verificar que el tipoToken esté dentro del rango del enum
-        if (tipoToken >= 0 && tipoToken < valores.length) {
-            String nombre = valores[tipoToken].name();
-            return nombre;
-        } else {
-            // Si está fuera de rango
+    private static String obtenerNombreToken(int tipoToken) {
+        try {
+            Tokens[] valores = Tokens.values();
+            
+            // Verificar que el tipoToken esté dentro del rango del enum
+            if (tipoToken >= 0 && tipoToken < valores.length) {
+                String nombre = valores[tipoToken].name();
+                return nombre;
+            } else {
+                // Si está fuera de rango
+                return "TOKEN_" + tipoToken;
+            }
+        } catch (Exception e) {
+            System.out.printf("[DEBUG] Error: %s%n", e.getMessage());
             return "TOKEN_" + tipoToken;
         }
-    } catch (Exception e) {
-        System.out.printf("[DEBUG] Error: %s%n", e.getMessage());
-        return "TOKEN_" + tipoToken;
     }
-}
     
     public static class ResultadoSintactico {
         private boolean exitoso;
