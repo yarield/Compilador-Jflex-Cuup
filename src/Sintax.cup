@@ -3,61 +3,172 @@ import java_cup.runtime.Symbol;
 parser code
 {:
     private Symbol s;
+    private int erroresSintacticos = 0;
+    private final int MAX_ERRORES = 10;
     
     public void syntax_error(Symbol s){
         this.s = s;
+        erroresSintacticos++;
+        
         System.err.println("ERROR SINTÁCTICO en línea " + (s.left+1) + 
                           ", columna " + (s.right+1) + 
                           ": Token inesperado '" + s.value + "'");
+        
+        if (erroresSintacticos < MAX_ERRORES) {
+            System.err.println("  Recuperando... (Modo Pánico)");
+            
+            buscarPuntoRecuperacion();
+            
+            System.err.println("  Continuando análisis...");
+        } else {
+            System.err.println("DEMASIADOS ERRORES. Análisis abortado.");
+            done_parsing();
+        }
     }
-
+    
+    private void buscarPuntoRecuperacion() {
+        Symbol token;
+        try {
+            do {
+                token = getScanner().next_token();
+                if (token.sym == sym.EOF) {
+                    System.err.println("  Fin de archivo alcanzado");
+                    done_parsing();
+                    return;
+                }
+            } while (token.sym != sym.P_coma && 
+                     token.sym != sym.Llave_c && 
+                     token.sym != sym.Parentesis_c);
+            
+            System.err.println("  Recuperado en línea " + (token.left+1));
+        } catch (Exception e) {
+            System.err.println("  Error durante recuperación: " + e.getMessage());
+        }
+    }
+    
     public Symbol getS(){
         return this.s;
     }
+    
+    public int getErroresSintacticos() {
+        return erroresSintacticos;
+    }
 :};
 
-/* TODOS los tokens que tu LexerCup.flex usa */
-terminal Int, Navidad, Return, If, Else, While, Do, For,
-        Identificador, Numero, Igual, Suma, Resta, Multiplicacion, 
-        Division, Parentesis_a, Parentesis_c, Llave_a, Llave_c, P_coma,
-        Op_relacional, Op_logico, Op_incremento, Op_atribucion, 
-        Op_booleano, ERROR;
+/* TODOS los tokens - IGUAL que en Tokens.java */
+terminal ERROR, Return, Comillas, Cadena, Int, If, Else, Do, While, For, Igual, Suma, Resta,
+          Multiplicacion, Division, Op_logico, Op_incremento, Op_relacional, Op_atribucion, Op_booleano,
+          Parentesis_a, Parentesis_c, Llave_a, Llave_c, Corchete_a, Corchete_c, Navidad, P_coma,
+          Identificador, Numero;
 
-non terminal programa, sentencias, sentencia, declaracion, asignacion, 
-             retorno, expresion,condicional;
+/* No terminales */
+non terminal programa, sentencias, sentencia, declaracion, declaraciones,
+              asignacion, retorno, expresion, condicional, ciclo_while,
+              ciclo_for, ciclo_do, bloque, expr_logica;
+
+/* Precedencias */
+precedence left Op_logico;
+precedence left Op_relacional;
+precedence left Suma, Resta;
+precedence left Multiplicacion, Division;
 
 start with programa;
 
-/* GRAMÁTICA que funciona con tu input simple */
-programa ::= Int Navidad Parentesis_a Parentesis_c Llave_a sentencias Llave_c
-           | Int Navidad Parentesis_a Parentesis_c Llave_a Llave_c
+/* =============== GRAMÁTICA CORREGIDA =============== */
+
+/* PROGRAMA */
+programa ::= 
+      Int Navidad Parentesis_a Parentesis_c bloque
 ;
 
+/* BLOQUE */
+bloque ::= 
+      Llave_a declaraciones sentencias Llave_c
+    | Llave_a sentencias Llave_c
+    | Llave_a declaraciones Llave_c
+    | Llave_a Llave_c
+;
+
+/* DECLARACIONES */
+declaraciones ::=
+      declaracion P_coma
+    | declaraciones declaracion P_coma
+;
+
+/* SENTENCIAS */
 sentencias ::= 
-    sentencia
+      sentencia
     | sentencias sentencia
 ;
 
 sentencia ::= 
-    declaracion P_coma
-    | asignacion P_coma
+      asignacion P_coma
     | retorno P_coma
+    | condicional
+    | ciclo_while
+    | ciclo_for
+    | ciclo_do
 ;
 
+/* DECLARACIONES */
 declaracion ::= 
-    Int Identificador
-    | Int Identificador Igual Numero
+      Int Identificador
+    | Int Identificador Igual expresion
+    | Int Identificador Corchete_a Numero Corchete_c
 ;
 
+/* ASIGNACIONES */
 asignacion ::= 
-    Identificador Igual Numero
+      Identificador Igual expresion
+    | Identificador Op_atribucion expresion
+    | Identificador Op_incremento
+    | Op_incremento Identificador
+    | Identificador Corchete_a expresion Corchete_c Igual expresion
 ;
 
-retorno ::= 
-    Return Numero
+
+/* CONDICIONAL */
+condicional ::= 
+      If Parentesis_a expr_logica Parentesis_c bloque
+    | If Parentesis_a expr_logica Parentesis_c bloque Else bloque
 ;
 
+/* CICLOS */
+ciclo_while ::= 
+      While Parentesis_a expr_logica Parentesis_c bloque
+;
+
+ciclo_for ::= 
+      For Parentesis_a asignacion P_coma expr_logica P_coma asignacion Parentesis_c bloque
+    | For Parentesis_a declaracion P_coma expr_logica P_coma asignacion Parentesis_c bloque
+;
+
+ciclo_do ::= 
+      Do bloque While Parentesis_a expr_logica Parentesis_c P_coma
+;
+
+/* EXPRESIONES */
 expresion ::= 
-    Numero
+      Numero
     | Identificador
+    | Cadena
+    | Parentesis_a expresion Parentesis_c
+    | Identificador Corchete_a expresion Corchete_c
+    | expresion Suma expresion
+    | expresion Resta expresion
+    | expresion Multiplicacion expresion
+    | expresion Division expresion
+;
+
+/* EXPRESIONES LÓGICAS */
+expr_logica ::= 
+      expresion Op_relacional expresion
+    | Op_booleano
+    | expr_logica Op_logico expr_logica
+    | Parentesis_a expr_logica Parentesis_c
+;
+
+/* RETORNO */
+retorno ::= 
+      Return expresion
 ;

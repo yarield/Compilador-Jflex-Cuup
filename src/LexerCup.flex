@@ -1,15 +1,18 @@
 import java_cup.runtime.*;
+
 %%
 %class LexerCup
 %type Symbol
-%cup 
-%full 
-%line 
-%char 
+%cup
+%full
+%line
+%char
 
-L=[a-zA-Z_]+
-D=[0-9]+
-espacio=[ ,\t,\r,\n]+
+L = [a-zA-Z_]
+D = [0-9]
+espacio = [ \t\r\n]+
+comentarioLinea = "//".*
+comentarioMultilinea = "/\\*"(.|\\n)*?"\\*/"
 
 %{
     private Symbol symbol(int type, Object value){
@@ -20,43 +23,58 @@ espacio=[ ,\t,\r,\n]+
         return new Symbol(type, yyline, yycolumn);
     }
 %}
+
 %%
 
+/* Espacios y comentarios */
+{espacio}              { /* Ignore */ }
+{comentarioLinea}      { /* Ignore */ }
+{comentarioMultilinea} { /* Ignore */ }
+
 /* Palabras reservadas */
-"int"       {return symbol(sym.Int, yytext());}
-"if"        {return symbol(sym.If, yytext());}
-"else"      {return symbol(sym.Else, yytext());}
-"while"     {return symbol(sym.While, yytext());}
-"for"       {return symbol(sym.For, yytext());}
-"do"        {return symbol(sym.Do, yytext());}
-"return"    {return symbol(sym.Return, yytext());}  
-"navidad"   {return symbol(sym.Navidad, yytext());}
+"int"       { return symbol(sym.Int, yytext()); }
+"if"        { return symbol(sym.If, yytext()); }
+"else"      { return symbol(sym.Else, yytext()); }
+"while"     { return symbol(sym.While, yytext()); }
+"for"       { return symbol(sym.For, yytext()); }
+"do"        { return symbol(sym.Do, yytext()); }
+"return"    { return symbol(sym.Return, yytext()); }
+"navidad"   { return symbol(sym.Navidad, yytext()); }
 
-/* Operadores y símbolos */
-"="       {return symbol(sym.Igual, yytext());}
-"+"       {return symbol(sym.Suma, yytext());}
-"-"       {return symbol(sym.Resta, yytext());}
-"*"       {return symbol(sym.Multiplicacion, yytext());}
-"/"       {return symbol(sym.Division, yytext());}
-"("       {return symbol(sym.Parentesis_a, yytext());}
-")"       {return symbol(sym.Parentesis_c, yytext());}
-"{"       {return symbol(sym.Llave_a, yytext());}
-"}"       {return symbol(sym.Llave_c, yytext());}
-";"       {return symbol(sym.P_coma, yytext());}
+/* Operadores relacionales */
+"=="|"!="|"<="|">="|"<"|">" { return symbol(sym.Op_relacional, yytext()); }
 
-/* Operadores adicionales (para tu gramática completa) */
-"=="|"!="|"<"|">"|"<="|">=" {return symbol(sym.Op_relacional, yytext());}
-"&&"|"||"                   {return symbol(sym.Op_logico, yytext());}
-"++"|"--"                   {return symbol(sym.Op_incremento, yytext());}
-"+="|"-="|"*="|"/="        {return symbol(sym.Op_atribucion, yytext());}
-"true"|"false"             {return symbol(sym.Op_booleano, yytext());}
+/* Operadores lógicos */
+"&&"|"||" { return symbol(sym.Op_logico, yytext()); }
 
-{espacio} {/*Ignore*/}
-"//".*    {/*Ignore*/}
+/* Incremento */
+"++"|"--" { return symbol(sym.Op_incremento, yytext()); }
+
+/* Asignación compuesta */
+"+="|"-="|"*="|"/=" { return symbol(sym.Op_atribucion, yytext()); }
+
+/* Operadores simples */
+"="  { return symbol(sym.Igual, yytext()); }
+"+"  { return symbol(sym.Suma, yytext()); }
+"-"  { return symbol(sym.Resta, yytext()); }
+"*"  { return symbol(sym.Multiplicacion, yytext()); }
+"/"  { return symbol(sym.Division, yytext()); }
+
+/* Símbolos */
+"("  { return symbol(sym.Parentesis_a, yytext()); }
+")"  { return symbol(sym.Parentesis_c, yytext()); }
+"{"  { return symbol(sym.Llave_a, yytext()); }
+"}"  { return symbol(sym.Llave_c, yytext()); }
+"["  { return symbol(sym.Corchete_a, yytext()); }
+"]"  { return symbol(sym.Corchete_c, yytext()); }
+";"  { return symbol(sym.P_coma, yytext()); }
+
+/* Booleanos */
+"true"|"false" { return symbol(sym.Op_booleano, yytext()); }
 
 /* Identificadores y números */
-{L}({L}|{D})*     {return symbol(sym.Identificador, yytext());}
-("-"{D}+)|{D}+    {return symbol(sym.Numero, yytext());}
+{L}({L}|{D})* { return symbol(sym.Identificador, yytext()); }
+{D}+          { return symbol(sym.Numero, yytext()); }
 
-/* Cualquier otro carácter (error) */
-.                 {return symbol(sym.ERROR, yytext());}
+/* Error léxico */
+. { return symbol(sym.ERROR, yytext()); }

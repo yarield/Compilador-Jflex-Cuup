@@ -9,27 +9,18 @@ import java.util.Map;
 public class Principal {
     
     public static void generarLexer(String ruta) {
-        File lexerFile = new File("src/Lexer.java");
-        lexerFile.delete();
         File archivo = new File(ruta);
         JFlex.Main.generate(archivo);
     }
  
     public static void generarLexerCup(String ruta) {
-        File lexerCupFile = new File("src/LexerCup.java");
-        lexerCupFile.delete();
         File archivo = new File(ruta);
         JFlex.Main.generate(archivo);
     }
 
     public static void generarSintax(String[] rutaS) {
-        File SintaxFile = new File("src/Sintax.java");
-        if (SintaxFile.exists()) {
-            SintaxFile.delete();
-        }
         try {
-            java_cup.Main.main(rutaS);
-            System.out.println("Parser generado");
+            java_cup.Main.main(rutaS);;
         } catch (Exception e) {
             System.err.println("Error al generar parser: " + e.getMessage());
         }
@@ -46,7 +37,6 @@ public class Principal {
                 Paths.get("sym.java"), 
                 Paths.get("src/sym.java")
             );
-            System.out.println("✅ sym.java movido a src/");
             
             // Mover Sintax.java
             Path rutaSin = Paths.get("src/Sintax.java");
@@ -57,191 +47,30 @@ public class Principal {
                 Paths.get("Sintax.java"), 
                 Paths.get("src/Sintax.java")
             );
-            System.out.println("✅ Sintax.java movido a src/");
+           
         } catch (Exception e) {
-            System.err.println("⚠️  Advertencia: No se pudieron mover algunos archivos");
+            System.err.println("No se movieron archivos");
         }
     }
     
-    /************************************************************
-     * FUNCIÓN FALTANTE: obtenerNombreToken (CORREGIDA)
-     ************************************************************/
-    private static String obtenerNombreToken(int tipoToken) {
-        try {
-            java.lang.reflect.Field[] campos = sym.class.getDeclaredFields();
-            for (java.lang.reflect.Field campo : campos) {
-                if (campo.getType() == int.class && campo.getInt(null) == tipoToken) {
-                    return campo.getName();
-                }
-            }
-        } catch (Exception e) {
-            // Si falla, usar nombres genéricos
-        }
+
+private static String obtenerNombreToken(int tipoToken) {
+    try {
+        Tokens[] valores = Tokens.values();
         
-        // Mapeo manual básico para los tokens principales
-        switch (tipoToken) {
-    case 0: return "ERROR";
-    case 2: return "Int";
-    case 3: return "Navidad";
-    case 5: return "Igual";
-    case 6: return "Suma";
-    case 7: return "Resta";
-    case 8: return "Multiplicacion";
-    case 9: return "Division";
-    case 10: return "Identificador";
-    case 14: return "P_coma";
-    case 16: return "If";
-    case 17: return "Parentesis_a";  // ← CORREGIDO: Solo una vez
-    case 18: return "Parentesis_c";
-    case 19: return "Llave_a";
-    case 20: return "Llave_c";
-    case 21: return "Return";
-    case 22: return "For";
-    case 23: return "Numero";
-    case 24: return "Else";
-    case 25: return "While";
-    case 26: return "Return";  // ← DUPLICADO con case 21, probablemente sea "Op_relacional" o similar
-    case 27: return "Do";      // ← CAMBIADO: Probablemente sea "Do" en lugar de "Navidad"
-    default: return "TOKEN_" + tipoToken;
+        // Verificar que el tipoToken esté dentro del rango del enum
+        if (tipoToken >= 0 && tipoToken < valores.length) {
+            String nombre = valores[tipoToken].name();
+            return nombre;
+        } else {
+            // Si está fuera de rango
+            return "TOKEN_" + tipoToken;
+        }
+    } catch (Exception e) {
+        System.out.printf("[DEBUG] Error: %s%n", e.getMessage());
+        return "TOKEN_" + tipoToken;
+    }
 }
-    }
-    
-    /************************************************************
-     * FUNCIÓN CORREGIDA: escribirTokensArchivo (DESPUÉS del análisis)
-     ************************************************************/
-    public static void escribirTokensArchivo(String texto, String rutaSalida) {
-        try {
-            // PRIMERO: Recolectar todos los tokens (ANÁLISIS LÉXICO)
-            List<Symbol> tokens = new ArrayList<>();
-            LexerCup lexer = new LexerCup(new StringReader(texto));
-            
-            int totalTokens = 0;
-            int erroresLexicos = 0;
-            
-            while (true) {
-                Symbol token = lexer.next_token();
-                if (token.sym == sym.EOF) break;
-                tokens.add(token);
-                totalTokens++;
-                if (token.sym == sym.ERROR) erroresLexicos++;
-            }
-            
-            // DESPUÉS: Escribir al archivo
-            try (PrintWriter writer = new PrintWriter(new FileWriter(rutaSalida))) {
-                writer.println("=== ANÁLISIS LÉXICO COMPLETADO ===");
-                writer.println("Archivo: input.txt");
-                writer.println("Fecha: " + new java.util.Date());
-                writer.println("==================================\n");
-                
-                writer.println("LÍNEA\tCOLUMNA\tTOKEN\t\tLEXEMA");
-                writer.println("------\t-------\t-----\t\t------");
-                
-                for (Symbol token : tokens) {
-                    String nombreToken = obtenerNombreToken(token.sym);
-                    String lexema = token.value != null ? token.value.toString() : "";
-                    writer.printf("%d\t%d\t%s\t\t%s%n",
-                        token.left + 1, token.right + 1, nombreToken, lexema);
-                }
-                
-                writer.println("\n==================================");
-                writer.println("ESTADÍSTICAS:");
-                writer.println("• Total tokens: " + totalTokens);
-                writer.println("• Tokens válidos: " + (totalTokens - erroresLexicos));
-                writer.println("• Errores léxicos: " + erroresLexicos);
-                writer.println("==================================");
-            }
-            
-            System.out.println("✅ Análisis léxico completado");
-            System.out.println("📁 Resultados guardados en: " + rutaSalida);
-            System.out.println("📊 Total tokens encontrados: " + totalTokens);
-            if (erroresLexicos > 0) {
-                System.out.println("⚠️  Errores léxicos: " + erroresLexicos);
-            }
-            
-        } catch (Exception e) {
-            System.err.println("❌ Error: " + e.getMessage());
-        }
-    }
-    
-    /************************************************************
-     * FUNCIÓN AUXILIAR: obtenerNombreTokenSeguro (mantenida por compatibilidad)
-     ************************************************************/
-    private static final Map<Integer, String> NOMBRES_TOKENS = new HashMap<>();
-    
-    static {
-        NOMBRES_TOKENS.put(-1, "EOF");
-        NOMBRES_TOKENS.put(0, "ERROR");
-    }
-    
-    private static String obtenerNombreTokenSeguro(int tipoToken) {
-        if (NOMBRES_TOKENS.containsKey(tipoToken)) {
-            return NOMBRES_TOKENS.get(tipoToken);
-        }
-        
-        try {
-            java.lang.reflect.Field[] campos = sym.class.getDeclaredFields();
-            
-            for (java.lang.reflect.Field campo : campos) {
-                campo.setAccessible(true);
-                if (campo.getType() == int.class) {
-                    int valorCampo = campo.getInt(null);
-                    if (valorCampo == tipoToken) {
-                        String nombre = campo.getName();
-                        NOMBRES_TOKENS.put(tipoToken, nombre);
-                        return nombre;
-                    }
-                }
-            }
-        } catch (Exception e) {
-            // Si falla, usar la función principal
-        }
-        
-        return obtenerNombreToken(tipoToken);
-    }
-    
-    /************************************************************
-     * FUNCIÓN ALTERNATIVA (mantenida)
-     ************************************************************/
-    public static void escribirTokensArchivoSimple(String texto, String rutaSalida) {
-        try (PrintWriter writer = new PrintWriter(new FileWriter(rutaSalida))) {
-            LexerCup lexer = new LexerCup(new StringReader(texto));
-            
-            writer.println("=== TOKENS ENCONTRADOS ===");
-            writer.println("Formato: [Línea:Columna] TipoToken 'Lexema'");
-            writer.println("==========================");
-            writer.println();
-            
-            int contador = 0;
-            
-            while (true) {
-                Symbol token = lexer.next_token();
-                if (token.sym == sym.EOF) break;
-                
-                String lexema = token.value != null ? token.value.toString() : "";
-                writer.printf("[%d:%d] Token#%d '%s'%n",
-                    token.left + 1,
-                    token.right + 1,
-                    token.sym,
-                    lexema.replace("\n", "\\n").replace("\t", "\\t"));
-                
-                contador++;
-            }
-            
-            writer.println("\n==========================");
-            writer.println("Total tokens: " + contador);
-            writer.println("FIN DEL ANÁLISIS");
-            
-            System.out.println("✅ Archivo de tokens creado: " + rutaSalida);
-            System.out.println("📊 Tokens procesados: " + contador);
-            
-        } catch (Exception e) {
-            System.err.println("❌ Error: " + e.getMessage());
-        }
-    }
-    
-    /************************************************************
-     * FUNCIONES PARA ANÁLISIS SINTÁCTICO
-     ************************************************************/
     
     public static class ResultadoSintactico {
         private boolean exitoso;
@@ -267,21 +96,17 @@ public class Principal {
         @Override
         public String toString() { 
             if (exitoso) {
-                return "✅ " + mensaje;
+                return  mensaje;
             } else {
-                return "❌ " + mensaje;
+                return  mensaje;
             }
         }
     }
     
-    public static ResultadoSintactico analizarSintactico(String texto) {
-        System.out.println("\n=== DEBUG SINTÁCTICO DETALLADO ===");
-        
+    public static ResultadoSintactico analizarSintactico(String texto) {        
         try {
             // Primero mostrar tokens
-            LexerCup lexer = new LexerCup(new StringReader(texto));
-            System.out.println("Tokens generados:");
-            
+            LexerCup lexer = new LexerCup(new StringReader(texto));  
             int tokenNum = 0;
             while (true) {
                 Symbol token = lexer.next_token();
@@ -299,163 +124,236 @@ public class Principal {
             }
             
             // Ahora intentar parsear
-            System.out.println("\nIntentando análisis sintáctico...");
             lexer = new LexerCup(new StringReader(texto));
             Sintax parser = new Sintax(lexer);
             parser.parse();
             
-            return new ResultadoSintactico(true, "Análisis sintáctico EXITOSO", -1, -1, null);
+            return new ResultadoSintactico(true, "Análisis ejecutado", -1, -1, null);
             
         } catch (Exception ex) {
-            System.err.println("\n❌ ERROR durante el parseo:");
+            System.err.println("\nERROR durante el parseo:");
             ex.printStackTrace();
             return new ResultadoSintactico(false, "Error: " + ex.getMessage(), -1, -1, null);
         }
     }
     
-    /************************************************************
-     * FUNCIÓN PARA LIMPIAR ARCHIVOS
-     ************************************************************/
+
     public static void limpiarArchivosViejos() {
-        System.out.println("🧹 LIMPIANDO ARCHIVOS VIEJOS...");
-        
         String[] archivosAEliminar = {
             "src/LexerCup.java",
             "src/Lexer.java", 
             "src/Sintax.java",
             "src/sym.java",
-            "LexerCup.java",
-            "Lexer.java",
-            "Sintax.java", 
-            "sym.java"
+
         };
         
         for (String archivo : archivosAEliminar) {
             File f = new File(archivo);
             if (f.exists()) {
                 if (f.delete()) {
-                    System.out.println("  ✅ Eliminado: " + archivo);
+                    System.out.println(" Eliminado: " + archivo);
                 } else {
-                    System.out.println("  ❌ No se pudo eliminar: " + archivo);
+                    System.out.println(" No se pudo eliminar: " + archivo);
                 }
             }
         }
         System.out.println();
     }
-    
-    /************************************************************
-     * FUNCIÓN MAIN
-     ************************************************************/
-    
-    public static void main(String[] args) throws Exception {
-        System.out.println("=== SISTEMA DE ANÁLISIS LÉXICO Y SINTÁCTICO ===\n");
+
+    // FUNCIÓN PARA LEER ARCHIVO FUENTE
+    public static String leerArchivoFuente(String rutaArchivo) {
+        System.out.println("LEYENDO ARCHIVO FUENTE: " + rutaArchivo);
         
-        // Rutas de los archivos
+        StringBuilder contenido = new StringBuilder();
+        File archivo = new File(rutaArchivo);
+        
+        if (!archivo.exists()) {
+            System.out.println("Archivo no encontrado: " + rutaArchivo);
+            return "";
+        }
+        
+        try (BufferedReader br = new BufferedReader(new FileReader(archivo))) {
+            String linea;
+            while ((linea = br.readLine()) != null) {
+                contenido.append(linea).append("\n");
+            }
+            System.out.println("Archivo leído exitosamente (" + archivo.length() + " bytes)");
+            return contenido.toString();
+        } catch (IOException e) {
+            System.err.println("Error al leer archivo: " + e.getMessage());
+            return "";
+        }
+    }
+
+
+    // FUNCIÓN PARA GUARDAR TOKENS EN FORMATO JSON PURO
+    public static void guardarResultadosEnArchivo(String archivoTokens, Map<String, Object> resultados) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(archivoTokens))) {
+            
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> tokens = (List<Map<String, Object>>) resultados.get("tokens");
+            
+            if (tokens != null && !tokens.isEmpty()) {
+                writer.write("[\n");
+                
+                for (int i = 0; i < tokens.size(); i++) {
+                    Map<String, Object> token = tokens.get(i);
+                    
+                    writer.write("  {\n");
+                    writer.write("    \"nombre\": \"" + token.get("nombre") + "\",\n");
+                    writer.write("    \"valor\": \"" + token.get("valor").toString().replace("\"", "\\\"") + "\",\n");
+                    writer.write("    \"linea\": " + token.get("linea") + ",\n");
+                    writer.write("    \"columna\": " + token.get("columna") + "\n");
+                    writer.write("  }");
+                    
+                    if (i < tokens.size() - 1) {
+                        writer.write(",\n");
+                    } else {
+                        writer.write("\n");
+                    }
+                }
+                
+                writer.write("]\n");
+            } else {
+                writer.write("[]\n");
+            }
+            
+            System.out.println("Tokens guardados: " + archivoTokens);
+            
+        } catch (IOException e) {
+            System.err.println("Error al guardar tokens: " + e.getMessage());
+        }
+    }
+
+
+    // FUNCIÓN PARA REALIZAR ANÁLISIS LÉXICO
+    public static List<Map<String, Object>> realizarAnalisisLexico(String contenidoArchivo) {
+        
+        List<Map<String, Object>> listaTokens = new ArrayList<>();
+        
+        try {
+            LexerCup lexer = new LexerCup(new StringReader(contenidoArchivo));
+            
+            while (true) {
+                Symbol token = lexer.next_token();
+                int tipo = token.sym;
+                
+                if (tipo == sym.EOF) break;
+                
+                String nombreToken = obtenerNombreToken(tipo);
+                String valor = (token.value != null) ? token.value.toString() : "";
+                
+                Map<String, Object> tokenInfo = new HashMap<>();
+                tokenInfo.put("nombre", nombreToken);
+                tokenInfo.put("valor", valor);
+                tokenInfo.put("linea", token.left + 1);
+                tokenInfo.put("columna", token.right + 1);
+                tokenInfo.put("tipo", tipo);
+                
+                listaTokens.add(tokenInfo);
+            }
+            
+           
+            
+        } catch (Exception e) {
+            System.err.println("Error en análisis léxico: " + e.getMessage());
+        }
+        
+        return listaTokens;
+    }
+
+    // FUNCIÓN PARA PROCESAR ANÁLISIS COMPLETO
+    public static Map<String, Object> procesarAnalisisCompleto(String contenidoArchivo) {
+        long inicioAnalisis = System.currentTimeMillis();
+        
+        // Análisis léxico
+        List<Map<String, Object>> listaTokens = realizarAnalisisLexico(contenidoArchivo);
+        
+        // Análisis sintáctico
+        ResultadoSintactico resultadoSintactico = analizarSintactico(contenidoArchivo);
+        
+        // Calcular tiempo total
+        long finAnalisis = System.currentTimeMillis();
+        long tiempoAnalisis = finAnalisis - inicioAnalisis;
+        
+        // Preparar resultados para guardar
+        Map<String, Object> resultados = new HashMap<>();
+        resultados.put("tokens", listaTokens);
+        resultados.put("resultadoSintactico", resultadoSintactico.getMensaje());
+        resultados.put("totalTokens", listaTokens.size());
+        resultados.put("tiempoAnalisis", tiempoAnalisis + " ms");
+        
+        if (!resultadoSintactico.isExitoso()) {
+            resultados.put("errorSintactico", resultadoSintactico.getTextoError());
+        }
+        
+        return resultados;
+    }
+
+    // FUNCIÓN PARA GENERAR TODOS LOS ANALIZADORES
+    
+    // FUNCIÓN SIMPLIFICADA
+public static List<Map<String, Object>> realizarAnalisisCompleto(String contenidoArchivo) {
+    // Solo análisis léxico (el sintáctico ya muestra su mensaje por consola)
+    return realizarAnalisisLexico(contenidoArchivo);
+}
+
+// FUNCIÓN SIMPLIFICADA DE GUARDADO
+public static void guardarTokensEnJSON(String archivoTokens, List<Map<String, Object>> tokens) {
+    try (BufferedWriter writer = new BufferedWriter(new FileWriter(archivoTokens))) {
+        if (tokens != null && !tokens.isEmpty()) {
+            writer.write("[\n");
+            for (int i = 0; i < tokens.size(); i++) {
+                Map<String, Object> token = tokens.get(i);
+                writer.write("  {\n");
+                writer.write("    \"nombre\": \"" + token.get("nombre") + "\",\n");
+                writer.write("    \"valor\": \"" + token.get("valor").toString().replace("\"", "\\\"") + "\",\n");
+                writer.write("    \"linea\": " + token.get("linea") + ",\n");
+                writer.write("    \"columna\": " + token.get("columna") + "\n");
+                writer.write("  }");
+                writer.write(i < tokens.size() - 1 ? ",\n" : "\n");
+            }
+            writer.write("]\n");
+        } else {
+            writer.write("[]\n");
+        }
+        System.out.println("Tokens guardados: " + archivoTokens);
+    } catch (IOException e) {
+        System.err.println("Error al guardar tokens: " + e.getMessage());
+    }
+}
+
+    // MAIN SIMPLIFICADO
+    public static void main(String[] args) throws Exception {        
+        // Rutas
         String rutaLexer = "src/Lexer.flex";
         String rutaLexerCup = "src/LexerCup.flex";
         String[] rutaSintax = {"-parser", "Sintax", "src/Sintax.cup"};
         String archivoEntrada = "./archivos/input.txt";
-        String archivoTokens = "./archivos/output_tokens.txt";
+        String archivoTokens = "./archivos/output_tokens.json";
         
-        // 🧹 Limpiar primero
+        // 1. Limpiar
         limpiarArchivosViejos();
         
-        // 1. GENERAR ANALIZADORES
-        System.out.println("1. GENERANDO ANALIZADORES...");
+        // 2. Generar analizadores
         generarLexer(rutaLexer);
         generarLexerCup(rutaLexerCup);
         generarSintax(rutaSintax);
         moverArchivosGenerados();
         System.out.println();
         
-        // 2. LEER ARCHIVO FUENTE
-        System.out.println("2. LEYENDO ARCHIVO FUENTE...");
+        // 3. Leer
+        String contenidoArchivo = leerArchivoFuente(archivoEntrada);
+        if (contenidoArchivo.isEmpty()) return;
         
-        String contenidoArchivo = "";
-        File archivo = new File(archivoEntrada);
+        // 4. Análisis sintáctico (solo muestra mensajes por consola)
+        analizarSintactico(contenidoArchivo);
         
-        if (!archivo.exists()) {
-            System.out.println("⚠️  Archivo no encontrado: " + archivoEntrada);
-            System.out.println("Creando archivo de ejemplo...");
-            
-            // Crear directorio si no existe
-            new File("./archivos").mkdirs();
-            
-            // Contenido de ejemplo que SÍ funciona con "navidad"
-            contenidoArchivo = "int navidad(){}";
-            
-            // Escribir archivo de entrada
-            try (PrintWriter writer = new PrintWriter(archivoEntrada)) {
-                writer.println(contenidoArchivo);
-            }
-            System.out.println("✅ Archivo de ejemplo creado: " + archivoEntrada);
-        } else {
-            // Leer archivo existente
-            try (BufferedReader br = new BufferedReader(new FileReader(archivo))) {
-                StringBuilder sb = new StringBuilder();
-                String linea;
-                while ((linea = br.readLine()) != null) {
-                    sb.append(linea).append("\n");
-                }
-                contenidoArchivo = sb.toString();
-            }
-            System.out.println("📄 Archivo analizado: " + archivoEntrada);
-            System.out.println("Tamaño: " + archivo.length() + " bytes");
-        }
+        // 5. Análisis léxico y guardar
+        List<Map<String, Object>> tokens = realizarAnalisisLexico(contenidoArchivo);
         
-        // Mostrar contenido
-        System.out.println("\nCONTENIDO DEL ARCHIVO:");
-        System.out.println("----------------------");
-        System.out.println(contenidoArchivo);
-        System.out.println("----------------------\n");
+        // 6. Guardar JSON
+        guardarTokensEnJSON(archivoTokens, tokens);
         
-        // 3. REALIZAR ANÁLISIS LÉXICO Y GUARDAR EN ARCHIVO
-        System.out.println("3. REALIZANDO ANÁLISIS LÉXICO...");
-        System.out.println("Guardando tokens en: " + archivoTokens);
-        
-        // Usar la función corregida
-        escribirTokensArchivo(contenidoArchivo, archivoTokens);
-        
-        // Si falla, usar la simple
-        File archivoTokensVerificar = new File(archivoTokens);
-        if (!archivoTokensVerificar.exists() || archivoTokensVerificar.length() == 0) {
-            System.out.println("\n⚠️  Usando método alternativo...");
-            escribirTokensArchivoSimple(contenidoArchivo, archivoTokens);
-        }
-        
-        // 4. MOSTRAR PREVIEW del archivo generado
-        System.out.println("\n4. VISTA PREVIA DEL ARCHIVO DE TOKENS:");
-        System.out.println("========================================");
-        
-        try (BufferedReader br = new BufferedReader(new FileReader(archivoTokens))) {
-            String linea;
-            int contador = 0;
-            while ((linea = br.readLine()) != null && contador < 15) {
-                System.out.println(linea);
-                contador++;
-            }
-            if (contador == 15) {
-                System.out.println("... (archivo truncado para vista previa)");
-            }
-        } catch (Exception e) {
-            System.err.println("No se pudo leer el archivo de tokens: " + e.getMessage());
-        }
-        
-        // 5. ANÁLISIS SINTÁCTICO
-        System.out.println("\n5. REALIZANDO ANÁLISIS SINTÁCTICO...");
-        System.out.println("=====================================\n");
-        
-        ResultadoSintactico resultado = analizarSintactico(contenidoArchivo);
-        System.out.println(resultado);
-        
-        if (!resultado.isExitoso()) {
-            System.out.println("\nDETALLES DEL ERROR SINTÁCTICO:");
-            System.out.println("-----------------------------");
-            System.out.println("Mensaje: " + resultado.getMensaje());
-        }
-        
-        System.out.println("\n=== PROCESO COMPLETADO ===");
-        System.out.println("✅ Análisis léxico guardado en: " + archivoTokens);
-        System.out.println("📁 Directorio de trabajo: " + System.getProperty("user.dir"));
     }
 }
