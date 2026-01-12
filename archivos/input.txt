@@ -1,3 +1,11 @@
+int world a = 2; 
+int world a[2] = 5;
+
+int func funci (int a = 2; int b = 5;) {
+    int a = 1;
+}
+
+
 int navidad() {
 
     //comentario

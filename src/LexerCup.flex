@@ -33,6 +33,11 @@ comentarioMultilinea = "/\\*"(.|\\n)*?"\\*/"
 
 /* Palabras reservadas */
 "int"       { return symbol(sym.Int, yytext()); }
+"float"     { return symbol(sym.Float, yytext()); }
+"bool"      { return symbol(sym.Bool, yytext()); }
+"char"      { return symbol(sym.Char, yytext()); }
+"string"    { return symbol(sym.String, yytext()); }
+"func"      { return symbol(sym.Func, yytext()); }
 "if"        { return symbol(sym.If, yytext()); }
 "else"      { return symbol(sym.Else, yytext()); }
 "while"     { return symbol(sym.While, yytext()); }
@@ -40,6 +45,7 @@ comentarioMultilinea = "/\\*"(.|\\n)*?"\\*/"
 "do"        { return symbol(sym.Do, yytext()); }
 "return"    { return symbol(sym.Return, yytext()); }
 "navidad"   { return symbol(sym.Navidad, yytext()); }
+"world"     { return symbol(sym.World, yytext()); }
 
 /* Operadores relacionales */
 "=="|"!="|"<="|">="|"<"|">" { return symbol(sym.Op_relacional, yytext()); }

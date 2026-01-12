@@ -9,8 +9,13 @@ espacio=[ ,\t,\r,\n]+
 %}
 %%
 
-/* Palabras reservadas - TODAS como en LexerCup */
+/* Palabras reservadas */
 "int"       { lexeme = yytext(); return Tokens.Int; }
+"float"     { lexeme = yytext(); return Tokens.Float; }
+"bool"      { lexeme = yytext(); return Tokens.Bool; }
+"char"      { lexeme = yytext(); return Tokens.Char; }
+"string"    { lexeme = yytext(); return Tokens.String; }
+"func"      { lexeme = yytext(); return Tokens.Func; }
 "if"        { lexeme = yytext(); return Tokens.If; }
 "else"      { lexeme = yytext(); return Tokens.Else; }
 "while"     { lexeme = yytext(); return Tokens.While; }
@@ -18,6 +23,7 @@ espacio=[ ,\t,\r,\n]+
 "do"        { lexeme = yytext(); return Tokens.Do; }
 "return"    { lexeme = yytext(); return Tokens.Return; }
 "navidad"   { lexeme = yytext(); return Tokens.Navidad; }
+"world"     { lexeme = yytext(); return Tokens.World; }
 
 /* Operadores - TODOS */
 "="   { lexeme = yytext(); return Tokens.Igual; }

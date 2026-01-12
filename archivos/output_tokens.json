@@ -6,356 +6,392 @@
     "columna": 1
   },
   {
-    "nombre": "Navidad",
-    "valor": "navidad",
+    "nombre": "World",
+    "valor": "world",
     "linea": 1,
-    "columna": 1
-  },
-  {
-    "nombre": "Parentesis_a",
-    "valor": "(",
-    "linea": 1,
-    "columna": 1
-  },
-  {
-    "nombre": "Parentesis_c",
-    "valor": ")",
-    "linea": 1,
-    "columna": 1
-  },
-  {
-    "nombre": "Llave_a",
-    "valor": "{",
-    "linea": 1,
-    "columna": 1
-  },
-  {
-    "nombre": "Int",
-    "valor": "int",
-    "linea": 4,
     "columna": 1
   },
   {
     "nombre": "Identificador",
     "valor": "a",
-    "linea": 4,
-    "columna": 1
-  },
-  {
-    "nombre": "P_coma",
-    "valor": ";",
-    "linea": 4,
-    "columna": 1
-  },
-  {
-    "nombre": "Int",
-    "valor": "int",
-    "linea": 5,
-    "columna": 1
-  },
-  {
-    "nombre": "Identificador",
-    "valor": "b",
-    "linea": 5,
-    "columna": 1
-  },
-  {
-    "nombre": "Numero",
-    "valor": "5",
-    "linea": 5,
-    "columna": 1
-  },
-  {
-    "nombre": "P_coma",
-    "valor": ";",
-    "linea": 5,
-    "columna": 1
-  },
-  {
-    "nombre": "Int",
-    "valor": "int",
-    "linea": 6,
-    "columna": 1
-  },
-  {
-    "nombre": "Identificador",
-    "valor": "numeros",
-    "linea": 6,
-    "columna": 1
-  },
-  {
-    "nombre": "Corchete_a",
-    "valor": "[",
-    "linea": 6,
-    "columna": 1
-  },
-  {
-    "nombre": "Numero",
-    "valor": "5",
-    "linea": 6,
-    "columna": 1
-  },
-  {
-    "nombre": "Corchete_c",
-    "valor": "]",
-    "linea": 6,
-    "columna": 1
-  },
-  {
-    "nombre": "P_coma",
-    "valor": ";",
-    "linea": 6,
-    "columna": 1
-  },
-  {
-    "nombre": "Identificador",
-    "valor": "a",
-    "linea": 8,
+    "linea": 1,
     "columna": 1
   },
   {
     "nombre": "Igual",
     "valor": "=",
-    "linea": 8,
+    "linea": 1,
     "columna": 1
   },
   {
     "nombre": "Numero",
     "valor": "2",
-    "linea": 8,
+    "linea": 1,
     "columna": 1
   },
   {
     "nombre": "P_coma",
     "valor": ";",
-    "linea": 8,
+    "linea": 1,
+    "columna": 1
+  },
+  {
+    "nombre": "Int",
+    "valor": "int",
+    "linea": 2,
+    "columna": 1
+  },
+  {
+    "nombre": "World",
+    "valor": "world",
+    "linea": 2,
     "columna": 1
   },
   {
     "nombre": "Identificador",
-    "valor": "b",
-    "linea": 9,
-    "columna": 1
-  },
-  {
-    "nombre": "Op_booleano",
-    "valor": "+=",
-    "linea": 9,
-    "columna": 1
-  },
-  {
-    "nombre": "Numero",
-    "valor": "3",
-    "linea": 9,
-    "columna": 1
-  },
-  {
-    "nombre": "P_coma",
-    "valor": ";",
-    "linea": 9,
-    "columna": 1
-  },
-  {
-    "nombre": "Identificador",
-    "valor": "numeros",
-    "linea": 10,
+    "valor": "a",
+    "linea": 2,
     "columna": 1
   },
   {
     "nombre": "Corchete_a",
     "valor": "[",
-    "linea": 10,
+    "linea": 2,
     "columna": 1
   },
   {
     "nombre": "Numero",
-    "valor": "0",
-    "linea": 10,
+    "valor": "2",
+    "linea": 2,
     "columna": 1
   },
   {
     "nombre": "Corchete_c",
     "valor": "]",
-    "linea": 10,
+    "linea": 2,
     "columna": 1
   },
   {
     "nombre": "Igual",
     "valor": "=",
-    "linea": 10,
+    "linea": 2,
     "columna": 1
   },
   {
-    "nombre": "Identificador",
-    "valor": "a",
-    "linea": 10,
-    "columna": 1
-  },
-  {
-    "nombre": "Suma",
-    "valor": "+",
-    "linea": 10,
-    "columna": 1
-  },
-  {
-    "nombre": "Identificador",
-    "valor": "b",
-    "linea": 10,
+    "nombre": "Numero",
+    "valor": "5",
+    "linea": 2,
     "columna": 1
   },
   {
     "nombre": "P_coma",
     "valor": ";",
-    "linea": 10,
+    "linea": 2,
     "columna": 1
   },
   {
-    "nombre": "If",
-    "valor": "if",
-    "linea": 12,
+    "nombre": "Int",
+    "valor": "int",
+    "linea": 4,
+    "columna": 1
+  },
+  {
+    "nombre": "Func",
+    "valor": "func",
+    "linea": 4,
+    "columna": 1
+  },
+  {
+    "nombre": "Identificador",
+    "valor": "funci",
+    "linea": 4,
     "columna": 1
   },
   {
     "nombre": "Parentesis_a",
     "valor": "(",
-    "linea": 12,
+    "linea": 4,
+    "columna": 1
+  },
+  {
+    "nombre": "Int",
+    "valor": "int",
+    "linea": 4,
     "columna": 1
   },
   {
     "nombre": "Identificador",
     "valor": "a",
-    "linea": 12,
-    "columna": 1
-  },
-  {
-    "nombre": "Op_relacional",
-    "valor": "<",
-    "linea": 12,
-    "columna": 1
-  },
-  {
-    "nombre": "Identificador",
-    "valor": "b",
-    "linea": 12,
-    "columna": 1
-  },
-  {
-    "nombre": "Parentesis_c",
-    "valor": ")",
-    "linea": 12,
-    "columna": 1
-  },
-  {
-    "nombre": "Llave_a",
-    "valor": "{",
-    "linea": 12,
-    "columna": 1
-  },
-  {
-    "nombre": "Identificador",
-    "valor": "a",
-    "linea": 13,
-    "columna": 1
-  },
-  {
-    "nombre": "Op_incremento",
-    "valor": "++",
-    "linea": 13,
-    "columna": 1
-  },
-  {
-    "nombre": "P_coma",
-    "valor": ";",
-    "linea": 13,
-    "columna": 1
-  },
-  {
-    "nombre": "Llave_c",
-    "valor": "}",
-    "linea": 14,
-    "columna": 1
-  },
-  {
-    "nombre": "Else",
-    "valor": "else",
-    "linea": 14,
-    "columna": 1
-  },
-  {
-    "nombre": "Llave_a",
-    "valor": "{",
-    "linea": 14,
-    "columna": 1
-  },
-  {
-    "nombre": "Identificador",
-    "valor": "a",
-    "linea": 15,
+    "linea": 4,
     "columna": 1
   },
   {
     "nombre": "Igual",
     "valor": "=",
-    "linea": 15,
+    "linea": 4,
+    "columna": 1
+  },
+  {
+    "nombre": "Numero",
+    "valor": "2",
+    "linea": 4,
+    "columna": 1
+  },
+  {
+    "nombre": "P_coma",
+    "valor": ";",
+    "linea": 4,
+    "columna": 1
+  },
+  {
+    "nombre": "Int",
+    "valor": "int",
+    "linea": 4,
+    "columna": 1
+  },
+  {
+    "nombre": "Identificador",
+    "valor": "b",
+    "linea": 4,
+    "columna": 1
+  },
+  {
+    "nombre": "Igual",
+    "valor": "=",
+    "linea": 4,
+    "columna": 1
+  },
+  {
+    "nombre": "Numero",
+    "valor": "5",
+    "linea": 4,
+    "columna": 1
+  },
+  {
+    "nombre": "P_coma",
+    "valor": ";",
+    "linea": 4,
+    "columna": 1
+  },
+  {
+    "nombre": "Parentesis_c",
+    "valor": ")",
+    "linea": 4,
+    "columna": 1
+  },
+  {
+    "nombre": "Llave_a",
+    "valor": "{",
+    "linea": 4,
+    "columna": 1
+  },
+  {
+    "nombre": "Int",
+    "valor": "int",
+    "linea": 5,
     "columna": 1
   },
   {
     "nombre": "Identificador",
     "valor": "a",
-    "linea": 15,
+    "linea": 5,
     "columna": 1
   },
   {
-    "nombre": "Resta",
-    "valor": "-",
-    "linea": 15,
+    "nombre": "Igual",
+    "valor": "=",
+    "linea": 5,
     "columna": 1
   },
   {
     "nombre": "Numero",
     "valor": "1",
-    "linea": 15,
+    "linea": 5,
     "columna": 1
   },
   {
     "nombre": "P_coma",
     "valor": ";",
-    "linea": 15,
+    "linea": 5,
     "columna": 1
   },
   {
     "nombre": "Llave_c",
     "valor": "}",
-    "linea": 16,
-    "columna": 1
-  },
-  {
-    "nombre": "For",
-    "valor": "for",
-    "linea": 18,
-    "columna": 1
-  },
-  {
-    "nombre": "Parentesis_a",
-    "valor": "(",
-    "linea": 18,
+    "linea": 6,
     "columna": 1
   },
   {
     "nombre": "Int",
     "valor": "int",
-    "linea": 18,
+    "linea": 9,
+    "columna": 1
+  },
+  {
+    "nombre": "Navidad",
+    "valor": "navidad",
+    "linea": 9,
+    "columna": 1
+  },
+  {
+    "nombre": "Parentesis_a",
+    "valor": "(",
+    "linea": 9,
+    "columna": 1
+  },
+  {
+    "nombre": "Parentesis_c",
+    "valor": ")",
+    "linea": 9,
+    "columna": 1
+  },
+  {
+    "nombre": "Llave_a",
+    "valor": "{",
+    "linea": 9,
+    "columna": 1
+  },
+  {
+    "nombre": "Int",
+    "valor": "int",
+    "linea": 12,
     "columna": 1
   },
   {
     "nombre": "Identificador",
-    "valor": "i",
-    "linea": 18,
+    "valor": "a",
+    "linea": 12,
+    "columna": 1
+  },
+  {
+    "nombre": "P_coma",
+    "valor": ";",
+    "linea": 12,
+    "columna": 1
+  },
+  {
+    "nombre": "Int",
+    "valor": "int",
+    "linea": 13,
+    "columna": 1
+  },
+  {
+    "nombre": "Identificador",
+    "valor": "b",
+    "linea": 13,
     "columna": 1
   },
   {
     "nombre": "Igual",
     "valor": "=",
+    "linea": 13,
+    "columna": 1
+  },
+  {
+    "nombre": "Numero",
+    "valor": "5",
+    "linea": 13,
+    "columna": 1
+  },
+  {
+    "nombre": "P_coma",
+    "valor": ";",
+    "linea": 13,
+    "columna": 1
+  },
+  {
+    "nombre": "Int",
+    "valor": "int",
+    "linea": 14,
+    "columna": 1
+  },
+  {
+    "nombre": "Identificador",
+    "valor": "numeros",
+    "linea": 14,
+    "columna": 1
+  },
+  {
+    "nombre": "Corchete_a",
+    "valor": "[",
+    "linea": 14,
+    "columna": 1
+  },
+  {
+    "nombre": "Numero",
+    "valor": "5",
+    "linea": 14,
+    "columna": 1
+  },
+  {
+    "nombre": "Corchete_c",
+    "valor": "]",
+    "linea": 14,
+    "columna": 1
+  },
+  {
+    "nombre": "P_coma",
+    "valor": ";",
+    "linea": 14,
+    "columna": 1
+  },
+  {
+    "nombre": "Identificador",
+    "valor": "a",
+    "linea": 16,
+    "columna": 1
+  },
+  {
+    "nombre": "Igual",
+    "valor": "=",
+    "linea": 16,
+    "columna": 1
+  },
+  {
+    "nombre": "Numero",
+    "valor": "2",
+    "linea": 16,
+    "columna": 1
+  },
+  {
+    "nombre": "P_coma",
+    "valor": ";",
+    "linea": 16,
+    "columna": 1
+  },
+  {
+    "nombre": "Identificador",
+    "valor": "b",
+    "linea": 17,
+    "columna": 1
+  },
+  {
+    "nombre": "Op_booleano",
+    "valor": "+=",
+    "linea": 17,
+    "columna": 1
+  },
+  {
+    "nombre": "Numero",
+    "valor": "3",
+    "linea": 17,
+    "columna": 1
+  },
+  {
+    "nombre": "P_coma",
+    "valor": ";",
+    "linea": 17,
+    "columna": 1
+  },
+  {
+    "nombre": "Identificador",
+    "valor": "numeros",
+    "linea": 18,
+    "columna": 1
+  },
+  {
+    "nombre": "Corchete_a",
+    "valor": "[",
     "linea": 18,
     "columna": 1
   },
@@ -366,182 +402,140 @@
     "columna": 1
   },
   {
-    "nombre": "P_coma",
-    "valor": ";",
-    "linea": 18,
-    "columna": 1
-  },
-  {
-    "nombre": "Identificador",
-    "valor": "i",
-    "linea": 18,
-    "columna": 1
-  },
-  {
-    "nombre": "Op_relacional",
-    "valor": "<",
-    "linea": 18,
-    "columna": 1
-  },
-  {
-    "nombre": "Numero",
-    "valor": "5",
-    "linea": 18,
-    "columna": 1
-  },
-  {
-    "nombre": "P_coma",
-    "valor": ";",
-    "linea": 18,
-    "columna": 1
-  },
-  {
-    "nombre": "Identificador",
-    "valor": "i",
-    "linea": 18,
-    "columna": 1
-  },
-  {
-    "nombre": "Op_incremento",
-    "valor": "++",
-    "linea": 18,
-    "columna": 1
-  },
-  {
-    "nombre": "Parentesis_c",
-    "valor": ")",
-    "linea": 18,
-    "columna": 1
-  },
-  {
-    "nombre": "Llave_a",
-    "valor": "{",
-    "linea": 18,
-    "columna": 1
-  },
-  {
-    "nombre": "Identificador",
-    "valor": "numeros",
-    "linea": 19,
-    "columna": 1
-  },
-  {
-    "nombre": "Corchete_a",
-    "valor": "[",
-    "linea": 19,
-    "columna": 1
-  },
-  {
-    "nombre": "Identificador",
-    "valor": "i",
-    "linea": 19,
-    "columna": 1
-  },
-  {
     "nombre": "Corchete_c",
     "valor": "]",
-    "linea": 19,
+    "linea": 18,
     "columna": 1
   },
   {
     "nombre": "Igual",
     "valor": "=",
-    "linea": 19,
-    "columna": 1
-  },
-  {
-    "nombre": "Identificador",
-    "valor": "i",
-    "linea": 19,
-    "columna": 1
-  },
-  {
-    "nombre": "Multiplicacion",
-    "valor": "*",
-    "linea": 19,
-    "columna": 1
-  },
-  {
-    "nombre": "Numero",
-    "valor": "2",
-    "linea": 19,
-    "columna": 1
-  },
-  {
-    "nombre": "P_coma",
-    "valor": ";",
-    "linea": 19,
-    "columna": 1
-  },
-  {
-    "nombre": "Llave_c",
-    "valor": "}",
-    "linea": 20,
-    "columna": 1
-  },
-  {
-    "nombre": "While",
-    "valor": "while",
-    "linea": 22,
-    "columna": 1
-  },
-  {
-    "nombre": "Parentesis_a",
-    "valor": "(",
-    "linea": 22,
+    "linea": 18,
     "columna": 1
   },
   {
     "nombre": "Identificador",
     "valor": "a",
-    "linea": 22,
-    "columna": 1
-  },
-  {
-    "nombre": "Op_relacional",
-    "valor": "<",
-    "linea": 22,
-    "columna": 1
-  },
-  {
-    "nombre": "Numero",
-    "valor": "10",
-    "linea": 22,
-    "columna": 1
-  },
-  {
-    "nombre": "Parentesis_c",
-    "valor": ")",
-    "linea": 22,
-    "columna": 1
-  },
-  {
-    "nombre": "Llave_a",
-    "valor": "{",
-    "linea": 22,
-    "columna": 1
-  },
-  {
-    "nombre": "Identificador",
-    "valor": "a",
-    "linea": 23,
-    "columna": 1
-  },
-  {
-    "nombre": "Igual",
-    "valor": "=",
-    "linea": 23,
-    "columna": 1
-  },
-  {
-    "nombre": "Identificador",
-    "valor": "a",
-    "linea": 23,
+    "linea": 18,
     "columna": 1
   },
   {
     "nombre": "Suma",
     "valor": "+",
+    "linea": 18,
+    "columna": 1
+  },
+  {
+    "nombre": "Identificador",
+    "valor": "b",
+    "linea": 18,
+    "columna": 1
+  },
+  {
+    "nombre": "P_coma",
+    "valor": ";",
+    "linea": 18,
+    "columna": 1
+  },
+  {
+    "nombre": "If",
+    "valor": "if",
+    "linea": 20,
+    "columna": 1
+  },
+  {
+    "nombre": "Parentesis_a",
+    "valor": "(",
+    "linea": 20,
+    "columna": 1
+  },
+  {
+    "nombre": "Identificador",
+    "valor": "a",
+    "linea": 20,
+    "columna": 1
+  },
+  {
+    "nombre": "Op_relacional",
+    "valor": "<",
+    "linea": 20,
+    "columna": 1
+  },
+  {
+    "nombre": "Identificador",
+    "valor": "b",
+    "linea": 20,
+    "columna": 1
+  },
+  {
+    "nombre": "Parentesis_c",
+    "valor": ")",
+    "linea": 20,
+    "columna": 1
+  },
+  {
+    "nombre": "Llave_a",
+    "valor": "{",
+    "linea": 20,
+    "columna": 1
+  },
+  {
+    "nombre": "Identificador",
+    "valor": "a",
+    "linea": 21,
+    "columna": 1
+  },
+  {
+    "nombre": "Op_incremento",
+    "valor": "++",
+    "linea": 21,
+    "columna": 1
+  },
+  {
+    "nombre": "P_coma",
+    "valor": ";",
+    "linea": 21,
+    "columna": 1
+  },
+  {
+    "nombre": "Llave_c",
+    "valor": "}",
+    "linea": 22,
+    "columna": 1
+  },
+  {
+    "nombre": "Else",
+    "valor": "else",
+    "linea": 22,
+    "columna": 1
+  },
+  {
+    "nombre": "Llave_a",
+    "valor": "{",
+    "linea": 22,
+    "columna": 1
+  },
+  {
+    "nombre": "Identificador",
+    "valor": "a",
+    "linea": 23,
+    "columna": 1
+  },
+  {
+    "nombre": "Igual",
+    "valor": "=",
+    "linea": 23,
+    "columna": 1
+  },
+  {
+    "nombre": "Identificador",
+    "valor": "a",
+    "linea": 23,
+    "columna": 1
+  },
+  {
+    "nombre": "Resta",
+    "valor": "-",
     "linea": 23,
     "columna": 1
   },
@@ -564,8 +558,86 @@
     "columna": 1
   },
   {
-    "nombre": "Do",
-    "valor": "do",
+    "nombre": "For",
+    "valor": "for",
+    "linea": 26,
+    "columna": 1
+  },
+  {
+    "nombre": "Parentesis_a",
+    "valor": "(",
+    "linea": 26,
+    "columna": 1
+  },
+  {
+    "nombre": "Int",
+    "valor": "int",
+    "linea": 26,
+    "columna": 1
+  },
+  {
+    "nombre": "Identificador",
+    "valor": "i",
+    "linea": 26,
+    "columna": 1
+  },
+  {
+    "nombre": "Igual",
+    "valor": "=",
+    "linea": 26,
+    "columna": 1
+  },
+  {
+    "nombre": "Numero",
+    "valor": "0",
+    "linea": 26,
+    "columna": 1
+  },
+  {
+    "nombre": "P_coma",
+    "valor": ";",
+    "linea": 26,
+    "columna": 1
+  },
+  {
+    "nombre": "Identificador",
+    "valor": "i",
+    "linea": 26,
+    "columna": 1
+  },
+  {
+    "nombre": "Op_relacional",
+    "valor": "<",
+    "linea": 26,
+    "columna": 1
+  },
+  {
+    "nombre": "Numero",
+    "valor": "5",
+    "linea": 26,
+    "columna": 1
+  },
+  {
+    "nombre": "P_coma",
+    "valor": ";",
+    "linea": 26,
+    "columna": 1
+  },
+  {
+    "nombre": "Identificador",
+    "valor": "i",
+    "linea": 26,
+    "columna": 1
+  },
+  {
+    "nombre": "Op_incremento",
+    "valor": "++",
+    "linea": 26,
+    "columna": 1
+  },
+  {
+    "nombre": "Parentesis_c",
+    "valor": ")",
     "linea": 26,
     "columna": 1
   },
@@ -577,13 +649,49 @@
   },
   {
     "nombre": "Identificador",
-    "valor": "a",
+    "valor": "numeros",
     "linea": 27,
     "columna": 1
   },
   {
-    "nombre": "Op_incremento",
-    "valor": "--",
+    "nombre": "Corchete_a",
+    "valor": "[",
+    "linea": 27,
+    "columna": 1
+  },
+  {
+    "nombre": "Identificador",
+    "valor": "i",
+    "linea": 27,
+    "columna": 1
+  },
+  {
+    "nombre": "Corchete_c",
+    "valor": "]",
+    "linea": 27,
+    "columna": 1
+  },
+  {
+    "nombre": "Igual",
+    "valor": "=",
+    "linea": 27,
+    "columna": 1
+  },
+  {
+    "nombre": "Identificador",
+    "valor": "i",
+    "linea": 27,
+    "columna": 1
+  },
+  {
+    "nombre": "Multiplicacion",
+    "valor": "*",
+    "linea": 27,
+    "columna": 1
+  },
+  {
+    "nombre": "Numero",
+    "valor": "2",
     "linea": 27,
     "columna": 1
   },
@@ -602,67 +710,187 @@
   {
     "nombre": "While",
     "valor": "while",
-    "linea": 28,
+    "linea": 30,
     "columna": 1
   },
   {
     "nombre": "Parentesis_a",
     "valor": "(",
-    "linea": 28,
+    "linea": 30,
     "columna": 1
   },
   {
     "nombre": "Identificador",
     "valor": "a",
-    "linea": 28,
+    "linea": 30,
     "columna": 1
   },
   {
     "nombre": "Op_relacional",
-    "valor": ">",
-    "linea": 28,
+    "valor": "<",
+    "linea": 30,
     "columna": 1
   },
   {
     "nombre": "Numero",
-    "valor": "0",
-    "linea": 28,
+    "valor": "10",
+    "linea": 30,
     "columna": 1
   },
   {
     "nombre": "Parentesis_c",
     "valor": ")",
-    "linea": 28,
+    "linea": 30,
     "columna": 1
   },
   {
-    "nombre": "P_coma",
-    "valor": ";",
-    "linea": 28,
-    "columna": 1
-  },
-  {
-    "nombre": "Return",
-    "valor": "return",
+    "nombre": "Llave_a",
+    "valor": "{",
     "linea": 30,
     "columna": 1
   },
   {
     "nombre": "Identificador",
     "valor": "a",
-    "linea": 30,
+    "linea": 31,
+    "columna": 1
+  },
+  {
+    "nombre": "Igual",
+    "valor": "=",
+    "linea": 31,
+    "columna": 1
+  },
+  {
+    "nombre": "Identificador",
+    "valor": "a",
+    "linea": 31,
+    "columna": 1
+  },
+  {
+    "nombre": "Suma",
+    "valor": "+",
+    "linea": 31,
+    "columna": 1
+  },
+  {
+    "nombre": "Numero",
+    "valor": "1",
+    "linea": 31,
     "columna": 1
   },
   {
     "nombre": "P_coma",
     "valor": ";",
-    "linea": 30,
+    "linea": 31,
     "columna": 1
   },
   {
     "nombre": "Llave_c",
     "valor": "}",
-    "linea": 31,
+    "linea": 32,
+    "columna": 1
+  },
+  {
+    "nombre": "Do",
+    "valor": "do",
+    "linea": 34,
+    "columna": 1
+  },
+  {
+    "nombre": "Llave_a",
+    "valor": "{",
+    "linea": 34,
+    "columna": 1
+  },
+  {
+    "nombre": "Identificador",
+    "valor": "a",
+    "linea": 35,
+    "columna": 1
+  },
+  {
+    "nombre": "Op_incremento",
+    "valor": "--",
+    "linea": 35,
+    "columna": 1
+  },
+  {
+    "nombre": "P_coma",
+    "valor": ";",
+    "linea": 35,
+    "columna": 1
+  },
+  {
+    "nombre": "Llave_c",
+    "valor": "}",
+    "linea": 36,
+    "columna": 1
+  },
+  {
+    "nombre": "While",
+    "valor": "while",
+    "linea": 36,
+    "columna": 1
+  },
+  {
+    "nombre": "Parentesis_a",
+    "valor": "(",
+    "linea": 36,
+    "columna": 1
+  },
+  {
+    "nombre": "Identificador",
+    "valor": "a",
+    "linea": 36,
+    "columna": 1
+  },
+  {
+    "nombre": "Op_relacional",
+    "valor": ">",
+    "linea": 36,
+    "columna": 1
+  },
+  {
+    "nombre": "Numero",
+    "valor": "0",
+    "linea": 36,
+    "columna": 1
+  },
+  {
+    "nombre": "Parentesis_c",
+    "valor": ")",
+    "linea": 36,
+    "columna": 1
+  },
+  {
+    "nombre": "P_coma",
+    "valor": ";",
+    "linea": 36,
+    "columna": 1
+  },
+  {
+    "nombre": "Return",
+    "valor": "return",
+    "linea": 38,
+    "columna": 1
+  },
+  {
+    "nombre": "Identificador",
+    "valor": "a",
+    "linea": 38,
+    "columna": 1
+  },
+  {
+    "nombre": "P_coma",
+    "valor": ";",
+    "linea": 38,
+    "columna": 1
+  },
+  {
+    "nombre": "Llave_c",
+    "valor": "}",
+    "linea": 39,
     "columna": 1
   }
 ]

@@ -55,16 +55,17 @@ parser code
     }
 :};
 
-/* TODOS los tokens - IGUAL que en Tokens.java */
-terminal ERROR, Return, Comillas, Cadena, Int, If, Else, Do, While, For, Igual, Suma, Resta,
+/* TODOS los tokens */
+terminal ERROR, Return, Comillas, Cadena, Int, Float, Bool, Char, String, Func, If, Else, Do, While, For, Igual, Suma, Resta,
           Multiplicacion, Division, Op_logico, Op_incremento, Op_relacional, Op_atribucion, Op_booleano,
-          Parentesis_a, Parentesis_c, Llave_a, Llave_c, Corchete_a, Corchete_c, Navidad, P_coma,
+          Parentesis_a, Parentesis_c, Llave_a, Llave_c, Corchete_a, Corchete_c, Navidad, World, P_coma,
           Identificador, Numero;
 
 /* No terminales */
 non terminal programa, sentencias, sentencia, declaracion, declaraciones,
               asignacion, retorno, expresion, condicional, ciclo_while,
-              ciclo_for, ciclo_do, bloque, expr_logica;
+              ciclo_for, ciclo_do, bloque, expr_logica, funcion, funciones, main,
+              declaracion_global,declaraciones_globales, tipo_de_variable;
 
 /* Precedencias */
 precedence left Op_logico;
@@ -78,8 +79,26 @@ start with programa;
 
 /* PROGRAMA */
 programa ::= 
+      main
+    | funciones main 
+    | declaraciones_globales main
+    | declaraciones_globales funciones main
+;
+
+main ::= 
       Int Navidad Parentesis_a Parentesis_c bloque
 ;
+
+/* FUNCION*/
+funciones ::= 
+      funcion
+    | funciones funcion
+;
+funcion ::=  
+      Int Func Identificador Parentesis_a Parentesis_c bloque
+    | Int  Func Identificador Parentesis_a declaraciones Parentesis_c bloque
+;
+
 
 /* BLOQUE */
 bloque ::= 
@@ -87,12 +106,6 @@ bloque ::=
     | Llave_a sentencias Llave_c
     | Llave_a declaraciones Llave_c
     | Llave_a Llave_c
-;
-
-/* DECLARACIONES */
-declaraciones ::=
-      declaracion P_coma
-    | declaraciones declaracion P_coma
 ;
 
 /* SENTENCIAS */
@@ -109,12 +122,38 @@ sentencia ::=
     | ciclo_for
     | ciclo_do
 ;
+/* TIPO DE VARIABLES*/
+
+tipo_de_variable ::= 
+      Int
+    | Float
+    | Bool
+    | Char
+    | String
+;
 
 /* DECLARACIONES */
+
+declaraciones ::=
+      declaracion P_coma
+    | declaraciones declaracion P_coma
+;
+
 declaracion ::= 
-      Int Identificador
-    | Int Identificador Igual expresion
-    | Int Identificador Corchete_a Numero Corchete_c
+      tipo_de_variable Identificador
+    | tipo_de_variable Identificador Igual expresion
+    | tipo_de_variable Identificador Corchete_a Numero Corchete_c
+    | tipo_de_variable Identificador Corchete_a Numero Corchete_c Igual expresion
+;
+declaraciones_globales::=
+      declaracion_global P_coma
+    | declaraciones_globales declaracion_global P_coma
+;
+declaracion_global ::=
+      tipo_de_variable World Identificador
+    | tipo_de_variable World Identificador Igual expresion
+    | tipo_de_variable World Identificador Corchete_a Numero Corchete_c
+    | tipo_de_variable World Identificador Corchete_a Numero Corchete_c Igual expresion
 ;
 
 /* ASIGNACIONES */
@@ -125,7 +164,6 @@ asignacion ::=
     | Op_incremento Identificador
     | Identificador Corchete_a expresion Corchete_c Igual expresion
 ;
-
 
 /* CONDICIONAL */
 condicional ::= 
