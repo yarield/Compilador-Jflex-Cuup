@@ -139,21 +139,21 @@ declaraciones ::=
     | declaraciones declaracion P_coma
 ;
 
-declaracion ::= 
-      tipo_de_variable Identificador
-    | tipo_de_variable Identificador Igual expresion
-    | tipo_de_variable Identificador Corchete_a Numero Corchete_c
+declaracion ::=
+      tipo_de_variable Identificador Corchete_a Numero Corchete_c
     | tipo_de_variable Identificador Corchete_a Numero Corchete_c Igual expresion
-;
+    | tipo_de_variable Identificador
+    | tipo_de_variable Identificador Igual expresion
+    ;
 declaraciones_globales::=
       declaracion_global P_coma
     | declaraciones_globales declaracion_global P_coma
 ;
 declaracion_global ::=
-      tipo_de_variable World Identificador
-    | tipo_de_variable World Identificador Igual expresion
-    | tipo_de_variable World Identificador Corchete_a Numero Corchete_c
+      tipo_de_variable World Identificador Corchete_a Numero Corchete_c
     | tipo_de_variable World Identificador Corchete_a Numero Corchete_c Igual expresion
+    | tipo_de_variable World Identificador
+    | tipo_de_variable World Identificador Igual expresion
 ;
 
 /* ASIGNACIONES */
