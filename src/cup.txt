@@ -1,0 +1,222 @@
+import java_cup.runtime.Symbol;
+
+parser code
+{:
+    private Symbol s;
+    private int erroresSintacticos = 0;
+    private final int MAX_ERRORES = 10;
+    
+    public void syntax_error(Symbol s){
+        this.s = s;
+        erroresSintacticos++;
+        
+        System.err.println("ERROR SINTÁCTICO en línea " + (s.left+1) + 
+                          ", columna " + (s.right+1) + 
+                          ": Token inesperado '" + s.value + "'");
+        
+        if (erroresSintacticos < MAX_ERRORES) {
+            System.err.println("  Recuperando... (Modo Pánico)");
+            
+            buscarPuntoRecuperacion();
+            
+            System.err.println("  Continuando análisis...");
+        } else {
+            System.err.println("DEMASIADOS ERRORES. Análisis abortado.");
+            done_parsing();
+        }
+    }
+    
+    private void buscarPuntoRecuperacion() {
+        Symbol token;
+        try {
+            do {
+                token = getScanner().next_token();
+                if (token.sym == sym.EOF) {
+                    System.err.println("  Fin de archivo alcanzado");
+                    done_parsing();
+                    return;
+                }
+            } while (token.sym != sym.P_coma && 
+                     token.sym != sym.Llave_c && 
+                     token.sym != sym.Parentesis_c);
+            
+            System.err.println("  Recuperado en línea " + (token.left+1));
+        } catch (Exception e) {
+            System.err.println("  Error durante recuperación: " + e.getMessage());
+        }
+    }
+    
+    public Symbol getS(){
+        return this.s;
+    }
+    
+    public int getErroresSintacticos() {
+        return erroresSintacticos;
+    }
+:};
+
+/* TODOS los tokens */
+terminal ERROR, Return, Comillas, Cadena, Int, Float, Bool, Char, String, Func, If, Else, Do, While, For, Igual, Suma, Resta,
+          Multiplicacion, Division, Op_logico, Op_incremento, Op_relacional, Op_atribucion, Op_booleano,
+          Parentesis_a, Parentesis_c, Llave_a, Llave_c, Corchete_a, Corchete_c, Navidad, World,Local, P_coma, Coma,
+          Identificador, Numero;
+
+/* No terminales */
+non terminal programa, sentencias, sentencia, declaracion, declaraciones,
+              asignacion, retorno, expresion, condicional, ciclo_while,
+              ciclo_for, ciclo_do, bloque, expr_logica, funcion, funciones, main,
+              declaracion_global,declaraciones_globales, tipo_de_variable, lista_expresiones;
+
+/* Precedencias */
+precedence left Op_logico;
+precedence left Op_relacional;
+precedence left Suma, Resta;
+precedence left Multiplicacion, Division;
+
+start with programa;
+
+/* =============== GRAMÁTICA CORREGIDA =============== */
+
+/* PROGRAMA */
+programa ::= 
+      main
+    | funciones main 
+    | declaraciones_globales main
+    | declaraciones_globales funciones main
+;
+
+main ::= 
+      Int Navidad Parentesis_a Parentesis_c bloque
+;
+
+/* FUNCION*/
+funciones ::= 
+      funcion
+    | funciones funcion
+;
+funcion ::=  
+      Int Func Identificador Parentesis_a Parentesis_c bloque
+    | Int  Func Identificador Parentesis_a declaraciones Parentesis_c bloque
+;
+
+
+/* BLOQUE */
+bloque ::= 
+      Llave_a declaraciones sentencias Llave_c
+    | Llave_a sentencias Llave_c
+    | Llave_a declaraciones Llave_c
+    | Llave_a Llave_c
+;
+
+/* SENTENCIAS */
+sentencias ::= 
+      sentencia
+    | sentencias sentencia
+;
+
+sentencia ::= 
+      asignacion P_coma
+    | retorno P_coma
+    | condicional
+    | ciclo_while
+    | ciclo_for
+    | ciclo_do
+;
+/* TIPO DE VARIABLES*/
+
+tipo_de_variable ::= 
+      Int
+    | Float
+    | Bool
+    | Char
+    | String
+;
+
+/* DECLARACIONES */
+
+declaraciones ::=
+      declaracion P_coma
+    | declaraciones declaracion P_coma
+;
+
+declaracion ::=
+      tipo_de_variable Local Identificador Corchete_a Numero Corchete_c Igual  Llave_a lista_expresiones Llave_c
+    | tipo_de_variable Local Identificador Corchete_a Numero Corchete_c Igual expresion
+    | tipo_de_variable Local Identificador Corchete_a Numero Corchete_c 
+    | tipo_de_variable Local Identificador Igual expresion
+    | tipo_de_variable Local Identificador
+;
+
+declaraciones_globales::=
+      declaracion_global P_coma
+    | declaraciones_globales declaracion_global P_coma
+;
+declaracion_global ::=
+      tipo_de_variable World Identificador Corchete_a Numero Corchete_c Igual Llave_a lista_expresiones Llave_c
+    | tipo_de_variable World Identificador Corchete_a Numero Corchete_c Igual expresion
+    | tipo_de_variable World Identificador Corchete_a Numero Corchete_c
+    | tipo_de_variable World Identificador Igual expresion
+    | tipo_de_variable World Identificador
+;
+
+/* ASIGNACIONES */
+asignacion ::= 
+      Identificador Igual expresion
+    | Identificador Op_atribucion expresion
+    | Identificador Op_incremento
+    | Op_incremento Identificador
+    | Identificador Corchete_a expresion Corchete_c Igual Llave_a lista_expresiones Llave_c
+    | Identificador Corchete_a expresion Corchete_c Igual expresion
+;
+
+/* CONDICIONAL */
+condicional ::= 
+      If Parentesis_a expr_logica Parentesis_c bloque
+    | If Parentesis_a expr_logica Parentesis_c bloque Else bloque
+;
+
+/* CICLOS */
+ciclo_while ::= 
+      While Parentesis_a expr_logica Parentesis_c bloque
+;
+
+ciclo_for ::= 
+      For Parentesis_a asignacion P_coma expr_logica P_coma asignacion Parentesis_c bloque
+    | For Parentesis_a declaracion P_coma expr_logica P_coma asignacion Parentesis_c bloque
+;
+
+ciclo_do ::= 
+      Do bloque While Parentesis_a expr_logica Parentesis_c P_coma
+;
+
+/* EXPRESIONES */
+expresion ::= 
+      Numero
+    | Identificador
+    | Cadena
+    | Parentesis_a expresion Parentesis_c
+    | Identificador Corchete_a expresion Corchete_c
+    | expresion Suma expresion
+    | expresion Resta expresion
+    | expresion Multiplicacion expresion
+    | expresion Division expresion
+;
+
+lista_expresiones ::= 
+      expresion
+    | lista_expresiones Coma expresion
+;
+
+
+/* EXPRESIONES LÓGICAS */
+expr_logica ::= 
+      expresion Op_relacional expresion
+    | Op_booleano
+    | expr_logica Op_logico expr_logica
+    | Parentesis_a expr_logica Parentesis_c
+;
+
+/* RETORNO */
+retorno ::= 
+      Return expresion
+;

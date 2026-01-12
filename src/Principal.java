@@ -54,23 +54,34 @@ public class Principal {
     }
     
 
-    private static String obtenerNombreToken(int tipoToken) {
-        try {
-            Tokens[] valores = Tokens.values();
-            
-            // Verificar que el tipoToken esté dentro del rango del enum
-            if (tipoToken >= 0 && tipoToken < valores.length) {
-                String nombre = valores[tipoToken].name();
-                return nombre;
-            } else {
-                // Si está fuera de rango
-                return "TOKEN_" + tipoToken;
-            }
-        } catch (Exception e) {
-            System.out.printf("[DEBUG] Error: %s%n", e.getMessage());
-            return "TOKEN_" + tipoToken;
-        }
+private static String obtenerNombreToken(int tipoToken) {
+    if (tipoToken == sym.EOF) {
+        return "EOF";
     }
+    
+    try {
+        java.lang.reflect.Field[] campos = sym.class.getDeclaredFields();
+        
+        for (java.lang.reflect.Field campo : campos) {
+            if (java.lang.reflect.Modifier.isStatic(campo.getModifiers()) && 
+                campo.getType() == int.class) {
+                
+                try {
+                    int valorCampo = campo.getInt(null);
+                    if (valorCampo == tipoToken) {
+                        return campo.getName();
+                    }
+                } catch (IllegalAccessException e) {
+                }
+            }
+        }
+        return "TOKEN_" + tipoToken;
+        
+    } catch (Exception e) {
+        System.err.println("Error obteniendo nombre del token: " + e.getMessage());
+        return "TOKEN_" + tipoToken;
+    }
+}
     
     public static class ResultadoSintactico {
         private boolean exitoso;
@@ -141,7 +152,6 @@ public class Principal {
     public static void limpiarArchivosViejos() {
         String[] archivosAEliminar = {
             "src/LexerCup.java",
-            "src/Lexer.java", 
             "src/Sintax.java",
             "src/sym.java",
 
@@ -326,17 +336,16 @@ public static void guardarTokensEnJSON(String archivoTokens, List<Map<String, Ob
     // MAIN SIMPLIFICADO
     public static void main(String[] args) throws Exception {        
         // Rutas
-        String rutaLexer = "src/Lexer.flex";
-        String rutaLexerCup = "src/LexerCup.flex";
+        String rutaLexerCup = "src/LexerCup.flex";  // <-- Este es el único que necesitas
         String[] rutaSintax = {"-parser", "Sintax", "src/Sintax.cup"};
         String archivoEntrada = "./archivos/input.txt";
         String archivoTokens = "./archivos/output_tokens.json";
+        
         
         // 1. Limpiar
         limpiarArchivosViejos();
         
         // 2. Generar analizadores
-        generarLexer(rutaLexer);
         generarLexerCup(rutaLexerCup);
         generarSintax(rutaSintax);
         moverArchivosGenerados();
