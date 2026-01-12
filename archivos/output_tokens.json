@@ -12,25 +12,25 @@
     "columna": 1
   },
   {
-    "nombre": "S_pregunta_i",
+    "nombre": "S_pregunta_a",
     "valor": "¿",
     "linea": 1,
     "columna": 1
   },
   {
-    "nombre": "S_pregunta",
+    "nombre": "S_pregunta_c",
     "valor": "?",
     "linea": 1,
     "columna": 1
   },
   {
-    "nombre": "S_exclamacion_i",
+    "nombre": "S_exclamacion_a",
     "valor": "¡",
     "linea": 1,
     "columna": 1
   },
   {
-    "nombre": "S_exclamacion",
+    "nombre": "S_exclamacion_c",
     "valor": "!",
     "linea": 2,
     "columna": 1

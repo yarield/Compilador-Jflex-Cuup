@@ -22,8 +22,8 @@ parser code
 terminal   ERROR, Cadena, Caracter, Entero, Flotante, True, False, Int, Float, Bool, Char, String, Coal,
     Identificador, World, Local, Return, Break, Gift, Navidad, Show, Get, Decide, Of, Else, End, Loop, Exit, When, For, 
     Suma, Resta, Multiplicacion, Division, Division_entera, Modulo, Potencia, Op_incremento, Menor, Menor_igual, Mayor,  
-    Mayor_igual, Igual, Diferente, Conjuncion, Disyuncion, Negacion, Op_atribucion, S_pregunta_i, S_pregunta, S_exclamacion_i,  
-    S_exclamacion, Endl, P_coma, Coma, Corchete_a, Corchete_c, Comentario_linea, Comentario_ini, Comentario_fin
+    Mayor_igual, Igual, Diferente, Conjuncion, Disyuncion, Negacion, Op_atribucion, S_pregunta_a, S_pregunta_c, S_exclamacion_a,  
+    S_exclamacion_c, Endl, P_coma, Coma, Corchete_a, Corchete_c, Comentario_linea, Comentario_ini, Comentario_fin
 ;
 
 /* No terminales */
@@ -45,15 +45,15 @@ programa ::=
 ;
 
 main ::=
-      Coal Navidad S_pregunta_i S_pregunta bloque
+      Coal Navidad S_pregunta_a S_pregunta_c bloque
 ;
 
 /* BLOQUE */
 
-bloque ::= S_exclamacion_i S_exclamacion
-        | S_exclamacion_i declaraciones S_exclamacion
-        | S_exclamacion_i sentencias S_exclamacion
-        | S_exclamacion_i declaraciones sentencias S_exclamacion
+bloque ::= S_exclamacion_a S_exclamacion_c 
+        | S_exclamacion_a declaraciones S_exclamacion_c 
+        | S_exclamacion_a sentencias S_exclamacion_c 
+        | S_exclamacion_a declaraciones sentencias S_exclamacion_c
 ;
 
 

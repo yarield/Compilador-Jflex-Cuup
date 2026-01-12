@@ -90,10 +90,10 @@ comentarioMultilinea = "є"([^э])*"э"
 
 "="   { return symbol(sym.Op_atribucion, yytext()); }
 
-"¿"   { return symbol(sym.S_pregunta_i, yytext()); }
-"?"   { return symbol(sym.S_pregunta, yytext()); }
-"¡"   { return symbol(sym.S_exclamacion_i, yytext()); }
-"!"   { return symbol(sym.S_exclamacion, yytext()); }
+"¿"   { return symbol(sym.S_pregunta_a, yytext()); }
+"?"   { return symbol(sym.S_pregunta_c, yytext()); }
+"¡"   { return symbol(sym.S_exclamacion_a, yytext()); }
+"!"   { return symbol(sym.S_exclamacion_c, yytext()); }
 
 "["   { return symbol(sym.Corchete_a, yytext()); }
 "]"   { return symbol(sym.Corchete_c, yytext()); }

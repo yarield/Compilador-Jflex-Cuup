@@ -154,7 +154,6 @@ private static String obtenerNombreToken(int tipoToken) {
             "src/LexerCup.java",
             "src/Sintax.java",
             "src/sym.java",
-
         };
         
         for (String archivo : archivosAEliminar) {
@@ -195,8 +194,7 @@ private static String obtenerNombreToken(int tipoToken) {
         }
     }
 
-
-    // FUNCIÓN PARA GUARDAR TOKENS EN FORMATO JSON PURO
+    // FUNCIÓN PARA GUARDAR TOKENS EN FORMATO JSON 
     public static void guardarResultadosEnArchivo(String archivoTokens, Map<String, Object> resultados) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(archivoTokens))) {
             
@@ -272,6 +270,7 @@ private static String obtenerNombreToken(int tipoToken) {
         return listaTokens;
     }
 
+
     // FUNCIÓN PARA PROCESAR ANÁLISIS COMPLETO
     public static Map<String, Object> procesarAnalisisCompleto(String contenidoArchivo) {
         long inicioAnalisis = System.currentTimeMillis();
@@ -300,15 +299,11 @@ private static String obtenerNombreToken(int tipoToken) {
         return resultados;
     }
 
-    // FUNCIÓN PARA GENERAR TODOS LOS ANALIZADORES
-    
-    // FUNCIÓN SIMPLIFICADA
 public static List<Map<String, Object>> realizarAnalisisCompleto(String contenidoArchivo) {
-    // Solo análisis léxico (el sintáctico ya muestra su mensaje por consola)
     return realizarAnalisisLexico(contenidoArchivo);
 }
 
-// FUNCIÓN SIMPLIFICADA DE GUARDADO
+// FUNCIÓN DE GUARDADO
 public static void guardarTokensEnJSON(String archivoTokens, List<Map<String, Object>> tokens) {
     try (BufferedWriter writer = new BufferedWriter(new FileWriter(archivoTokens))) {
         if (tokens != null && !tokens.isEmpty()) {
@@ -333,21 +328,19 @@ public static void guardarTokensEnJSON(String archivoTokens, List<Map<String, Ob
     }
 }
 
-    // MAIN SIMPLIFICADO
     public static void main(String[] args) throws Exception {        
         // Rutas
-        String rutaLexerCup = "src/LexerCup.flex";  // <-- Este es el único que necesitas
+        String rutaLexerCup = "src/LexerCup.flex";  
         String[] rutaSintax = {"-parser", "Sintax", "src/Sintax.cup"};
         String archivoEntrada = "./archivos/input.txt";
         String archivoTokens = "./archivos/output_tokens.json";
-        
         
         // 1. Limpiar
         limpiarArchivosViejos();
         
         // 2. Generar analizadores
-        generarLexerCup(rutaLexerCup);
         generarSintax(rutaSintax);
+        generarLexerCup(rutaLexerCup);
         moverArchivosGenerados();
         System.out.println();
         
