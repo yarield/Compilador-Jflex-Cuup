@@ -1,5 +1,4 @@
 int world a = 2; 
-int world a[2] = 5;
 
 int func funci (int a = 2; int b = 5;) {
     int a = 1;
@@ -13,9 +12,9 @@ int navidad() {
     int b = 5;
     int numeros[5];
 
-    a = 2;
+    int a[3];
+    int a[3] = {1, 2, 3};
     b += 3;
-    numeros[0] = a + b;
 
     if (a < b) {
         a++;

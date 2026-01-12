@@ -35,9 +35,10 @@ espacio=[ ,\t,\r,\n]+
 ")"   { lexeme = yytext(); return Tokens.Parentesis_c; }
 "{"   { lexeme = yytext(); return Tokens.Llave_a; }
 "}"   { lexeme = yytext(); return Tokens.Llave_c; }
-"[" { lexeme = yytext(); return Tokens.Corchete_a; }
-"]" { lexeme = yytext(); return Tokens.Corchete_c; }
+"["   { lexeme = yytext(); return Tokens.Corchete_a; }
+"]"   { lexeme = yytext(); return Tokens.Corchete_c; }
 ";"   { lexeme = yytext(); return Tokens.P_coma; }
+","   { lexeme = yytext(); return Tokens.Coma; }
 
 /* Operadores adicionales */
 "=="|"!="|"<"|">"|"<="|">=" { lexeme = yytext(); return Tokens.Op_relacional; }

@@ -58,14 +58,14 @@ parser code
 /* TODOS los tokens */
 terminal ERROR, Return, Comillas, Cadena, Int, Float, Bool, Char, String, Func, If, Else, Do, While, For, Igual, Suma, Resta,
           Multiplicacion, Division, Op_logico, Op_incremento, Op_relacional, Op_atribucion, Op_booleano,
-          Parentesis_a, Parentesis_c, Llave_a, Llave_c, Corchete_a, Corchete_c, Navidad, World, P_coma,
+          Parentesis_a, Parentesis_c, Llave_a, Llave_c, Corchete_a, Corchete_c, Navidad, World, P_coma, Coma,
           Identificador, Numero;
 
 /* No terminales */
 non terminal programa, sentencias, sentencia, declaracion, declaraciones,
               asignacion, retorno, expresion, condicional, ciclo_while,
               ciclo_for, ciclo_do, bloque, expr_logica, funcion, funciones, main,
-              declaracion_global,declaraciones_globales, tipo_de_variable;
+              declaracion_global,declaraciones_globales, tipo_de_variable, lista_expresiones;
 
 /* Precedencias */
 precedence left Op_logico;
@@ -132,6 +132,10 @@ tipo_de_variable ::=
     | String
 ;
 
+cadena ::=
+    Comillas expresion Comillas
+;
+
 /* DECLARACIONES */
 
 declaraciones ::=
@@ -140,20 +144,23 @@ declaraciones ::=
 ;
 
 declaracion ::=
-      tipo_de_variable Identificador Corchete_a Numero Corchete_c
+      tipo_de_variable Identificador Corchete_a Numero Corchete_c Igual  Llave_a lista_expresiones Llave_c
     | tipo_de_variable Identificador Corchete_a Numero Corchete_c Igual expresion
-    | tipo_de_variable Identificador
+    | tipo_de_variable Identificador Corchete_a Numero Corchete_c 
     | tipo_de_variable Identificador Igual expresion
-    ;
+    | tipo_de_variable Identificador
+;
+
 declaraciones_globales::=
       declaracion_global P_coma
     | declaraciones_globales declaracion_global P_coma
 ;
 declaracion_global ::=
-      tipo_de_variable World Identificador Corchete_a Numero Corchete_c
+      tipo_de_variable World Identificador Corchete_a Numero Corchete_c Igual Llave_a lista_expresiones Llave_c
     | tipo_de_variable World Identificador Corchete_a Numero Corchete_c Igual expresion
-    | tipo_de_variable World Identificador
+    | tipo_de_variable World Identificador Corchete_a Numero Corchete_c
     | tipo_de_variable World Identificador Igual expresion
+    | tipo_de_variable World Identificador
 ;
 
 /* ASIGNACIONES */
@@ -162,6 +169,7 @@ asignacion ::=
     | Identificador Op_atribucion expresion
     | Identificador Op_incremento
     | Op_incremento Identificador
+    | Identificador Corchete_a expresion Corchete_c Igual Llave_a lista_expresiones Llave_c
     | Identificador Corchete_a expresion Corchete_c Igual expresion
 ;
 
@@ -197,6 +205,12 @@ expresion ::=
     | expresion Multiplicacion expresion
     | expresion Division expresion
 ;
+
+lista_expresiones ::= 
+      expresion
+    | lista_expresiones Coma expresion
+;
+
 
 /* EXPRESIONES LÓGICAS */
 expr_logica ::= 

@@ -74,6 +74,7 @@ comentarioMultilinea = "/\\*"(.|\\n)*?"\\*/"
 "["  { return symbol(sym.Corchete_a, yytext()); }
 "]"  { return symbol(sym.Corchete_c, yytext()); }
 ";"  { return symbol(sym.P_coma, yytext()); }
+","  { return symbol(sym.Coma, yytext()); }
 
 /* Booleanos */
 "true"|"false" { return symbol(sym.Op_booleano, yytext()); }
