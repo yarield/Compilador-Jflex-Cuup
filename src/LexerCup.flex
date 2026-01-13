@@ -7,12 +7,13 @@ import java_cup.runtime.*;
 %full
 %line
 %char
+%unicode
 
 L = [a-zA-Z_]
 D = [0-9]
 espacio = [ \t\r\n]+
 comentarioLinea = "|".*
-comentarioMultilinea = "є"([^э])*"э"
+comentarioMultilinea =   "є" ~"э"
 
 %{
     private Symbol symbol(int type, Object value){
@@ -26,10 +27,9 @@ comentarioMultilinea = "є"([^э])*"э"
 
 %%
 
-/* Espacios y comentarios */
-{espacio}              { /* Ignore */ }
-{comentarioLinea}      { /* Ignore */ }
-{comentarioMultilinea} { /* Ignore */ }
+{comentarioMultilinea} { /* ignorar */ }
+{comentarioLinea}      { /* ignorar */ }
+{espacio}+             { /* ignorar */ }
 
 
 /* Palabras reservadas */
@@ -81,14 +81,15 @@ comentarioMultilinea = "є"([^э])*"э"
 ">="  { return symbol(sym.Mayor_igual, yytext()); }
 "<"   { return symbol(sym.Menor, yytext()); }
 ">"   { return symbol(sym.Mayor, yytext()); }
-"=="  { return symbol(sym.Igual, yytext()); }
 "!="  { return symbol(sym.Diferente, yytext()); }
+"->"  { return symbol(sym.Flecha, yytext()); }
+
 
 "@"   { return symbol(sym.Conjuncion, yytext()); }
 "~"   { return symbol(sym.Disyuncion, yytext()); }
 "Σ"   { return symbol(sym.Negacion, yytext()); }
 
-"="   { return symbol(sym.Op_atribucion, yytext()); }
+"="   { return symbol(sym.Igual, yytext()); }
 
 "¿"   { return symbol(sym.S_pregunta_a, yytext()); }
 "?"   { return symbol(sym.S_pregunta_c, yytext()); }
@@ -100,11 +101,12 @@ comentarioMultilinea = "є"([^э])*"э"
 ";"   { return symbol(sym.P_coma, yytext()); }
 ","   { return symbol(sym.Coma, yytext()); }
 
-
 /* Identificadores y números */
 {D}+"."{D}+   { return symbol(sym.Flotante, yytext()); }
 {D}+          { return symbol(sym.Entero, yytext()); }
 {L}({L}|{D})* { return symbol(sym.Identificador, yytext()); }
+"'"([^'\n]|"\\'")"'" { return symbol(sym.Caracter, yytext()); }
+\"([^\"\n]|\\\")*\" { return symbol(sym.Cadena, yytext()); }
 
 
 /* Error léxico */

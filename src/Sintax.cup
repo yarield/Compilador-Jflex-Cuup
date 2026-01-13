@@ -22,18 +22,24 @@ parser code
 terminal   ERROR, Cadena, Caracter, Entero, Flotante, True, False, Int, Float, Bool, Char, String, Coal,
     Identificador, World, Local, Return, Break, Gift, Navidad, Show, Get, Decide, Of, Else, End, Loop, Exit, When, For, 
     Suma, Resta, Multiplicacion, Division, Division_entera, Modulo, Potencia, Op_incremento, Menor, Menor_igual, Mayor,  
-    Mayor_igual, Igual, Diferente, Conjuncion, Disyuncion, Negacion, Op_atribucion, S_pregunta_a, S_pregunta_c, S_exclamacion_a,  
+    Mayor_igual, Igual, Diferente, Flecha, Conjuncion, Disyuncion, Negacion, S_pregunta_a, S_pregunta_c, S_exclamacion_a,  
     S_exclamacion_c, Endl, P_coma, Coma, Corchete_a, Corchete_c, Comentario_linea, Comentario_ini, Comentario_fin
 ;
 
 /* No terminales */
-non terminal programa, main, bloque, declaraciones, declaracion, sentencias, sentencia, tipo_de_variable, asignacion, expresion
+non terminal programa, main, bloque, lista_elementos, elemento, declaraciones, declaracion, sentencias, sentencia, tipo_de_variable, asignacion, expresion, 
+    declaraciones_globales, declaracion_global, arreglo, operadores, operadores_loguicos, decideoff, estructuras_de_control
 
 ;
 
 /* Precedencias */
+precedence left Conjuncion, Disyuncion;
+precedence left Igual, Diferente;
+precedence left Menor, Menor_igual, Mayor, Mayor_igual;
 precedence left Suma, Resta;
 precedence left Multiplicacion, Division;
+precedence left Division_entera, Modulo;
+precedence right Potencia;
 
 start with programa;
 
@@ -42,6 +48,7 @@ start with programa;
 /* MAIN */
 programa ::= 
       main
+      | declaraciones_globales main
 ;
 
 main ::=
@@ -50,12 +57,21 @@ main ::=
 
 /* BLOQUE */
 
-bloque ::= S_exclamacion_a S_exclamacion_c 
-        | S_exclamacion_a declaraciones S_exclamacion_c 
-        | S_exclamacion_a sentencias S_exclamacion_c 
-        | S_exclamacion_a declaraciones sentencias S_exclamacion_c
+bloque ::= 
+      S_exclamacion_a S_exclamacion_c 
+    | S_exclamacion_a lista_elementos S_exclamacion_c
 ;
 
+lista_elementos ::=
+      elemento
+    | lista_elementos elemento
+;
+
+elemento ::=
+      declaracion Endl
+    | sentencia
+    | estructuras_de_control Endl
+;
 
 /* SENTENCIAS */
 sentencias ::= 
@@ -70,14 +86,28 @@ sentencia ::=
 /* DECLARACIONES */
 
 declaraciones ::=
-      declaracion P_coma
-    | declaraciones declaracion P_coma
+      declaracion Endl
+    | declaraciones declaracion Endl
 ;
 
 declaracion ::=
-    | tipo_de_variable Local Identificador
+      Local tipo_de_variable Identificador
+    | Local tipo_de_variable Identificador Igual expresion 
+    | Local tipo_de_variable Identificador Igual Identificador arreglo 
+    | Local tipo_de_variable Identificador arreglo Igual Identificador arreglo 
+    
 ;
 
+declaraciones_globales ::= 
+      declaracion_global Endl
+    | declaraciones_globales declaracion_global Endl
+;
+
+declaracion_global ::= 
+      World tipo_de_variable Identificador
+    | World tipo_de_variable Identificador Igual expresion
+
+;
 /* TIPO DE VARIABLES*/
 
 tipo_de_variable ::= 
@@ -88,14 +118,60 @@ tipo_de_variable ::=
     | String
 ;
 
+/* arreglo */
+arreglo::= 
+      Corchete_a Entero Corchete_c
+;
+
+
 /* ASIGNACIONES */
 asignacion ::= 
       Identificador Igual expresion
 ;
 
+/* ESTRUCTURAS DE CONTROL */
+
+estructuras_de_control ::= 
+      decideoff
+    | estructuras_de_control decideoff
+;
+decideoff ::= 
+      Decide Of expresion Flecha bloque End Decide Endl
+    | Decide Of expresion Flecha bloque Else Flecha bloque End Decide Endl
+;
+/* OPERADORES */
+
+operadores ::= 
+      Suma  
+    | Resta 
+    | Multiplicacion  
+    | Division 
+    | Division_entera 
+    | Modulo 
+    | Potencia 
+;
+/* OPERADORES LOGUICOS */
+operadores_loguicos ::= 
+      Menor_igual
+    | Mayor_igual
+    | Menor
+    | Mayor
+    | Diferente
+;
+
 /* EXPRESIONES */
 expresion ::= 
       Entero
+    | Resta Entero
     | Flotante
+    | Resta Flotante
+    | Caracter
+    | True
+    | False
+    | Cadena
     | Identificador
+    | expresion operadores expresion
+    | expresion operadores_loguicos expresion
+    | S_pregunta_a expresion S_pregunta_c
+
 ;

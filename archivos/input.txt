@@ -1,2 +1,26 @@
+world char b  = 'h' endl
+є 
+soy otro comentario
+э
+world string b  = "hola" endl
+
+| soy un comentario
+
 coal navidad ¿? ¡
+    local int a endl
+    local int a = inta[1] endl
+    local int areglodsdfsd[2] = hola[8] endl
+    local int b = "hola" ^ 1 endl 
+    local int c = ¿¿a + b? + c? +d endl
+    local int d = -8 + -8 endl
+
+
+    decide of a + b -> ¡
+    ! 
+    end decide endl 
+
+    decide of a + b -> ¡
+    ! else ->¡
+    !
+    end decide endl
 !
