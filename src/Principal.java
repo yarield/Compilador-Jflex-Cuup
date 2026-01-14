@@ -1,10 +1,17 @@
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java_cup.runtime.Symbol;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.lang.reflect.Field;
+
 
 public class Principal {
     
@@ -361,6 +368,64 @@ public static void guardarTokensEnJSON(String archivoTokens, List<Map<String, Ob
         System.err.println("Error al guardar tokens: " + e.getMessage());
     }
 }
+//Imprime los tokkens en la terminal desde un archivo JSON
+public static void imprimirTokens(String rutaJson) {
+    try {
+        String json = Files.readString(Paths.get(rutaJson), StandardCharsets.UTF_8);
+
+        // Encuentra cada objeto { ... } dentro del arreglo [ ... ]
+        Pattern objPattern = Pattern.compile("\\{[^}]*\\}");
+        Matcher objMatcher = objPattern.matcher(json);
+
+        // Extrae campos del objeto
+        Pattern nombreP  = Pattern.compile("\"nombre\"\\s*:\\s*\"([^\"]*)\"");
+        Pattern valorP   = Pattern.compile("\"valor\"\\s*:\\s*\"((?:\\\\\"|[^\"])*)\"");
+        Pattern lineaP   = Pattern.compile("\"linea\"\\s*:\\s*(\\d+)");
+        Pattern colP     = Pattern.compile("\"columna\"\\s*:\\s*(\\d+)");
+
+        int tokenNum = 0;
+
+        while (objMatcher.find()) {
+            String obj = objMatcher.group();
+
+            String nombre = extraer(obj, nombreP);
+            String valor  = extraer(obj, valorP);
+            int linea     = Integer.parseInt(extraer(obj, lineaP));
+            int col       = Integer.parseInt(extraer(obj, colP));
+
+            // Des-escapar comillas del JSON (\" -> ")
+            valor = valor.replace("\\\"", "\"");
+
+            int id = obtenerIdTokenDesdeSym(nombre);
+
+            System.out.printf(
+                "  Token #%d: %s (%d) = '%s' [Línea:%d, Col:%d]%n",
+                ++tokenNum, nombre, id, valor, linea, col
+            );
+        }
+
+    } catch (Exception e) {
+        System.err.println("Error leyendo/imprimiendo tokens desde JSON: " + e.getMessage());
+    }
+}
+
+private static String extraer(String texto, Pattern p) {
+    Matcher m = p.matcher(texto);
+    if (m.find()) return m.group(1);
+    throw new IllegalArgumentException("Campo faltante en JSON: " + p.pattern());
+}
+
+private static int obtenerIdTokenDesdeSym(String nombreToken) { 
+    if ("EOF".equals(nombreToken)) return sym.EOF;
+
+    try {
+        Field f = sym.class.getField(nombreToken);
+        return f.getInt(null);
+    } catch (Exception e) {
+        // Si el nombre del JSON no existe en sym.java
+        return -1;
+    }
+}
 
 
     public static void main(String[] args) throws Exception {        
@@ -391,6 +456,11 @@ public static void guardarTokensEnJSON(String archivoTokens, List<Map<String, Ob
         
         // 6. Guardar JSON
         guardarTokensEnJSON(archivoTokens, tokens);
-        
+
+        // 7. Imprimir tokens desde JSON
+        /* 
+        System.out.println("\nTOKENS LEÍDOS DESDE JSON:");
+        imprimirTokens(archivoTokens);
+        */
     }
 }
