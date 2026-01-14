@@ -195,43 +195,54 @@ private static String obtenerNombreToken(int tipoToken) {
     }
 
     // FUNCIÓN PARA GUARDAR TOKENS EN FORMATO JSON 
-    public static void guardarResultadosEnArchivo(String archivoTokens, Map<String, Object> resultados) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(archivoTokens))) {
-            
-            @SuppressWarnings("unchecked")
-            List<Map<String, Object>> tokens = (List<Map<String, Object>>) resultados.get("tokens");
-            
-            if (tokens != null && !tokens.isEmpty()) {
-                writer.write("[\n");
-                
-                for (int i = 0; i < tokens.size(); i++) {
-                    Map<String, Object> token = tokens.get(i);
-                    
-                    writer.write("  {\n");
-                    writer.write("    \"nombre\": \"" + token.get("nombre") + "\",\n");
-                    writer.write("    \"valor\": \"" + token.get("valor").toString().replace("\"", "\\\"") + "\",\n");
-                    writer.write("    \"linea\": " + token.get("linea") + ",\n");
-                    writer.write("    \"columna\": " + token.get("columna") + "\n");
-                    writer.write("  }");
-                    
-                    if (i < tokens.size() - 1) {
-                        writer.write(",\n");
-                    } else {
-                        writer.write("\n");
-                    }
+    // FUNCIÓN PARA GUARDAR TOKENS EN FORMATO JSON (columna por token dentro de cada línea)
+public static void guardarResultadosEnArchivo(String archivoTokens, Map<String, Object> resultados) {
+    try (BufferedWriter writer = new BufferedWriter(new FileWriter(archivoTokens))) {
+
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> tokens = (List<Map<String, Object>>) resultados.get("tokens");
+
+        if (tokens != null && !tokens.isEmpty()) {
+            writer.write("[\n");
+
+            int lineaActual = -1;
+            int columnaToken = 0;
+
+            for (int i = 0; i < tokens.size(); i++) {
+                Map<String, Object> token = tokens.get(i);
+
+                int linea = (int) token.get("linea");
+
+                if (linea != lineaActual) {
+                    lineaActual = linea;
+                    columnaToken = 1;
+                } else {
+                    columnaToken++;
                 }
-                
-                writer.write("]\n");
-            } else {
-                writer.write("[]\n");
+
+                writer.write("  {\n");
+                writer.write("    \"nombre\": \"" + token.get("nombre") + "\",\n");
+                writer.write("    \"valor\": \"" + token.get("valor").toString().replace("\"", "\\\"") + "\",\n");
+                writer.write("    \"linea\": " + token.get("linea") + ",\n");
+                writer.write("    \"columna\": " + columnaToken + "\n");
+                writer.write("  }");
+
+                if (i < tokens.size() - 1) writer.write(",\n");
+                else writer.write("\n");
             }
-            
-            System.out.println("Tokens guardados: " + archivoTokens);
-            
-        } catch (IOException e) {
-            System.err.println("Error al guardar tokens: " + e.getMessage());
+
+            writer.write("]\n");
+        } else {
+            writer.write("[]\n");
         }
+
+        System.out.println("Tokens guardados: " + archivoTokens);
+
+    } catch (IOException e) {
+        System.err.println("Error al guardar tokens: " + e.getMessage());
     }
+}
+
 
 
     // FUNCIÓN PARA REALIZAR ANÁLISIS LÉXICO
@@ -304,29 +315,53 @@ public static List<Map<String, Object>> realizarAnalisisCompleto(String contenid
 }
 
 // FUNCIÓN DE GUARDADO
+// FUNCIÓN DE GUARDADO (columna por token dentro de cada línea)
 public static void guardarTokensEnJSON(String archivoTokens, List<Map<String, Object>> tokens) {
     try (BufferedWriter writer = new BufferedWriter(new FileWriter(archivoTokens))) {
+
         if (tokens != null && !tokens.isEmpty()) {
             writer.write("[\n");
+
+            int lineaActual = -1;
+            int columnaToken = 0;
+
             for (int i = 0; i < tokens.size(); i++) {
                 Map<String, Object> token = tokens.get(i);
+
+                // NO tocamos nombre/valor/linea: solo leemos la línea
+                int linea = (int) token.get("linea");
+
+                // Si cambia de línea, reiniciamos columna a 1
+                if (linea != lineaActual) {
+                    lineaActual = linea;
+                    columnaToken = 1;
+                } else {
+                    columnaToken++;
+                }
+
                 writer.write("  {\n");
                 writer.write("    \"nombre\": \"" + token.get("nombre") + "\",\n");
                 writer.write("    \"valor\": \"" + token.get("valor").toString().replace("\"", "\\\"") + "\",\n");
                 writer.write("    \"linea\": " + token.get("linea") + ",\n");
-                writer.write("    \"columna\": " + token.get("columna") + "\n");
+
+                // AQUÍ está la corrección: columna basada en orden de tokens por línea
+                writer.write("    \"columna\": " + columnaToken + "\n");
+
                 writer.write("  }");
                 writer.write(i < tokens.size() - 1 ? ",\n" : "\n");
             }
+
             writer.write("]\n");
         } else {
             writer.write("[]\n");
         }
+
         System.out.println("Tokens guardados: " + archivoTokens);
     } catch (IOException e) {
         System.err.println("Error al guardar tokens: " + e.getMessage());
     }
 }
+
 
     public static void main(String[] args) throws Exception {        
         // Rutas
