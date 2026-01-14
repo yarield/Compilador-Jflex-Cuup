@@ -2,7 +2,7 @@ world char b  = 'h' endl
 є 
 soy otro comentario
 э
-world string b  = "hola" endl
+world string b  = 4+8 endl
 
 | soy un comentario
 
@@ -15,12 +15,9 @@ coal navidad ¿? ¡
     local int d = -8 + -8 endl
 
 
-    decide of a + b -> ¡
-    ! 
+    decide of a + b -> ¡! 
     end decide endl 
 
-    decide of a + b -> ¡
-    ! else ->¡
-    !
+    decide of a + b -> ¡! else ->¡!
     end decide endl
 !

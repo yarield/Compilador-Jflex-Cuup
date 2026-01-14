@@ -70,7 +70,7 @@ lista_elementos ::=
 elemento ::=
       declaracion Endl
     | sentencia
-    | estructuras_de_control Endl
+    | estructuras_de_control 
 ;
 
 /* SENTENCIAS */
@@ -132,12 +132,12 @@ asignacion ::=
 /* ESTRUCTURAS DE CONTROL */
 
 estructuras_de_control ::= 
-      decideoff
-    | estructuras_de_control decideoff
+      decideoff Endl
 ;
 decideoff ::= 
-      Decide Of expresion Flecha bloque End Decide Endl
-    | Decide Of expresion Flecha bloque Else Flecha bloque End Decide Endl
+      Decide Of expresion Flecha bloque End Decide 
+    | Decide Of expresion Flecha bloque Else Flecha bloque End Decide 
+
 ;
 /* OPERADORES */
 

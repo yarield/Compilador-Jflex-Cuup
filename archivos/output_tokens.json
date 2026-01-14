@@ -60,8 +60,20 @@
     "columna": 1
   },
   {
-    "nombre": "Cadena",
-    "valor": "\"hola\"",
+    "nombre": "Entero",
+    "valor": "4",
+    "linea": 5,
+    "columna": 1
+  },
+  {
+    "nombre": "Suma",
+    "valor": "+",
+    "linea": 5,
+    "columna": 1
+  },
+  {
+    "nombre": "Entero",
+    "valor": "8",
     "linea": 5,
     "columna": 1
   },
@@ -500,121 +512,121 @@
   {
     "nombre": "S_exclamacion_c",
     "valor": "!",
-    "linea": 19,
+    "linea": 18,
     "columna": 1
   },
   {
     "nombre": "End",
     "valor": "end",
-    "linea": 20,
+    "linea": 19,
     "columna": 1
   },
   {
     "nombre": "Decide",
     "valor": "decide",
-    "linea": 20,
+    "linea": 19,
     "columna": 1
   },
   {
     "nombre": "Endl",
     "valor": "endl",
-    "linea": 20,
+    "linea": 19,
     "columna": 1
   },
   {
     "nombre": "Decide",
     "valor": "decide",
-    "linea": 22,
+    "linea": 21,
     "columna": 1
   },
   {
     "nombre": "Of",
     "valor": "of",
-    "linea": 22,
+    "linea": 21,
     "columna": 1
   },
   {
     "nombre": "Identificador",
     "valor": "a",
-    "linea": 22,
+    "linea": 21,
     "columna": 1
   },
   {
     "nombre": "Suma",
     "valor": "+",
-    "linea": 22,
+    "linea": 21,
     "columna": 1
   },
   {
     "nombre": "Identificador",
     "valor": "b",
-    "linea": 22,
+    "linea": 21,
     "columna": 1
   },
   {
     "nombre": "Flecha",
     "valor": "->",
-    "linea": 22,
+    "linea": 21,
     "columna": 1
   },
   {
     "nombre": "S_exclamacion_a",
     "valor": "¡",
-    "linea": 22,
+    "linea": 21,
     "columna": 1
   },
   {
     "nombre": "S_exclamacion_c",
     "valor": "!",
-    "linea": 23,
+    "linea": 21,
     "columna": 1
   },
   {
     "nombre": "Else",
     "valor": "else",
-    "linea": 23,
+    "linea": 21,
     "columna": 1
   },
   {
     "nombre": "Flecha",
     "valor": "->",
-    "linea": 23,
+    "linea": 21,
     "columna": 1
   },
   {
     "nombre": "S_exclamacion_a",
     "valor": "¡",
-    "linea": 23,
+    "linea": 21,
     "columna": 1
   },
   {
     "nombre": "S_exclamacion_c",
     "valor": "!",
-    "linea": 24,
+    "linea": 21,
     "columna": 1
   },
   {
     "nombre": "End",
     "valor": "end",
-    "linea": 25,
+    "linea": 22,
     "columna": 1
   },
   {
     "nombre": "Decide",
     "valor": "decide",
-    "linea": 25,
+    "linea": 22,
     "columna": 1
   },
   {
     "nombre": "Endl",
     "valor": "endl",
-    "linea": 25,
+    "linea": 22,
     "columna": 1
   },
   {
     "nombre": "S_exclamacion_c",
     "valor": "!",
-    "linea": 26,
+    "linea": 23,
     "columna": 1
   }
 ]
