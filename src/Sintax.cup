@@ -21,25 +21,28 @@ parser code
 /* TODOS los tokens */
 terminal   ERROR, Cadena, Caracter, Entero, Flotante, True, False, Int, Float, Bool, Char, String, Coal,
     Identificador, World, Local, Return, Break, Gift, Navidad, Show, Get, Decide, Of, Else, End, Loop, Exit, When, For, 
-    Suma, Resta, Multiplicacion, Division, Division_entera, Modulo, Potencia, Op_incremento, Menor, Menor_igual, Mayor,  
-    Mayor_igual, Igual, Diferente, Flecha, Conjuncion, Disyuncion, Negacion, S_pregunta_a, S_pregunta_c, S_exclamacion_a,  
-    S_exclamacion_c, Endl, P_coma, Coma, Corchete_a, Corchete_c, Comentario_linea, Comentario_ini, Comentario_fin
+    Suma, Resta, Multiplicacion, Division, Division_entera, Modulo, Potencia, Op_incremento,Op_decremento, Menor, Menor_igual, Mayor,  
+    Mayor_igual, Igual, Doble_igual, Diferente, Flecha, Conjuncion, Disyuncion, Negacion, S_pregunta_a, S_pregunta_c, S_exclamacion_a,  
+    S_exclamacion_c, Endl, P_coma, Coma, Corchete_a, Corchete_c
 ;
 
 /* No terminales */
-non terminal programa, main, bloque, lista_elementos, elemento, declaraciones, declaracion, sentencias, sentencia, tipo_de_variable, asignacion, expresion, 
-    declaraciones_globales, declaracion_global, arreglo, operadores, operadores_loguicos, decideoff, estructuras_de_control
+non terminal programa, main, bloque, lista_elementos, elemento, declaracion, sentencia, tipo_de_variable, asignacion, expresion, 
+    declaraciones_globales, declaracion_global, arreglo, operadores, operadores_loguicos, decideoff, estructuras_de_control, init_array_2d, lista_filas, 
+    fila, lista_expresiones, funciones, parametros, elementos_del_programa, elemento_del_programa, ciclo_for,  init_for, update_for, ciclo_loop,
+    llamada_funcion, argumentos,  lista_decide_of, expr_char
 
 ;
 
 /* Precedencias */
-precedence left Conjuncion, Disyuncion;
-precedence left Igual, Diferente;
+precedence left Disyuncion;
+precedence left Conjuncion;
+precedence left Doble_igual, Diferente;
 precedence left Menor, Menor_igual, Mayor, Mayor_igual;
 precedence left Suma, Resta;
-precedence left Multiplicacion, Division;
-precedence left Division_entera, Modulo;
+precedence left Multiplicacion, Division, Division_entera, Modulo;
 precedence right Potencia;
+precedence right Negacion;
 
 start with programa;
 
@@ -48,9 +51,18 @@ start with programa;
 /* MAIN */
 programa ::= 
       main
-      | declaraciones_globales main
+    | elementos_del_programa main
 ;
 
+elementos_del_programa ::=
+      elemento_del_programa
+    | elementos_del_programa elemento_del_programa
+;
+
+elemento_del_programa ::=
+      declaracion_global Endl
+    | funciones
+;
 main ::=
       Coal Navidad S_pregunta_a S_pregunta_c bloque
 ;
@@ -69,32 +81,51 @@ lista_elementos ::=
 
 elemento ::=
       declaracion Endl
+    | asignacion Endl  
     | sentencia
     | estructuras_de_control 
 ;
 
-/* SENTENCIAS */
-sentencias ::= 
-      sentencia
-    | sentencias sentencia
+
+/* FUNCIONES */
+funciones ::= 
+      Gift tipo_de_variable Identificador S_pregunta_a S_pregunta_c bloque
+    | Gift tipo_de_variable Identificador S_pregunta_a parametros S_pregunta_c bloque
 ;
 
-sentencia ::= 
-      asignacion P_coma
+parametros ::= 
+      tipo_de_variable Identificador
+    | parametros Coma tipo_de_variable Identificador
 ;
+argumentos ::=
+      expresion
+    | argumentos Coma expresion
+;
+llamada_funcion ::=
+      Identificador S_pregunta_a S_pregunta_c
+    | Identificador S_pregunta_a argumentos S_pregunta_c
+;
+
+/* SENTENCIAS */
+sentencia ::=
+      asignacion P_coma
+    | Show S_pregunta_a expresion S_pregunta_c Endl
+    | Show S_pregunta_a Identificador arreglo S_pregunta_c Endl
+    | Get S_pregunta_a expresion S_pregunta_c Endl
+    | Return expresion Endl
+    | Break Endl
+;
+
 
 /* DECLARACIONES */
-
-declaraciones ::=
-      declaracion Endl
-    | declaraciones declaracion Endl
-;
-
 declaracion ::=
       Local tipo_de_variable Identificador
     | Local tipo_de_variable Identificador Igual expresion 
     | Local tipo_de_variable Identificador Igual Identificador arreglo 
+    | Local tipo_de_variable Identificador arreglo 
+    | Local tipo_de_variable Identificador arreglo Igual expresion 
     | Local tipo_de_variable Identificador arreglo Igual Identificador arreglo 
+    | Local tipo_de_variable Identificador arreglo Igual init_array_2d
     
 ;
 
@@ -106,6 +137,22 @@ declaraciones_globales ::=
 declaracion_global ::= 
       World tipo_de_variable Identificador
     | World tipo_de_variable Identificador Igual expresion
+    | World tipo_de_variable Identificador Igual Identificador arreglo 
+    | World tipo_de_variable Identificador arreglo 
+    | World tipo_de_variable Identificador arreglo Igual expresion 
+    | World tipo_de_variable Identificador arreglo Igual Identificador arreglo 
+    | World tipo_de_variable Identificador arreglo Igual init_array_2d
+
+;
+
+/* ASIGNACIONES */
+asignacion ::= 
+      Identificador Igual expresion
+    | Identificador Igual Identificador arreglo 
+    | Identificador arreglo 
+    | Identificador arreglo Igual expresion 
+    | Identificador arreglo Igual Identificador arreglo 
+    | Identificador arreglo Igual init_array_2d
 
 ;
 /* TIPO DE VARIABLES*/
@@ -120,25 +167,61 @@ tipo_de_variable ::=
 
 /* arreglo */
 arreglo::= 
-      Corchete_a Entero Corchete_c
+        Corchete_a expresion Corchete_c Corchete_a expresion Corchete_c
+      | Corchete_a  Corchete_c Corchete_a  Corchete_c
 ;
 
-
-/* ASIGNACIONES */
-asignacion ::= 
-      Identificador Igual expresion
+lista_expresiones ::=
+      expresion
+    | lista_expresiones Coma expresion
 ;
+
+fila ::=
+      S_exclamacion_a lista_expresiones S_exclamacion_c
+;
+
+lista_filas ::=
+      fila
+    | lista_filas fila
+;
+
+init_array_2d ::=
+      S_exclamacion_a lista_filas S_exclamacion_c
+;
+
 
 /* ESTRUCTURAS DE CONTROL */
 
 estructuras_de_control ::= 
       decideoff Endl
+    | ciclo_for
+    | ciclo_loop
 ;
-decideoff ::= 
-      Decide Of expresion Flecha bloque End Decide 
-    | Decide Of expresion Flecha bloque Else Flecha bloque End Decide 
+decideoff ::=
+      Decide Of lista_decide_of End Decide
+    | Decide Of lista_decide_of Else Flecha bloque End Decide
+;
+lista_decide_of ::=
+      expresion Flecha bloque
+    | lista_decide_of expresion Flecha bloque
+;
 
+ciclo_loop ::= 
+      Loop lista_elementos Exit When expresion Endl End Loop Endl
 ;
+ciclo_for ::=
+      For S_pregunta_a init_for Endl expresion Endl update_for S_pregunta_c bloque
+;
+
+init_for ::=
+      tipo_de_variable Identificador Igual expresion
+;
+update_for ::=
+      Op_incremento Identificador
+    | Op_decremento Identificador
+;
+
+
 /* OPERADORES */
 
 operadores ::= 
@@ -156,10 +239,18 @@ operadores_loguicos ::=
     | Mayor_igual
     | Menor
     | Mayor
+    | Doble_igual
     | Diferente
+    | Conjuncion
+    | Disyuncion
 ;
 
 /* EXPRESIONES */
+expr_char ::=
+      Caracter
+    | Identificador
+;
+
 expresion ::= 
       Entero
     | Resta Entero
@@ -170,8 +261,11 @@ expresion ::=
     | False
     | Cadena
     | Identificador
+    | Op_incremento Identificador
+    | Op_decremento Identificador
+    | Negacion expr_char
     | expresion operadores expresion
     | expresion operadores_loguicos expresion
     | S_pregunta_a expresion S_pregunta_c
-
+    | llamada_funcion
 ;

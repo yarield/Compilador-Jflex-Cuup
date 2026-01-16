@@ -67,7 +67,7 @@ comentarioMultilinea =   "є" ~"э"
 
 /* Operadores - TODOS */
 "++"  { return symbol(sym.Op_incremento, yytext()); }
-"--"  { return symbol(sym.Op_incremento, yytext()); }
+"--"  { return symbol(sym.Op_decremento, yytext()); }
 
 "+"   { return symbol(sym.Suma, yytext()); }
 "-"   { return symbol(sym.Resta, yytext()); }
@@ -81,6 +81,7 @@ comentarioMultilinea =   "є" ~"э"
 ">="  { return symbol(sym.Mayor_igual, yytext()); }
 "<"   { return symbol(sym.Menor, yytext()); }
 ">"   { return symbol(sym.Mayor, yytext()); }
+"=="  { return symbol(sym.Doble_igual, yytext()); }
 "!="  { return symbol(sym.Diferente, yytext()); }
 "->"  { return symbol(sym.Flecha, yytext()); }
 
