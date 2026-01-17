@@ -8,8 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.lang.reflect.Field;
 
 
@@ -145,6 +143,10 @@ private static String obtenerNombreToken(int tipoToken) {
             lexer = new LexerCup(new StringReader(texto));
             Sintax parser = new Sintax(lexer);
             parser.parse();
+
+            if (parser.raiz != null) {
+                parser.raiz.imprimir();
+            }
             
             return new ResultadoSintactico(true, "Análisis ejecutado", -1, -1, null);
             

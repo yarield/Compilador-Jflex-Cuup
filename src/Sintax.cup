@@ -1,7 +1,12 @@
 import java_cup.runtime.Symbol;
 
+/* Conectar CUP al lexer */
+scan with {: return getScanner().next_token(); :};
+
 parser code
 {:
+    public Nodo raiz; // RAIZ DEL AST
+
     @Override
     public void syntax_error(Symbol s) {
         System.err.println(
@@ -17,161 +22,877 @@ parser code
     }
 :};
 
+action code
+{:
+    private String tok(Object o) {
+        if (o == null) return "";
+        if (o instanceof Symbol) {
+            Symbol s = (Symbol)o;
+            return (s.value != null) ? s.value.toString() : "";
+        }
+        return o.toString();
+    }
 
-/* TODOS los tokens */
+    private Nodo N(String lex) { return new Nodo(lex); }
+    private Nodo ID(Object o) { return new Nodo("Ident(" + tok(o) + ")"); }
+:};
+
+/* =========================
+   TOKENS
+   ========================= */
 terminal   ERROR, Cadena, Caracter, Entero, Flotante, True, False, Int, Float, Bool, Char, String, Coal,
     Identificador, World, Local, Return, Break, Gift, Navidad, Show, Get, Decide, Of, Else, End, Loop, Exit, When, For, 
-    Suma, Resta, Multiplicacion, Division, Division_entera, Modulo, Potencia, Op_incremento, Menor, Menor_igual, Mayor,  
-    Mayor_igual, Igual, Diferente, Flecha, Conjuncion, Disyuncion, Negacion, S_pregunta_a, S_pregunta_c, S_exclamacion_a,  
-    S_exclamacion_c, Endl, P_coma, Coma, Corchete_a, Corchete_c, Comentario_linea, Comentario_ini, Comentario_fin
+    Suma, Resta, Multiplicacion, Division, Division_entera, Modulo, Potencia, Op_incremento, Op_decremento,
+    Menor, Menor_igual, Mayor, Mayor_igual, Igual, Doble_igual, Diferente, Flecha, Conjuncion, Disyuncion, Negacion,
+    S_pregunta_a, S_pregunta_c, S_exclamacion_a, S_exclamacion_c, Endl, P_coma, Coma, Corchete_a, Corchete_c
 ;
 
-/* No terminales */
-non terminal programa, main, bloque, lista_elementos, elemento, declaraciones, declaracion, sentencias, sentencia, tipo_de_variable, asignacion, expresion, 
-    declaraciones_globales, declaracion_global, arreglo, operadores, operadores_loguicos, decideoff, estructuras_de_control
-
+/* =========================
+   NO TERMINALES (TODOS Nodo)
+   ========================= */
+non terminal Nodo programa, main, bloque, lista_elementos, elemento, declaracion, sentencia, tipo_de_variable, asignacion, expresion,
+    declaraciones_globales, declaracion_global, arreglo, operadores, operadores_loguicos, decideoff, estructuras_de_control,
+    init_array_2d, lista_filas, fila, lista_expresiones, funciones, parametros, elementos_del_programa, elemento_del_programa,
+    ciclo_for, init_for, update_for, ciclo_loop, llamada_funcion, argumentos, lista_decide_of, expr_char
 ;
 
-/* Precedencias */
-precedence left Conjuncion, Disyuncion;
-precedence left Igual, Diferente;
+/* =========================
+   PRECEDENCIAS
+   ========================= */
+precedence left Disyuncion;
+precedence left Conjuncion;
+precedence left Doble_igual, Diferente;
 precedence left Menor, Menor_igual, Mayor, Mayor_igual;
 precedence left Suma, Resta;
-precedence left Multiplicacion, Division;
-precedence left Division_entera, Modulo;
+precedence left Multiplicacion, Division, Division_entera, Modulo;
 precedence right Potencia;
+precedence right Negacion;
 
 start with programa;
 
-/* GRAMATICA */
+%%
 
-/* MAIN */
-programa ::= 
-      main
-      | declaraciones_globales main
+/* =========================
+   GRAMATICA + AST
+   ========================= */
+
+/* PROGRAMA */
+programa ::=
+      main:m
+      {:
+        Nodo n = N("programa");
+        n.addHijo(m);
+        RESULT = n;
+        parser.raiz = n;
+      :}
+    | elementos_del_programa:eds main:m
+      {:
+        Nodo n = N("programa");
+        n.addHijo(eds);
+        n.addHijo(m);
+        RESULT = n;
+        parser.raiz = n;
+      :}
 ;
 
+/* ELEMENTOS DEL PROGRAMA */
+elementos_del_programa ::=
+      elemento_del_programa:edp
+      {:
+        Nodo n = N("elementos_del_programa");
+        n.addHijo(edp);
+        RESULT = n;
+      :}
+    | elementos_del_programa:eds elemento_del_programa:edp
+      {:
+        eds.addHijo(edp);
+        RESULT = eds;
+      :}
+;
+
+elemento_del_programa ::=
+      declaracion_global:dg Endl
+      {:
+        Nodo n = N("elemento_del_programa");
+        n.addHijo(dg);
+        n.addHijo(N("endl"));
+        RESULT = n;
+      :}
+    | funciones:f
+      {:
+        Nodo n = N("elemento_del_programa");
+        n.addHijo(f);
+        RESULT = n;
+      :}
+;
+
+/* MAIN */
 main ::=
-      Coal Navidad S_pregunta_a S_pregunta_c bloque
+      Coal Navidad S_pregunta_a S_pregunta_c bloque:b
+      {:
+        Nodo n = N("main");
+        n.addHijo(N("Coal"));
+        n.addHijo(N("Navidad"));
+        n.addHijo(N("¿"));
+        n.addHijo(N("?"));
+        n.addHijo(b);
+        RESULT = n;
+      :}
 ;
 
 /* BLOQUE */
-
-bloque ::= 
-      S_exclamacion_a S_exclamacion_c 
-    | S_exclamacion_a lista_elementos S_exclamacion_c
+bloque ::=
+      S_exclamacion_a S_exclamacion_c
+      {:
+        Nodo n = N("bloque");
+        n.addHijo(N("¡"));
+        n.addHijo(N("!"));
+        RESULT = n;
+      :}
+    | S_exclamacion_a lista_elementos:le S_exclamacion_c
+      {:
+        Nodo n = N("bloque");
+        n.addHijo(N("¡"));
+        n.addHijo(le);
+        n.addHijo(N("!"));
+        RESULT = n;
+      :}
 ;
 
 lista_elementos ::=
-      elemento
-    | lista_elementos elemento
+      elemento:e
+      {:
+        Nodo n = N("lista_elementos");
+        n.addHijo(e);
+        RESULT = n;
+      :}
+    | lista_elementos:le elemento:e
+      {:
+        le.addHijo(e);
+        RESULT = le;
+      :}
 ;
 
 elemento ::=
-      declaracion Endl
-    | sentencia
-    | estructuras_de_control 
+      declaracion:d Endl
+      {:
+        Nodo n = N("elemento");
+        n.addHijo(d);
+        n.addHijo(N("endl"));
+        RESULT = n;
+      :}
+    | asignacion:a Endl
+      {:
+        Nodo n = N("elemento");
+        n.addHijo(a);
+        n.addHijo(N("endl"));
+        RESULT = n;
+      :}
+    | sentencia:s
+      {:
+        Nodo n = N("elemento");
+        n.addHijo(s);
+        RESULT = n;
+      :}
+    | estructuras_de_control:ec
+      {:
+        Nodo n = N("elemento");
+        n.addHijo(ec);
+        RESULT = n;
+      :}
 ;
 
-/* SENTENCIAS */
-sentencias ::= 
-      sentencia
-    | sentencias sentencia
+/* FUNCIONES */
+funciones ::=
+      Gift tipo_de_variable:t Identificador:id S_pregunta_a S_pregunta_c bloque:b
+      {:
+        Nodo n = N("funcion");
+        n.addHijo(N("Gift"));
+        n.addHijo(t);
+        n.addHijo(ID(id));
+        n.addHijo(N("¿"));
+        n.addHijo(N("?"));
+        n.addHijo(b);
+        RESULT = n;
+      :}
+    | Gift tipo_de_variable:t Identificador:id S_pregunta_a parametros:p S_pregunta_c bloque:b
+      {:
+        Nodo n = N("funcion");
+        n.addHijo(N("Gift"));
+        n.addHijo(t);
+        n.addHijo(ID(id));
+        n.addHijo(N("¿"));
+        n.addHijo(p);
+        n.addHijo(N("?"));
+        n.addHijo(b);
+        RESULT = n;
+      :}
 ;
 
-sentencia ::= 
-      asignacion P_coma
+parametros ::=
+      tipo_de_variable:t Identificador:id
+      {:
+        Nodo n = N("parametros");
+        Nodo par = N("param");
+        par.addHijo(t);
+        par.addHijo(ID(id));
+        n.addHijo(par);
+        RESULT = n;
+      :}
+    | parametros:ps Coma tipo_de_variable:t Identificador:id
+      {:
+        Nodo par = N("param");
+        par.addHijo(t);
+        par.addHijo(ID(id));
+        ps.addHijo(N(","));
+        ps.addHijo(par);
+        RESULT = ps;
+      :}
 ;
 
-/* DECLARACIONES */
-
-declaraciones ::=
-      declaracion Endl
-    | declaraciones declaracion Endl
+argumentos ::=
+      expresion:e
+      {:
+        Nodo n = N("argumentos");
+        n.addHijo(e);
+        RESULT = n;
+      :}
+    | argumentos:as Coma expresion:e
+      {:
+        as.addHijo(N(","));
+        as.addHijo(e);
+        RESULT = as;
+      :}
 ;
 
+llamada_funcion ::=
+      Identificador:id S_pregunta_a S_pregunta_c
+      {:
+        Nodo n = N("llamada_funcion");
+        n.addHijo(ID(id));
+        n.addHijo(N("¿"));
+        n.addHijo(N("?"));
+        RESULT = n;
+      :}
+    | Identificador:id S_pregunta_a argumentos:args S_pregunta_c
+      {:
+        Nodo n = N("llamada_funcion");
+        n.addHijo(ID(id));
+        n.addHijo(N("¿"));
+        n.addHijo(args);
+        n.addHijo(N("?"));
+        RESULT = n;
+      :}
+;
+
+/* SENTENCIA */
+sentencia ::=
+      asignacion:a P_coma
+      {:
+        Nodo n = N("sentencia");
+        n.addHijo(a);
+        n.addHijo(N(";"));
+        RESULT = n;
+      :}
+    | Show S_pregunta_a expresion:e S_pregunta_c Endl
+      {:
+        Nodo n = N("show");
+        n.addHijo(N("Show"));
+        n.addHijo(N("¿"));
+        n.addHijo(e);
+        n.addHijo(N("?"));
+        n.addHijo(N("endl"));
+        RESULT = n;
+      :}
+    | Show S_pregunta_a Identificador:id arreglo:arr S_pregunta_c Endl
+      {:
+        Nodo n = N("show");
+        n.addHijo(N("Show"));
+        n.addHijo(N("¿"));
+        n.addHijo(ID(id));
+        n.addHijo(arr);
+        n.addHijo(N("?"));
+        n.addHijo(N("endl"));
+        RESULT = n;
+      :}
+    | Get S_pregunta_a expresion:e S_pregunta_c Endl
+      {:
+        Nodo n = N("get");
+        n.addHijo(N("Get"));
+        n.addHijo(N("¿"));
+        n.addHijo(e);
+        n.addHijo(N("?"));
+        n.addHijo(N("endl"));
+        RESULT = n;
+      :}
+    | Return expresion:e Endl
+      {:
+        Nodo n = N("return");
+        n.addHijo(N("Return"));
+        n.addHijo(e);
+        n.addHijo(N("endl"));
+        RESULT = n;
+      :}
+    | Break Endl
+      {:
+        Nodo n = N("break");
+        n.addHijo(N("Break"));
+        n.addHijo(N("endl"));
+        RESULT = n;
+      :}
+;
+
+/* DECLARACION */
 declaracion ::=
-      Local tipo_de_variable Identificador
-    | Local tipo_de_variable Identificador Igual expresion 
-    | Local tipo_de_variable Identificador Igual Identificador arreglo 
-    | Local tipo_de_variable Identificador arreglo Igual Identificador arreglo 
-    
+      Local tipo_de_variable:t Identificador:id
+      {:
+        Nodo n = N("declaracion_local");
+        n.addHijo(N("Local"));
+        n.addHijo(t);
+        n.addHijo(ID(id));
+        RESULT = n;
+      :}
+    | Local tipo_de_variable:t Identificador:id Igual expresion:e
+      {:
+        Nodo n = N("declaracion_local");
+        n.addHijo(N("Local"));
+        n.addHijo(t);
+        n.addHijo(ID(id));
+        n.addHijo(N("="));
+        n.addHijo(e);
+        RESULT = n;
+      :}
+    | Local tipo_de_variable:t Identificador:id Igual Identificador:id2 arreglo:arr
+      {:
+        Nodo n = N("declaracion_local");
+        n.addHijo(N("Local"));
+        n.addHijo(t);
+        n.addHijo(ID(id));
+        n.addHijo(N("="));
+        n.addHijo(ID(id2));
+        n.addHijo(arr);
+        RESULT = n;
+      :}
+    | Local tipo_de_variable:t Identificador:id arreglo:arr
+      {:
+        Nodo n = N("declaracion_local");
+        n.addHijo(N("Local"));
+        n.addHijo(t);
+        n.addHijo(ID(id));
+        n.addHijo(arr);
+        RESULT = n;
+      :}
+    | Local tipo_de_variable:t Identificador:id arreglo:arr Igual expresion:e
+      {:
+        Nodo n = N("declaracion_local");
+        n.addHijo(N("Local"));
+        n.addHijo(t);
+        n.addHijo(ID(id));
+        n.addHijo(arr);
+        n.addHijo(N("="));
+        n.addHijo(e);
+        RESULT = n;
+      :}
+    | Local tipo_de_variable:t Identificador:id arreglo:arr Igual Identificador:id2 arreglo:arr2
+      {:
+        Nodo n = N("declaracion_local");
+        n.addHijo(N("Local"));
+        n.addHijo(t);
+        n.addHijo(ID(id));
+        n.addHijo(arr);
+        n.addHijo(N("="));
+        n.addHijo(ID(id2));
+        n.addHijo(arr2);
+        RESULT = n;
+      :}
+    | Local tipo_de_variable:t Identificador:id arreglo:arr Igual init_array_2d:init2d
+      {:
+        Nodo n = N("declaracion_local");
+        n.addHijo(N("Local"));
+        n.addHijo(t);
+        n.addHijo(ID(id));
+        n.addHijo(arr);
+        n.addHijo(N("="));
+        n.addHijo(init2d);
+        RESULT = n;
+      :}
 ;
 
-declaraciones_globales ::= 
-      declaracion_global Endl
-    | declaraciones_globales declaracion_global Endl
+/* DECLARACION GLOBAL */
+declaracion_global ::=
+      World tipo_de_variable:t Identificador:id
+      {:
+        Nodo n = N("declaracion_global");
+        n.addHijo(N("World"));
+        n.addHijo(t);
+        n.addHijo(ID(id));
+        RESULT = n;
+      :}
+    | World tipo_de_variable:t Identificador:id Igual expresion:e
+      {:
+        Nodo n = N("declaracion_global");
+        n.addHijo(N("World"));
+        n.addHijo(t);
+        n.addHijo(ID(id));
+        n.addHijo(N("="));
+        n.addHijo(e);
+        RESULT = n;
+      :}
+    | World tipo_de_variable:t Identificador:id Igual Identificador:id2 arreglo:arr
+      {:
+        Nodo n = N("declaracion_global");
+        n.addHijo(N("World"));
+        n.addHijo(t);
+        n.addHijo(ID(id));
+        n.addHijo(N("="));
+        n.addHijo(ID(id2));
+        n.addHijo(arr);
+        RESULT = n;
+      :}
+    | World tipo_de_variable:t Identificador:id arreglo:arr
+      {:
+        Nodo n = N("declaracion_global");
+        n.addHijo(N("World"));
+        n.addHijo(t);
+        n.addHijo(ID(id));
+        n.addHijo(arr);
+        RESULT = n;
+      :}
+    | World tipo_de_variable:t Identificador:id arreglo:arr Igual expresion:e
+      {:
+        Nodo n = N("declaracion_global");
+        n.addHijo(N("World"));
+        n.addHijo(t);
+        n.addHijo(ID(id));
+        n.addHijo(arr);
+        n.addHijo(N("="));
+        n.addHijo(e);
+        RESULT = n;
+      :}
+    | World tipo_de_variable:t Identificador:id arreglo:arr Igual Identificador:id2 arreglo:arr2
+      {:
+        Nodo n = N("declaracion_global");
+        n.addHijo(N("World"));
+        n.addHijo(t);
+        n.addHijo(ID(id));
+        n.addHijo(arr);
+        n.addHijo(N("="));
+        n.addHijo(ID(id2));
+        n.addHijo(arr2);
+        RESULT = n;
+      :}
+    | World tipo_de_variable:t Identificador:id arreglo:arr Igual init_array_2d:init2d
+      {:
+        Nodo n = N("declaracion_global");
+        n.addHijo(N("World"));
+        n.addHijo(t);
+        n.addHijo(ID(id));
+        n.addHijo(arr);
+        n.addHijo(N("="));
+        n.addHijo(init2d);
+        RESULT = n;
+      :}
 ;
 
-declaracion_global ::= 
-      World tipo_de_variable Identificador
-    | World tipo_de_variable Identificador Igual expresion
-
+/* ASIGNACION */
+asignacion ::=
+      Identificador:id Igual expresion:e
+      {:
+        Nodo n = N("asignacion");
+        n.addHijo(ID(id));
+        n.addHijo(N("="));
+        n.addHijo(e);
+        RESULT = n;
+      :}
+    | Identificador:id Igual Identificador:id2 arreglo:arr2
+      {:
+        Nodo n = N("asignacion");
+        n.addHijo(ID(id));
+        n.addHijo(N("="));
+        n.addHijo(ID(id2));
+        n.addHijo(arr2);
+        RESULT = n;
+      :}
+    | Identificador:id arreglo:arr
+      {:
+        Nodo n = N("asignacion_index");
+        n.addHijo(ID(id));
+        n.addHijo(arr);
+        RESULT = n;
+      :}
+    | Identificador:id arreglo:arr Igual expresion:e
+      {:
+        Nodo n = N("asignacion");
+        n.addHijo(ID(id));
+        n.addHijo(arr);
+        n.addHijo(N("="));
+        n.addHijo(e);
+        RESULT = n;
+      :}
+    | Identificador:id arreglo:arr Igual Identificador:id2 arreglo:arr2
+      {:
+        Nodo n = N("asignacion");
+        n.addHijo(ID(id));
+        n.addHijo(arr);
+        n.addHijo(N("="));
+        n.addHijo(ID(id2));
+        n.addHijo(arr2);
+        RESULT = n;
+      :}
+    | Identificador:id arreglo:arr Igual init_array_2d:init2d
+      {:
+        Nodo n = N("asignacion");
+        n.addHijo(ID(id));
+        n.addHijo(arr);
+        n.addHijo(N("="));
+        n.addHijo(init2d);
+        RESULT = n;
+      :}
 ;
-/* TIPO DE VARIABLES*/
 
-tipo_de_variable ::= 
-      Int
-    | Float
-    | Bool
-    | Char
-    | String
+/* TIPO DE VARIABLE */
+tipo_de_variable ::=
+      Int    {: RESULT = N("tipo:int"); :}
+    | Float  {: RESULT = N("tipo:float"); :}
+    | Bool   {: RESULT = N("tipo:bool"); :}
+    | Char   {: RESULT = N("tipo:char"); :}
+    | String {: RESULT = N("tipo:string"); :}
 ;
 
-/* arreglo */
-arreglo::= 
-      Corchete_a Entero Corchete_c
+/* ARREGLO (2D) */
+arreglo ::=
+        Corchete_a expresion:e1 Corchete_c Corchete_a expresion:e2 Corchete_c
+      {:
+        Nodo n = N("arreglo");
+        n.addHijo(N("["));
+        n.addHijo(e1);
+        n.addHijo(N("]"));
+        n.addHijo(N("["));
+        n.addHijo(e2);
+        n.addHijo(N("]"));
+        RESULT = n;
+      :}
+      | Corchete_a Corchete_c Corchete_a Corchete_c
+      {:
+        Nodo n = N("arreglo");
+        n.addHijo(N("[]"));
+        n.addHijo(N("[]"));
+        RESULT = n;
+      :}
 ;
 
+/* LISTAS PARA INIT 2D */
+lista_expresiones ::=
+      expresion:e
+      {:
+        Nodo n = N("lista_expresiones");
+        n.addHijo(e);
+        RESULT = n;
+      :}
+    | lista_expresiones:le Coma expresion:e
+      {:
+        le.addHijo(N(","));
+        le.addHijo(e);
+        RESULT = le;
+      :}
+;
 
-/* ASIGNACIONES */
-asignacion ::= 
-      Identificador Igual expresion
+fila ::=
+      S_exclamacion_a lista_expresiones:le S_exclamacion_c
+      {:
+        Nodo n = N("fila");
+        n.addHijo(N("¡"));
+        n.addHijo(le);
+        n.addHijo(N("!"));
+        RESULT = n;
+      :}
+;
+
+lista_filas ::=
+      fila:f
+      {:
+        Nodo n = N("lista_filas");
+        n.addHijo(f);
+        RESULT = n;
+      :}
+    | lista_filas:lf fila:f
+      {:
+        lf.addHijo(f);
+        RESULT = lf;
+      :}
+;
+
+init_array_2d ::=
+      S_exclamacion_a lista_filas:lf S_exclamacion_c
+      {:
+        Nodo n = N("init_array_2d");
+        n.addHijo(N("¡"));
+        n.addHijo(lf);
+        n.addHijo(N("!"));
+        RESULT = n;
+      :}
 ;
 
 /* ESTRUCTURAS DE CONTROL */
-
-estructuras_de_control ::= 
-      decideoff Endl
+estructuras_de_control ::=
+      decideoff:d Endl
+      {:
+        Nodo n = N("estructura_control");
+        n.addHijo(d);
+        n.addHijo(N("endl"));
+        RESULT = n;
+      :}
+    | ciclo_for:cf
+      {:
+        Nodo n = N("estructura_control");
+        n.addHijo(cf);
+        RESULT = n;
+      :}
+    | ciclo_loop:cl
+      {:
+        Nodo n = N("estructura_control");
+        n.addHijo(cl);
+        RESULT = n;
+      :}
 ;
-decideoff ::= 
-      Decide Of expresion Flecha bloque End Decide 
-    | Decide Of expresion Flecha bloque Else Flecha bloque End Decide 
 
+decideoff ::=
+      Decide Of lista_decide_of:ld End Decide
+      {:
+        Nodo n = N("decide_of");
+        n.addHijo(N("Decide"));
+        n.addHijo(N("Of"));
+        n.addHijo(ld);
+        n.addHijo(N("End"));
+        n.addHijo(N("Decide"));
+        RESULT = n;
+      :}
+    | Decide Of lista_decide_of:ld Else Flecha bloque:b End Decide
+      {:
+        Nodo n = N("decide_of");
+        n.addHijo(N("Decide"));
+        n.addHijo(N("Of"));
+        n.addHijo(ld);
+        n.addHijo(N("Else"));
+        n.addHijo(N("->"));
+        n.addHijo(b);
+        n.addHijo(N("End"));
+        n.addHijo(N("Decide"));
+        RESULT = n;
+      :}
 ;
+
+lista_decide_of ::=
+      expresion:e Flecha bloque:b
+      {:
+        Nodo n = N("lista_decide_of");
+        Nodo caso = N("case");
+        caso.addHijo(e);
+        caso.addHijo(N("->"));
+        caso.addHijo(b);
+        n.addHijo(caso);
+        RESULT = n;
+      :}
+    | lista_decide_of:ld expresion:e Flecha bloque:b
+      {:
+        Nodo caso = N("case");
+        caso.addHijo(e);
+        caso.addHijo(N("->"));
+        caso.addHijo(b);
+        ld.addHijo(caso);
+        RESULT = ld;
+      :}
+;
+
+/* LOOP */
+ciclo_loop ::=
+      Loop lista_elementos:le Exit When expresion:e Endl End Loop Endl
+      {:
+        Nodo n = N("loop");
+        n.addHijo(N("Loop"));
+        n.addHijo(le);
+        n.addHijo(N("Exit"));
+        n.addHijo(N("When"));
+        n.addHijo(e);
+        n.addHijo(N("endl"));
+        n.addHijo(N("End"));
+        n.addHijo(N("Loop"));
+        n.addHijo(N("endl"));
+        RESULT = n;
+      :}
+;
+
+/* FOR */
+ciclo_for ::=
+      For S_pregunta_a init_for:init Endl expresion:cond Endl update_for:upd S_pregunta_c bloque:b
+      {:
+        Nodo n = N("for");
+        n.addHijo(N("For"));
+        n.addHijo(N("¿"));
+        n.addHijo(init);
+        n.addHijo(N("endl"));
+        n.addHijo(cond);
+        n.addHijo(N("endl"));
+        n.addHijo(upd);
+        n.addHijo(N("?"));
+        n.addHijo(b);
+        RESULT = n;
+      :}
+;
+
+init_for ::=
+      tipo_de_variable:t Identificador:id Igual expresion:e
+      {:
+        Nodo n = N("init_for");
+        n.addHijo(t);
+        n.addHijo(ID(id));
+        n.addHijo(N("="));
+        n.addHijo(e);
+        RESULT = n;
+      :}
+;
+
+update_for ::=
+      Op_incremento Identificador:id
+      {:
+        Nodo n = N("update_for");
+        n.addHijo(N("++"));
+        n.addHijo(ID(id));
+        RESULT = n;
+      :}
+    | Op_decremento Identificador:id
+      {:
+        Nodo n = N("update_for");
+        n.addHijo(N("--"));
+        n.addHijo(ID(id));
+        RESULT = n;
+      :}
+;
+
 /* OPERADORES */
-
-operadores ::= 
-      Suma  
-    | Resta 
-    | Multiplicacion  
-    | Division 
-    | Division_entera 
-    | Modulo 
-    | Potencia 
+operadores ::=
+      Suma            {: RESULT = N("+"); :}
+    | Resta           {: RESULT = N("-"); :}
+    | Multiplicacion  {: RESULT = N("*"); :}
+    | Division        {: RESULT = N("/"); :}
+    | Division_entera {: RESULT = N("//"); :}
+    | Modulo          {: RESULT = N("%"); :}
+    | Potencia        {: RESULT = N("^"); :}
 ;
-/* OPERADORES LOGUICOS */
-operadores_loguicos ::= 
-      Menor_igual
-    | Mayor_igual
-    | Menor
-    | Mayor
-    | Diferente
+
+operadores_loguicos ::=
+      Menor_igual  {: RESULT = N("<="); :}
+    | Mayor_igual  {: RESULT = N(">="); :}
+    | Menor        {: RESULT = N("<"); :}
+    | Mayor        {: RESULT = N(">"); :}
+    | Doble_igual  {: RESULT = N("=="); :}
+    | Diferente    {: RESULT = N("!="); :}
+    | Conjuncion   {: RESULT = N("@"); :}
+    | Disyuncion   {: RESULT = N("~"); :}
 ;
 
 /* EXPRESIONES */
-expresion ::= 
-      Entero
-    | Resta Entero
-    | Flotante
-    | Resta Flotante
-    | Caracter
-    | True
-    | False
-    | Cadena
-    | Identificador
-    | expresion operadores expresion
-    | expresion operadores_loguicos expresion
-    | S_pregunta_a expresion S_pregunta_c
+expr_char ::=
+      Caracter:c
+      {:
+        RESULT = N("Caracter(" + tok(c) + ")");
+      :}
+    | Identificador:id
+      {:
+        RESULT = ID(id);
+      :}
+;
 
+expresion ::=
+      Entero:e
+      {:
+        RESULT = N("Entero(" + tok(e) + ")");
+      :}
+    | Resta Entero:e
+      {:
+        Nodo n = N("negativo");
+        n.addHijo(N("-"));
+        n.addHijo(N("Entero(" + tok(e) + ")"));
+        RESULT = n;
+      :}
+    | Flotante:f
+      {:
+        RESULT = N("Flotante(" + tok(f) + ")");
+      :}
+    | Resta Flotante:f
+      {:
+        Nodo n = N("negativo");
+        n.addHijo(N("-"));
+        n.addHijo(N("Flotante(" + tok(f) + ")"));
+        RESULT = n;
+      :}
+    | Caracter:c
+      {:
+        RESULT = N("Caracter(" + tok(c) + ")");
+      :}
+    | True
+      {:
+        RESULT = N("True");
+      :}
+    | False
+      {:
+        RESULT = N("False");
+      :}
+    | Cadena:cad
+      {:
+        RESULT = N("Cadena(" + tok(cad) + ")");
+      :}
+    | Identificador:id
+      {:
+        RESULT = ID(id);
+      :}
+    | Op_incremento Identificador:id
+      {:
+        Nodo n = N("pre_inc");
+        n.addHijo(N("++"));
+        n.addHijo(ID(id));
+        RESULT = n;
+      :}
+    | Op_decremento Identificador:id
+      {:
+        Nodo n = N("pre_dec");
+        n.addHijo(N("--"));
+        n.addHijo(ID(id));
+        RESULT = n;
+      :}
+    | Negacion expr_char:ec
+      {:
+        Nodo n = N("negacion");
+        n.addHijo(N("Negacion"));
+        n.addHijo(ec);
+        RESULT = n;
+      :}
+    | expresion:e1 operadores:op expresion:e2
+      {:
+        Nodo n = N("op");
+        n.addHijo(op);
+        n.addHijo(e1);
+        n.addHijo(e2);
+        RESULT = n;
+      :}
+    | expresion:e1 operadores_loguicos:op expresion:e2
+      {:
+        Nodo n = N("op_logico");
+        n.addHijo(op);
+        n.addHijo(e1);
+        n.addHijo(e2);
+        RESULT = n;
+      :}
+    | S_pregunta_a expresion:e S_pregunta_c
+      {:
+        Nodo n = N("parentesis");
+        n.addHijo(N("¿"));
+        n.addHijo(e);
+        n.addHijo(N("?"));
+        RESULT = n;
+      :}
+    | llamada_funcion:lf
+      {:
+        RESULT = lf;
+      :}
 ;

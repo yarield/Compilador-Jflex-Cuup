@@ -6,10 +6,14 @@ world string b  = 4+8 endl
 
 | soy un comentario
 
+gift int  funcion ¿int papas, int holamundo, float jua? ¡
+    local int a endl
+    local int b = "hola" ^ 1 endl 
+return 1 endl
+!
+world char b  = 'h' endl
 coal navidad ¿? ¡
     local int a endl
-    local int a = inta[1] endl
-    local int areglodsdfsd[2] = hola[8] endl
     local int b = "hola" ^ 1 endl 
     local int c = ¿¿a + b? + c? +d endl
     local int d = -8 + -8 endl
@@ -18,6 +22,62 @@ coal navidad ¿? ¡
     decide of a + b -> ¡! 
     end decide endl 
 
-    decide of a + b -> ¡! else ->¡!
+    decide of a + b -> ¡
+        decide of a + b -> ¡
+            local int a endl
+        ! 
+        end decide endl 
+
+    ! else ->¡
+       !
     end decide endl
+      local string resultado[][]  = 1 endl  
+      local string resultado[][]  = resultado[8][8] endl  
+      local string res  = resultado[8][8] endl  
+      local int resultado[][]  = ¡¡1,2!¡3,4!! endl 
+      local string textos[][] = ¡¡"hola","mundo"!¡"foo","bar"!! endl
+      show ¿ 5 ?  endl 
+      show ¿ "!|" ?  endl  
+      show ¿ papas ?  endl  
+
+        for ¿ int i = 0 endl i < 10 endl ++i ? ¡ 
+            res  = resultado[8][8] endl 
+            res  = 1 endl   
+            local int resultado[][]  = ¡¡1,2!¡3,4!! endl 
+            local string textos[][] = ¡¡"hola","mundo"!¡"foo","bar"!! endl  
+    !
+    loop
+        
+        res  = 1 endl   
+        exit when i >= 1  endl
+    end loop endl
+
+    local int a[3][3] endl
+    a[1][2] = 5 endl
+    show¿a[1][2]? endl
+
+    x = suma¿5, 3? endl
+    y = promedio¿x, 4? * 2 endl
+    show¿promedio¿x, y?? endl
+
+     decide of
+        a > 10 -> ¡
+            show¿"mayor que 10"? endl
+        !
+        a > 5 -> ¡
+            show¿"mayor que 5"? endl
+        !
+        a > 0 -> ¡
+            show¿"mayor que 0"? endl
+        !
+        else -> ¡
+            show¿"cero o negativo"? endl
+        !
+    end decide endl
+
+    local char c = 'x' endl
+    local char d = Σc endl
+    show¿d? endl
+
+
 !
