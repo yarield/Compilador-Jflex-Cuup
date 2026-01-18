@@ -54,7 +54,7 @@ coal navidad ¿? ¡
 
     local int a[3][3] endl
     a[1][2] = 5 endl
-    show¿a[1][2]? endl
+    |show¿a[1][2]? endl
 
     x = suma¿5, 3? endl
     y = promedio¿x, 4? * 2 endl

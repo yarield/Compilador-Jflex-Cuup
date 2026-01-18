@@ -14,6 +14,28 @@ parser code
             ", columna " + (s.right + 1) +
             ": Token inesperado '" + s.value + "'"
         );
+
+        // ===== MODO PÁNICO MANUAL =====
+        try {
+            Symbol tok;
+            do {
+                tok = getScanner().next_token();
+
+                if (tok == null) break;
+
+            } while (
+                tok.sym != sym.Endl &&
+                tok.sym != sym.P_coma &&
+                tok.sym != sym.S_exclamacion_c &&
+                tok.sym != sym.End &&
+                tok.sym != sym.EOF
+            );
+
+            System.err.println(">> Recuperación: continuando análisis");
+
+        } catch (Exception e) {
+            System.err.println(">> Error durante recuperación");
+        }
     }
 
     @Override
@@ -21,6 +43,7 @@ parser code
         System.err.println("ERROR SINTÁCTICO FATAL. Abortando análisis.");
     }
 :};
+
 
 action code
 {:
@@ -93,7 +116,13 @@ programa ::=
         RESULT = n;
         parser.raiz = n;
       :}
+    | error
+      {:
+        System.err.println(">> Error grave al inicio del programa");
+        RESULT = N("programa_error");
+      :}
 ;
+
 
 /* ELEMENTOS DEL PROGRAMA */
 elementos_del_programa ::=
@@ -157,7 +186,13 @@ bloque ::=
         n.addHijo(N("!"));
         RESULT = n;
       :}
+    | S_exclamacion_a error S_exclamacion_c
+      {:
+        System.err.println(">> Recuperación: error dentro de bloque");
+        RESULT = N("bloque_error");
+      :}
 ;
+
 
 lista_elementos ::=
       elemento:e
@@ -200,7 +235,13 @@ elemento ::=
         n.addHijo(ec);
         RESULT = n;
       :}
+    | error Endl
+      {:
+        System.err.println(">> Recuperación: error en elemento");
+        RESULT = N("error_elemento");
+      :}
 ;
+
 
 /* FUNCIONES */
 funciones ::=
@@ -304,17 +345,6 @@ sentencia ::=
         n.addHijo(N("endl"));
         RESULT = n;
       :}
-    | Show S_pregunta_a Identificador:id arreglo:arr S_pregunta_c Endl
-      {:
-        Nodo n = N("show");
-        n.addHijo(N("Show"));
-        n.addHijo(N("¿"));
-        n.addHijo(ID(id));
-        n.addHijo(arr);
-        n.addHijo(N("?"));
-        n.addHijo(N("endl"));
-        RESULT = n;
-      :}
     | Get S_pregunta_a expresion:e S_pregunta_c Endl
       {:
         Nodo n = N("get");
@@ -341,6 +371,7 @@ sentencia ::=
         RESULT = n;
       :}
 ;
+
 
 /* DECLARACION */
 declaracion ::=
