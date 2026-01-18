@@ -145,9 +145,20 @@ private static String obtenerNombreToken(int tipoToken) {
             parser.parse();
 
             if (parser.raiz != null) {
+                System.out.println("\n------ ARBOL SINTACTICO --------");
                 parser.raiz.imprimir();
             }
-            
+
+            // ------- TABLA DE SIMBOLOS  -------
+            TablaSimbolos ts = new TablaSimbolos();
+            ConstruirTablaSimbolos builder = new ConstruirTablaSimbolos(ts);
+            builder.construir(parser.raiz);
+
+            // IMPRESION DE LA TABLA DE SIMBOLOS
+            System.out.println("\n------ TABLA DE SIMBOLOS --------");
+            ts.imprimir();
+
+
             return new ResultadoSintactico(true, "Análisis ejecutado", -1, -1, null);
             
         } catch (Exception ex) {
@@ -169,7 +180,7 @@ private static String obtenerNombreToken(int tipoToken) {
             File f = new File(archivo);
             if (f.exists()) {
                 if (f.delete()) {
-                    System.out.println(" Eliminado: " + archivo);
+                    System.out.println(" Eliminado: " + archivo);   
                 } else {
                     System.out.println(" No se pudo eliminar: " + archivo);
                 }

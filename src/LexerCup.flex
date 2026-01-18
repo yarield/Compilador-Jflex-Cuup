@@ -6,6 +6,7 @@ import java_cup.runtime.*;
 %cup
 %full
 %line
+%column
 %char
 %unicode
 
