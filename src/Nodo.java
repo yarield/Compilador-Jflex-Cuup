@@ -1,9 +1,9 @@
 import java.util.ArrayList;
 
 public class Nodo {
-    private final String lexema;
-    private String tipo;
-    private final ArrayList<Nodo> hijos;
+    public final String lexema;
+    public String tipo;
+    public final ArrayList<Nodo> hijos;
 
     // opcional: posición
     private int linea = -1;
@@ -25,6 +25,10 @@ public class Nodo {
 
     public void setTipo(String tipo) { this.tipo = tipo; }
     public String getTipo() { return tipo; }
+
+    // ✅ NUEVO: getters de posición
+    public int getLinea() { return linea; }
+    public int getColumna() { return columna; }
 
     public void addHijo(Nodo hijo) {
         if (hijo != null) hijos.add(hijo);
