@@ -76,7 +76,7 @@ terminal   ERROR, Cadena, Caracter, Entero, Flotante, True, False, Int, Float, B
 non terminal Nodo programa, main, bloque, lista_elementos, elemento, declaracion, sentencia, tipo_de_variable, asignacion, expresion,
     declaraciones_globales, declaracion_global, arreglo, operadores, operadores_loguicos, decideoff, estructuras_de_control,
     init_array_2d, lista_filas, fila, lista_expresiones, funciones, parametros, elementos_del_programa, elemento_del_programa,
-    ciclo_for, init_for, update_for, ciclo_loop, llamada_funcion, argumentos, lista_decide_of, expr_char
+    ciclo_for, init_for, init_for2, update_for, ciclo_loop, llamada_funcion, argumentos, lista_decide_of
 ;
 
 /* =========================
@@ -355,6 +355,13 @@ sentencia ::=
         n.addHijo(N("endl"));
         RESULT = n;
       :}
+    | llamada_funcion:lf Endl
+      {:
+        Nodo n = N("sentencia");
+        n.addHijo(lf);
+        n.addHijo(N("endl"));
+        RESULT = n;
+      :}
     | Return expresion:e Endl
       {:
         Nodo n = N("return");
@@ -393,17 +400,6 @@ declaracion ::=
         n.addHijo(e);
         RESULT = n;
       :}
-    | Local tipo_de_variable:t Identificador:id Igual Identificador:id2 arreglo:arr
-      {:
-        Nodo n = N("declaracion_local");
-        n.addHijo(N("Local"));
-        n.addHijo(t);
-        n.addHijo(ID(id));
-        n.addHijo(N("="));
-        n.addHijo(ID(id2));
-        n.addHijo(arr);
-        RESULT = n;
-      :}
     | Local tipo_de_variable:t Identificador:id arreglo:arr
       {:
         Nodo n = N("declaracion_local");
@@ -424,29 +420,29 @@ declaracion ::=
         n.addHijo(e);
         RESULT = n;
       :}
-    | Local tipo_de_variable:t Identificador:id arreglo:arr Igual Identificador:id2 arreglo:arr2
+    | Local tipo_de_variable:t Identificador:id Igual init_array_2d:init2d
       {:
         Nodo n = N("declaracion_local");
         n.addHijo(N("Local"));
         n.addHijo(t);
         n.addHijo(ID(id));
-        n.addHijo(arr);
-        n.addHijo(N("="));
-        n.addHijo(ID(id2));
-        n.addHijo(arr2);
-        RESULT = n;
-      :}
-    | Local tipo_de_variable:t Identificador:id arreglo:arr Igual init_array_2d:init2d
-      {:
-        Nodo n = N("declaracion_local");
-        n.addHijo(N("Local"));
-        n.addHijo(t);
-        n.addHijo(ID(id));
-        n.addHijo(arr);
         n.addHijo(N("="));
         n.addHijo(init2d);
         RESULT = n;
       :}
+    | Local tipo_de_variable:t Identificador:id arreglo:arr Igual init_array_2d:init2d
+    {:
+      Nodo n = N("declaracion_local");
+      n.addHijo(N("Local"));
+      n.addHijo(t);
+      n.addHijo(ID(id));
+      n.addHijo(arr);
+      n.addHijo(N("="));
+      n.addHijo(init2d);
+      RESULT = n;
+    :}
+
+
 ;
 
 /* DECLARACION GLOBAL */
@@ -469,17 +465,6 @@ declaracion_global ::=
         n.addHijo(e);
         RESULT = n;
       :}
-    | World tipo_de_variable:t Identificador:id Igual Identificador:id2 arreglo:arr
-      {:
-        Nodo n = N("declaracion_global");
-        n.addHijo(N("World"));
-        n.addHijo(t);
-        n.addHijo(ID(id));
-        n.addHijo(N("="));
-        n.addHijo(ID(id2));
-        n.addHijo(arr);
-        RESULT = n;
-      :}
     | World tipo_de_variable:t Identificador:id arreglo:arr
       {:
         Nodo n = N("declaracion_global");
@@ -500,16 +485,14 @@ declaracion_global ::=
         n.addHijo(e);
         RESULT = n;
       :}
-    | World tipo_de_variable:t Identificador:id arreglo:arr Igual Identificador:id2 arreglo:arr2
+    | World tipo_de_variable:t Identificador:id Igual init_array_2d:init2d
       {:
         Nodo n = N("declaracion_global");
         n.addHijo(N("World"));
         n.addHijo(t);
         n.addHijo(ID(id));
-        n.addHijo(arr);
         n.addHijo(N("="));
-        n.addHijo(ID(id2));
-        n.addHijo(arr2);
+        n.addHijo(init2d);
         RESULT = n;
       :}
     | World tipo_de_variable:t Identificador:id arreglo:arr Igual init_array_2d:init2d
@@ -523,7 +506,10 @@ declaracion_global ::=
         n.addHijo(init2d);
         RESULT = n;
       :}
+
+
 ;
+
 
 /* ASIGNACION */
 asignacion ::=
@@ -535,48 +521,13 @@ asignacion ::=
         n.addHijo(e);
         RESULT = n;
       :}
-    | Identificador:id Igual Identificador:id2 arreglo:arr2
-      {:
-        Nodo n = N("asignacion");
-        n.addHijo(ID(id));
-        n.addHijo(N("="));
-        n.addHijo(ID(id2));
-        n.addHijo(arr2);
-        RESULT = n;
-      :}
-    | Identificador:id arreglo:arr
-      {:
-        Nodo n = N("asignacion_index");
-        n.addHijo(ID(id));
-        n.addHijo(arr);
-        RESULT = n;
-      :}
-    | Identificador:id arreglo:arr Igual expresion:e
+ | Identificador:id arreglo:arr Igual expresion:e
       {:
         Nodo n = N("asignacion");
         n.addHijo(ID(id));
         n.addHijo(arr);
         n.addHijo(N("="));
         n.addHijo(e);
-        RESULT = n;
-      :}
-    | Identificador:id arreglo:arr Igual Identificador:id2 arreglo:arr2
-      {:
-        Nodo n = N("asignacion");
-        n.addHijo(ID(id));
-        n.addHijo(arr);
-        n.addHijo(N("="));
-        n.addHijo(ID(id2));
-        n.addHijo(arr2);
-        RESULT = n;
-      :}
-    | Identificador:id arreglo:arr Igual init_array_2d:init2d
-      {:
-        Nodo n = N("asignacion");
-        n.addHijo(ID(id));
-        n.addHijo(arr);
-        n.addHijo(N("="));
-        n.addHijo(init2d);
         RESULT = n;
       :}
 ;
@@ -592,7 +543,7 @@ tipo_de_variable ::=
 
 /* ARREGLO (2D) */
 arreglo ::=
-        Corchete_a expresion:e1 Corchete_c Corchete_a expresion:e2 Corchete_c
+      Corchete_a expresion:e1 Corchete_c Corchete_a expresion:e2 Corchete_c
       {:
         Nodo n = N("arreglo");
         n.addHijo(N("["));
@@ -603,7 +554,7 @@ arreglo ::=
         n.addHijo(N("]"));
         RESULT = n;
       :}
-      | Corchete_a Corchete_c Corchete_a Corchete_c
+    | Corchete_a Corchete_c Corchete_a Corchete_c
       {:
         Nodo n = N("arreglo");
         n.addHijo(N("[]"));
@@ -755,7 +706,21 @@ ciclo_loop ::=
 
 /* FOR */
 ciclo_for ::=
-      For S_pregunta_a init_for:init Endl expresion:cond Endl update_for:upd S_pregunta_c bloque:b
+      For S_pregunta_a init_for2:init Endl expresion:cond Endl update_for:upd S_pregunta_c bloque:b
+      {:
+        Nodo n = N("for");
+        n.addHijo(N("For"));
+        n.addHijo(N("¿"));
+        n.addHijo(init);
+        n.addHijo(N("endl"));
+        n.addHijo(cond);
+        n.addHijo(N("endl"));
+        n.addHijo(upd);
+        n.addHijo(N("?"));
+        n.addHijo(b);
+        RESULT = n;
+      :}
+      |For S_pregunta_a init_for:init Endl expresion:cond Endl update_for:upd S_pregunta_c bloque:b
       {:
         Nodo n = N("for");
         n.addHijo(N("For"));
@@ -782,7 +747,16 @@ init_for ::=
         RESULT = n;
       :}
 ;
-
+init_for2 ::=
+      Identificador:id Igual expresion:e
+      {:
+        Nodo n = N("init_for");
+        n.addHijo(ID(id));
+        n.addHijo(N("="));
+        n.addHijo(e);
+        RESULT = n;
+      :}
+;
 update_for ::=
       Op_incremento Identificador:id
       {:
@@ -823,16 +797,7 @@ operadores_loguicos ::=
 ;
 
 /* EXPRESIONES */
-expr_char ::=
-      Caracter:c
-      {:
-        RESULT = N("Caracter(" + tok(c) + ")");
-      :}
-    | Identificador:id
-      {:
-        RESULT = ID(id);
-      :}
-;
+
 
 expresion ::=
       Entero:e
@@ -877,6 +842,13 @@ expresion ::=
       {:
         RESULT = ID(id);
       :}
+    | Identificador:id arreglo:arr
+      {:
+        Nodo n = N("acceso_arreglo");
+        n.addHijo(ID(id));
+        n.addHijo(arr);
+        RESULT = n;
+      :}
     | Op_incremento Identificador:id
       {:
         Nodo n = N("pre_inc");
@@ -891,7 +863,7 @@ expresion ::=
         n.addHijo(ID(id));
         RESULT = n;
       :}
-    | Negacion expr_char:ec
+    | Negacion expresion:ec
       {:
         Nodo n = N("negacion");
         n.addHijo(N("Negacion"));
