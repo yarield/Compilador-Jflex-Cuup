@@ -8,23 +8,38 @@ public class Scope {
     private final Map<String, Simbolo> tabla = new LinkedHashMap<>();
 
     public Scope(String nombre, Scope padre) {
-        this.nombre = nombre;
+        this.nombre = (nombre == null) ? "" : nombre.trim();
         this.padre = padre;
     }
 
+    private String norm(String id) {
+        return (id == null) ? "" : id.trim();
+    }
+
     public boolean contieneEnEsteScope(String id) {
-        return tabla.containsKey(id);
+        String k = norm(id);
+        if (k.isEmpty()) return false;
+        return tabla.containsKey(k);
     }
 
     public boolean insertar(Simbolo s) {
-        if (tabla.containsKey(s.nombre)) return false;
-        tabla.put(s.nombre, s);
+        if (s == null) return false;
+        String k = norm(s.nombre);
+        if (k.isEmpty()) return false;
+
+        if (tabla.containsKey(k)) return false;
+        tabla.put(k, s);
         return true;
     }
 
     public Simbolo buscar(String id) {
-        if (tabla.containsKey(id)) return tabla.get(id);
-        if (padre != null) return padre.buscar(id);
+        String k = norm(id);
+        if (k.isEmpty()) return null;
+
+        Simbolo local = tabla.get(k);
+        if (local != null) return local;
+
+        if (padre != null) return padre.buscar(k);
         return null;
     }
 

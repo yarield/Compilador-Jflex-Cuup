@@ -9,70 +9,118 @@ public class ConstruirTablaSimbolos {
 
     public void construir(Nodo raiz) {
         ts.iniciarGlobal();
-        if (raiz != null) visitar(raiz);
+        if (raiz != null)
+            visitar(raiz);
     }
 
+
     private void visitar(Nodo n) {
-        if (n == null) return;
+        if (n == null)
+            return;
 
         String lx = safe(n.lexema);
 
-        // Entradas “tipo profe”: tablas por función/main
+        // 1) MAIN: abrir tabla "main", recorrer, y cerrar (volver a global)
         if (lx.equals("main")) {
             ts.entrarFuncion("main");
+            for (Nodo h : n.hijos)
+                visitar(h);
+            ts.salirFuncion();
+            return;
         }
 
-        // Si en tu AST las funciones se llaman "funcion" y guardan el identificador adentro:
-        if (lx.equals("funcion") || lx.equals("funciones")) {
-            // solo seguimos; el nombre se detecta dentro por el Ident(...)
+        // 2) FUNCIÓN: abrir tabla "func:nombre", recorrer, y cerrar (volver a global)
+        if (lx.equals("funcion")) {
+            String nombreFun = extraerNombreFuncion(n);
+            String key = "func:" + nombreFun;
+            ts.entrarFuncion(key);
+
+            // recorrer todo lo interno (parametros y bloque vienen como hijos)
+            for (Nodo h : n.hijos)
+                visitar(h);
+
+            ts.salirFuncion();
+            return;
         }
 
-        // Si detectamos un bloque real, abrimos scope (mejora importante)
+        // 3) BLOQUE: cada "bloque" del AST abre un nuevo scope hijo
         if (lx.equals("bloque")) {
             contadorBloques++;
             ts.entrarBloque("bloque#" + contadorBloques);
+
+            for (Nodo h : n.hijos)
+                visitar(h);
+
+            ts.salirBloque();
+            return;
         }
 
-        // Declaraciones (local/global) según tu AST
+        // 4) Parámetros: en tu AST vienen como nodo "param"
+        if (lx.equals("param")) {
+            procesarParametro(n);
+            // igual se recorren hijos por si acaso
+            for (Nodo h : n.hijos)
+                visitar(h);
+            return;
+        }
+
+        // 5) Declaraciones
         if (lx.equals("declaracion_local") || lx.equals("declaracion_global")) {
             procesarDeclaracion(n, lx);
         }
 
-        // Asignación: usualmente usa Ident(...) => verificar uso
+        // 6) Asignación: verificar uso del LHS
         if (lx.equals("asignacion")) {
-            // hijo 0 suele ser Ident(...)
             if (!n.hijos.isEmpty()) {
                 String id = extraerIdentificador(n.hijos.get(0));
-                if (!id.isEmpty()) ts.usarIdentificador(id, -1, -1);
+                if (!id.isEmpty())
+                    ts.usarIdentificador(id, -1, -1);
             }
         }
 
-        // También revisamos expresiones: si aparece Ident(...)
+        // 7) Cualquier Ident(x) en expresiones: verificar uso
         if (lx.startsWith("Ident(")) {
             String id = extraerIdentificador(n);
-            if (!id.isEmpty()) ts.usarIdentificador(id, -1, -1);
+            if (!id.isEmpty())
+                ts.usarIdentificador(id, -1, -1);
         }
 
-        // Recorremos hijos
-        for (Nodo h : n.hijos) {
-            // Si tu AST de funciones tiene el nombre como Ident(...)
-            if (lx.equals("funcion")) {
-                // típico: hijo[1] = Ident(nombre)
-                String posible = extraerIdentificador(h);
-                if (!posible.isEmpty()) {
-                    ts.entrarFuncion("func:" + posible);
-                    break;
-                }
-            }
-
+        // 8) Recorrido normal
+        for (Nodo h : n.hijos)
             visitar(h);
+    }
+
+    private String extraerNombreFuncion(Nodo funcionNode) {
+        for (Nodo h : funcionNode.hijos) {
+            String id = extraerIdentificador(h);
+            if (!id.isEmpty())
+                return id.trim();
+        }
+        return "anonima";
+    }
+
+    private void procesarParametro(Nodo paramNode) {
+        String tipo = "desconocido";
+        String id = "";
+
+        for (Nodo h : paramNode.hijos) {
+            String lx = safe(h.lexema);
+            if (lx.startsWith("tipo:"))
+                tipo = lx.substring("tipo:".length());
+            if (lx.startsWith("Ident("))
+                id = extraerIdentificador(h);
         }
 
-        // Cerrar bloque
-        if (lx.equals("bloque")) {
-            ts.salirBloque();
-        }
+        if (id.isEmpty())
+            return;
+
+        Simbolo s = new Simbolo(
+                id, tipo, "parametro", "", // clase=parametro
+                -1, -1,
+                false, 0, "");
+        ts.declarar(s);
     }
+
 
     private void procesarDeclaracion(Nodo n, String tipoDecl) {
         String clase = tipoDecl.equals("declaracion_global") ? "global" : "local";
@@ -103,21 +151,23 @@ public class ConstruirTablaSimbolos {
             }
         }
 
-        if (id.isEmpty()) return;
+        if (id.isEmpty())
+            return;
 
         // línea/columna reales: solo si tu Nodo las guarda (ahora no). Dejamos -1.
         Simbolo s = new Simbolo(
                 id, tipo, clase, ambitoActualGuess(),
                 -1, -1,
                 esArreglo, dims,
-                ""
-        );
+                "");
         ts.declarar(s);
     }
 
-    // Como no tenemos posiciones reales dentro del Nodo, al menos el ámbito por nombre de función
+    // Como no tenemos posiciones reales dentro del Nodo, al menos el ámbito por
+    // nombre de función
     private String ambitoActualGuess() {
-        // Se imprime dentro de Simbolo como @ ambito, pero aquí ya va el nombre del "scope" actual en TS
+        // Se imprime dentro de Simbolo como @ ambito, pero aquí ya va el nombre del
+        // "scope" actual en TS
         // Para simplificar: dejamos vacío y TS lo muestra por scope.
         return "";
     }
@@ -125,14 +175,17 @@ public class ConstruirTablaSimbolos {
     private int contarDimensionesArreglo(Nodo arreglo) {
         // Busca "[" dentro del sub-árbol. Si hay dos pares, es 2D.
         int corchetes = contarLexema(arreglo, "[");
-        if (corchetes >= 2) return 2;
-        if (corchetes == 1) return 1;
+        if (corchetes >= 2)
+            return 2;
+        if (corchetes == 1)
+            return 1;
         return 1; // por defecto
     }
 
     private int contarLexema(Nodo n, String target) {
         int c = safe(n.lexema).equals(target) ? 1 : 0;
-        for (Nodo h : n.hijos) c += contarLexema(h, target);
+        for (Nodo h : n.hijos)
+            c += contarLexema(h, target);
         return c;
     }
 

@@ -2,224 +2,224 @@
   {
     "nombre": "World",
     "valor": "world",
-    "linea": 2,
-    "columna": 1
-  },
-  {
-    "nombre": "String",
-    "valor": "string",
-    "linea": 2,
-    "columna": 2
-  },
-  {
-    "nombre": "Identificador",
-    "valor": "_s2_",
-    "linea": 2,
-    "columna": 3
-  },
-  {
-    "nombre": "Endl",
-    "valor": "endl",
-    "linea": 2,
-    "columna": 4
-  },
-  {
-    "nombre": "World",
-    "valor": "world",
     "linea": 3,
-    "columna": 1
-  },
-  {
-    "nombre": "String",
-    "valor": "string",
-    "linea": 3,
-    "columna": 2
-  },
-  {
-    "nombre": "Identificador",
-    "valor": "ss",
-    "linea": 3,
-    "columna": 3
-  },
-  {
-    "nombre": "Endl",
-    "valor": "endl",
-    "linea": 3,
-    "columna": 4
-  },
-  {
-    "nombre": "World",
-    "valor": "world",
-    "linea": 4,
-    "columna": 1
-  },
-  {
-    "nombre": "Float",
-    "valor": "float",
-    "linea": 4,
-    "columna": 2
-  },
-  {
-    "nombre": "Identificador",
-    "valor": "ff",
-    "linea": 4,
-    "columna": 3
-  },
-  {
-    "nombre": "Endl",
-    "valor": "endl",
-    "linea": 4,
-    "columna": 4
-  },
-  {
-    "nombre": "World",
-    "valor": "world",
-    "linea": 5,
     "columna": 1
   },
   {
     "nombre": "Int",
     "valor": "int",
-    "linea": 5,
+    "linea": 3,
     "columna": 2
   },
   {
     "nombre": "Identificador",
     "valor": "ii",
-    "linea": 5,
+    "linea": 3,
     "columna": 3
   },
   {
     "nombre": "Endl",
     "valor": "endl",
-    "linea": 5,
+    "linea": 3,
     "columna": 4
   },
   {
     "nombre": "Gift",
     "valor": "gift",
-    "linea": 8,
+    "linea": 6,
     "columna": 1
   },
   {
     "nombre": "Bool",
     "valor": "bool",
-    "linea": 8,
+    "linea": 6,
     "columna": 2
   },
   {
     "nombre": "Identificador",
     "valor": "_func2_",
-    "linea": 8,
+    "linea": 6,
     "columna": 3
   },
   {
     "nombre": "S_pregunta_a",
     "valor": "¿",
-    "linea": 8,
+    "linea": 6,
     "columna": 4
   },
   {
     "nombre": "Bool",
     "valor": "bool",
-    "linea": 8,
+    "linea": 6,
     "columna": 5
   },
   {
     "nombre": "Identificador",
     "valor": "_b1_",
-    "linea": 8,
+    "linea": 6,
     "columna": 6
   },
   {
     "nombre": "Coma",
     "valor": ",",
-    "linea": 8,
+    "linea": 6,
     "columna": 7
   },
   {
     "nombre": "Int",
     "valor": "int",
-    "linea": 8,
+    "linea": 6,
     "columna": 8
   },
   {
     "nombre": "Identificador",
     "valor": "_i1_",
-    "linea": 8,
+    "linea": 6,
     "columna": 9
   },
   {
     "nombre": "S_pregunta_c",
     "valor": "?",
-    "linea": 8,
+    "linea": 6,
     "columna": 10
   },
   {
     "nombre": "S_exclamacion_a",
     "valor": "¡",
-    "linea": 8,
+    "linea": 6,
     "columna": 11
   },
   {
     "nombre": "Local",
     "valor": "local",
-    "linea": 13,
+    "linea": 11,
     "columna": 1
   },
   {
     "nombre": "Int",
     "valor": "int",
-    "linea": 13,
+    "linea": 11,
     "columna": 2
   },
   {
     "nombre": "Identificador",
     "valor": "id",
-    "linea": 13,
+    "linea": 11,
     "columna": 3
   },
   {
     "nombre": "Endl",
     "valor": "endl",
-    "linea": 13,
+    "linea": 11,
     "columna": 4
   },
   {
     "nombre": "Return",
     "valor": "return",
-    "linea": 14,
+    "linea": 12,
     "columna": 1
   },
   {
     "nombre": "Entero",
     "valor": "5",
-    "linea": 14,
+    "linea": 12,
     "columna": 2
   },
   {
     "nombre": "Suma",
     "valor": "+",
-    "linea": 14,
+    "linea": 12,
     "columna": 3
   },
   {
     "nombre": "Identificador",
     "valor": "d",
-    "linea": 14,
+    "linea": 12,
     "columna": 4
   },
   {
     "nombre": "Endl",
     "valor": "endl",
-    "linea": 14,
+    "linea": 12,
     "columna": 5
   },
   {
     "nombre": "S_exclamacion_c",
     "valor": "!",
+    "linea": 13,
+    "columna": 1
+  },
+  {
+    "nombre": "World",
+    "valor": "world",
     "linea": 15,
     "columna": 1
+  },
+  {
+    "nombre": "String",
+    "valor": "string",
+    "linea": 15,
+    "columna": 2
+  },
+  {
+    "nombre": "Identificador",
+    "valor": "_s2_",
+    "linea": 15,
+    "columna": 3
+  },
+  {
+    "nombre": "Endl",
+    "valor": "endl",
+    "linea": 15,
+    "columna": 4
+  },
+  {
+    "nombre": "World",
+    "valor": "world",
+    "linea": 16,
+    "columna": 1
+  },
+  {
+    "nombre": "String",
+    "valor": "string",
+    "linea": 16,
+    "columna": 2
+  },
+  {
+    "nombre": "Identificador",
+    "valor": "ss",
+    "linea": 16,
+    "columna": 3
+  },
+  {
+    "nombre": "Endl",
+    "valor": "endl",
+    "linea": 16,
+    "columna": 4
+  },
+  {
+    "nombre": "World",
+    "valor": "world",
+    "linea": 17,
+    "columna": 1
+  },
+  {
+    "nombre": "Float",
+    "valor": "float",
+    "linea": 17,
+    "columna": 2
+  },
+  {
+    "nombre": "Identificador",
+    "valor": "ff",
+    "linea": 17,
+    "columna": 3
+  },
+  {
+    "nombre": "Endl",
+    "valor": "endl",
+    "linea": 17,
+    "columna": 4
   },
   {
     "nombre": "Gift",

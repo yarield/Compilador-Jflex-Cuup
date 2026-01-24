@@ -1,7 +1,5 @@
 
-  world string _s2_ endl  | sintactico
-   world string ss endl 
- world float ff endl 
+ 
  world int ii endl 
 
 
@@ -14,7 +12,9 @@
 	return 5 + d endl  |sintactico
   !  
 
-
+world string _s2_ endl  | sintactico
+   world string ss endl 
+ world float ff endl 
 
 gift float _mi_  ¿ int _dif_, char _otra_  ?¡  |sintactico  ? 
 	local int _otra_ endl 
