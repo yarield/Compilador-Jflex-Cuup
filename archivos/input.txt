@@ -2,7 +2,10 @@
  
  world int ii endl 
  world int  var = 1  endl
- world string va = 1 endl
+ world string va = "a" endl
+ world bool variable = true endl
+ world char vas = 'a' endl
+
  coal navidad ¿  ?  ¡ | sintactico
 
  ! 

@@ -145,6 +145,7 @@ public class AnalizadorSemantico {
             return "bool";
         }
 
+
         /* === LITERALES PLANOS (backup) === */
 
         if (lx.matches("-?\\d+")) return "int";

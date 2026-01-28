@@ -84,8 +84,8 @@
     "columna": 4
   },
   {
-    "nombre": "Entero",
-    "valor": "1",
+    "nombre": "Cadena",
+    "valor": "\"a\"",
     "linea": 5,
     "columna": 5
   },
@@ -96,39 +96,111 @@
     "columna": 6
   },
   {
+    "nombre": "World",
+    "valor": "world",
+    "linea": 6,
+    "columna": 1
+  },
+  {
+    "nombre": "Bool",
+    "valor": "bool",
+    "linea": 6,
+    "columna": 2
+  },
+  {
+    "nombre": "Identificador",
+    "valor": "variable",
+    "linea": 6,
+    "columna": 3
+  },
+  {
+    "nombre": "Igual",
+    "valor": "=",
+    "linea": 6,
+    "columna": 4
+  },
+  {
+    "nombre": "True",
+    "valor": "true",
+    "linea": 6,
+    "columna": 5
+  },
+  {
+    "nombre": "Endl",
+    "valor": "endl",
+    "linea": 6,
+    "columna": 6
+  },
+  {
+    "nombre": "World",
+    "valor": "world",
+    "linea": 7,
+    "columna": 1
+  },
+  {
+    "nombre": "Char",
+    "valor": "char",
+    "linea": 7,
+    "columna": 2
+  },
+  {
+    "nombre": "Identificador",
+    "valor": "vas",
+    "linea": 7,
+    "columna": 3
+  },
+  {
+    "nombre": "Igual",
+    "valor": "=",
+    "linea": 7,
+    "columna": 4
+  },
+  {
+    "nombre": "Caracter",
+    "valor": "'a'",
+    "linea": 7,
+    "columna": 5
+  },
+  {
+    "nombre": "Endl",
+    "valor": "endl",
+    "linea": 7,
+    "columna": 6
+  },
+  {
     "nombre": "Coal",
     "valor": "coal",
-    "linea": 6,
+    "linea": 9,
     "columna": 1
   },
   {
     "nombre": "Navidad",
     "valor": "navidad",
-    "linea": 6,
+    "linea": 9,
     "columna": 2
   },
   {
     "nombre": "S_pregunta_a",
     "valor": "¿",
-    "linea": 6,
+    "linea": 9,
     "columna": 3
   },
   {
     "nombre": "S_pregunta_c",
     "valor": "?",
-    "linea": 6,
+    "linea": 9,
     "columna": 4
   },
   {
     "nombre": "S_exclamacion_a",
     "valor": "¡",
-    "linea": 6,
+    "linea": 9,
     "columna": 5
   },
   {
     "nombre": "S_exclamacion_c",
     "valor": "!",
-    "linea": 8,
+    "linea": 11,
     "columna": 1
   }
 ]
