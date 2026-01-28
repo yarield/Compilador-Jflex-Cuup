@@ -3,15 +3,14 @@ import java.util.*;
 public class TablaSimbolos {
 
     private final Map<String, List<Scope>> tablasPorFuncion = new LinkedHashMap<>();
-
     private Scope scopeActual;
     private String funcionActual = "global";
 
     private final List<String> errores = new ArrayList<>();
 
-    /* =========================
-       INICIALIZACIÓN
-       ========================= */
+    // ===============================
+    // INICIALIZACIÓN
+    // ===============================
 
     public void iniciarGlobal() {
         funcionActual = "global";
@@ -19,17 +18,9 @@ public class TablaSimbolos {
         tablasPorFuncion.put("global", new ArrayList<>(List.of(scopeActual)));
     }
 
-    public void resetearScopeAGlobal() {
-        List<Scope> g = tablasPorFuncion.get("global");
-        if (g != null && !g.isEmpty()) {
-            scopeActual = g.get(0);
-            funcionActual = "global";
-        }
-    }
-
-    /* =========================
-       MANEJO DE SCOPES
-       ========================= */
+    // ===============================
+    // FUNCIONES
+    // ===============================
 
     public void entrarFuncion(String nombreFuncion) {
         if (scopeActual == null) iniciarGlobal();
@@ -42,23 +33,26 @@ public class TablaSimbolos {
         }
 
         Scope global = tablasPorFuncion.get("global").get(0);
-        scopeActual = new Scope(nombreFuncion, global);
+        Scope nuevo = new Scope(nombreFuncion, global);
 
-        List<Scope> lista = new ArrayList<>();
-        lista.add(scopeActual);
-        tablasPorFuncion.put(nombreFuncion, lista);
+        tablasPorFuncion.put(nombreFuncion, new ArrayList<>(List.of(nuevo)));
+        scopeActual = nuevo;
     }
 
     public void salirFuncion() {
         resetearScopeAGlobal();
     }
 
-    public void entrarBloque(String nombreBloque) {
+    // ===============================
+    // BLOQUES
+    // ===============================
+
+    public void entrarBloque(String nombre) {
         if (scopeActual == null) iniciarGlobal();
 
-        Scope nuevo = new Scope(nombreBloque, scopeActual);
-        scopeActual = nuevo;
+        Scope nuevo = new Scope(nombre, scopeActual);
         tablasPorFuncion.get(funcionActual).add(nuevo);
+        scopeActual = nuevo;
     }
 
     public void salirBloque() {
@@ -67,25 +61,21 @@ public class TablaSimbolos {
         }
     }
 
-    /* =========================
-       DECLARACIÓN Y USO
-       ========================= */
+    // ===============================
+    // DECLARACIÓN Y USO
+    // ===============================
 
     public void declarar(Simbolo s) {
-        if (scopeActual == null) iniciarGlobal();
-
         if (scopeActual.contieneEnEsteScope(s.nombre)) {
             errores.add("ERROR SEMÁNTICO: '" + s.nombre +
                     "' ya fue declarado en este ámbito (" +
-                    scopeActual.nombre + "). [L:" + s.linea + ", C:" + s.columna + "]");
+                    scopeActual.nombre + ")");
             return;
         }
         scopeActual.insertar(s);
     }
 
     public void usarIdentificador(String id, int linea, int columna) {
-        if (scopeActual == null) iniciarGlobal();
-
         System.out.println("[DEBUG] USO de identificador: " + id +
                 " en scope: " + scopeActual.nombre);
 
@@ -99,14 +89,32 @@ public class TablaSimbolos {
         }
     }
 
+    // ===============================
+    // BÚSQUEDA
+    // ===============================
+
     public Simbolo buscarSimbolo(String nombre) {
-        if (scopeActual == null) return null;
         return scopeActual.buscar(nombre);
     }
 
-    /* =========================
-       SALIDA
-       ========================= */
+    // 🔥 MÉTODO QUE FALTABA 🔥
+    public Scope getScopeActual() {
+        return scopeActual;
+    }
+
+    // ===============================
+    // RESET
+    // ===============================
+
+    public void resetearScopeAGlobal() {
+        scopeActual = tablasPorFuncion.get("global").get(0);
+        funcionActual = "global";
+        System.out.println("[DEBUG] SCOPE RESETEADO A GLOBAL");
+    }
+
+    // ===============================
+    // UTILIDADES
+    // ===============================
 
     public List<String> getErrores() {
         return errores;
