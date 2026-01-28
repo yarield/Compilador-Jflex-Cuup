@@ -1,0 +1,19 @@
+function_int_suma:
+param_data_int a
+param_data_int b
+t1 = a
+t2 = b
+t3 = t1 + t2
+return t3
+function_int_suma_end:
+
+main:
+local_data_int x
+
+t1 = 2
+param t1
+t2 = 3
+param t2
+t3 = call suma,2
+x = t3
+main_end:
