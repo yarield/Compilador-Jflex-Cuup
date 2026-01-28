@@ -26,7 +26,7 @@ public class Nodo {
     public void setTipo(String tipo) { this.tipo = tipo; }
     public String getTipo() { return tipo; }
 
-    // ✅ NUEVO: getters de posición
+    // getters de posición
     public int getLinea() { return linea; }
     public int getColumna() { return columna; }
 
@@ -36,7 +36,7 @@ public class Nodo {
 
     public ArrayList<Nodo> getHijos() { return hijos; }
 
-    // Impresión tipo árbol (bonita y clara)
+    // Impresión tipo árbol 
     public void imprimir() {
         imprimir("", true);
     }

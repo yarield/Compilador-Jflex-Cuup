@@ -154,6 +154,18 @@ private static String obtenerNombreToken(int tipoToken) {
             ConstruirTablaSimbolos builder = new ConstruirTablaSimbolos(ts);
             builder.construir(parser.raiz);
 
+            ts.resetearScopeAGlobal();
+
+
+            AnalizadorSemantico sem = new AnalizadorSemantico(ts);
+            sem.analizar(parser.raiz);
+
+            // ERRORES
+            if (!ts.getErrores().isEmpty()) {
+                System.out.println("\n------ ERRORES SEMÁNTICOS --------");
+                for (String e : ts.getErrores())
+                    System.out.println(e);
+            }
             // IMPRESION DE LA TABLA DE SIMBOLOS
             System.out.println("\n------ TABLA DE SIMBOLOS --------");
             ts.imprimir();
@@ -215,7 +227,6 @@ private static String obtenerNombreToken(int tipoToken) {
     }
 
     // FUNCIÓN PARA GUARDAR TOKENS EN FORMATO JSON 
-    // FUNCIÓN PARA GUARDAR TOKENS EN FORMATO JSON (columna por token dentro de cada línea)
 public static void guardarResultadosEnArchivo(String archivoTokens, Map<String, Object> resultados) {
     try (BufferedWriter writer = new BufferedWriter(new FileWriter(archivoTokens))) {
 
@@ -475,5 +486,7 @@ private static int obtenerIdTokenDesdeSym(String nombreToken) {
         System.out.println("\nTOKENS LEÍDOS DESDE JSON:");
         imprimirTokens(archivoTokens);
         */
+
+        
     }
 }
