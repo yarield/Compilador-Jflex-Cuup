@@ -1,8 +1,97 @@
+world int g endl
+world float gf endl
+world bool gb endl
+world string gs endl
 
- 
- world int ii endl 
- world int  var = 1  endl
- world string va = 1 endl
- coal navidad ¿  ?  ¡ | sintactico
+gift int sum2 ¿ int a, int b ? ¡
+    local int r endl
+    r = a + b endl
+    show ¿ r ? endl
+    return r endl
+!
 
- ! 
+gift bool isBig ¿ int x ? ¡
+    decide of
+        x > 10 ->
+        ¡
+            show ¿ "x > 10" ? endl
+            return true endl
+        !
+    else ->
+        ¡
+            show ¿ "x <= 10" ? endl
+            return false endl
+        !
+    end decide endl
+!
+
+coal navidad ¿ ? ¡
+    local int i endl
+    local int acc endl
+    local int tmp endl
+    local bool ok endl
+    local string name endl
+    local float f endl
+    local char mat[3][3] endl
+
+    acc = 0 endl
+    i = 0 endl
+
+    get ¿ name ? endl
+    show ¿ name ? endl
+
+    mat[0][0] = 1 endl
+    mat[0][1] = 2 endl
+    mat[0][2] = 3 endl
+    mat[1][0] = 4 endl
+    mat[1][1] = 5 endl
+    mat[1][2] = 6 endl
+    mat[2][0] = 7 endl
+    mat[2][1] = 8 endl
+    mat[2][2] = 9 endl
+
+    for ¿ i = 0 endl i < 3 endl ++i ? ¡
+        tmp = sum2 ¿ acc, mat[i][i] ? endl
+        acc = tmp endl
+
+        decide of
+            acc > 12 ->
+            ¡
+                show ¿ "acc > 12" ? endl
+                break endl
+            !
+            acc == 12 ->
+            ¡
+                show ¿ "acc == 12" ? endl
+            !
+        else ->
+            ¡
+                show ¿ "acc < 12" ? endl
+            !
+        end decide endl
+    !
+
+    f = 0.5 endl
+
+    loop
+        f = f + 1.25 endl
+        show ¿ f ? endl
+
+        ok = isBig ¿ acc ? endl
+        show ¿ ok ? endl
+
+        decide of
+            ok == true ->
+            ¡
+                show ¿ "breaking loop" ? endl
+                break endl
+            !
+        end decide endl
+
+        acc = acc + 1 endl
+    exit when ¿ acc > 20 ? endl
+    end loop endl
+
+    show ¿ acc ? endl
+    return acc endl
+!

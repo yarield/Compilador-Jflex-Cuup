@@ -1,19 +1,190 @@
-function_int_suma:
+function_int_sum2:
 param_data_int a
 param_data_int b
+local_data_int r
+
 t1 = a
 t2 = b
 t3 = t1 + t2
-return t3
-function_int_suma_end:
+r = t3
+t4 = r
+print t4
+t5 = r
+return t5
+function_int_sum2_end:
+
+function_bool_isBig:
+param_data_int x
+isBig_decide_1:
+isBig_decide_1_cond_1:
+t1 = x
+t2 = 10
+t3 = t1 > t2
+if t3 isBig_decide_1_bloque_1
+goto isBig_decide_1_else
+isBig_decide_1_bloque_1:
+t4 = "x > 10"
+print t4
+t5 = 1
+return t5
+goto isBig_decide_1_end
+isBig_decide_1_else:
+t6 = "x <= 10"
+print t6
+t7 = 0
+return t7
+goto isBig_decide_1_end
+isBig_decide_1_end:
+function_bool_isBig_end:
 
 main:
-local_data_int x
+local_data_int i
+local_data_int acc
+local_data_int tmp
+local_data_bool ok
+local_data_string name
+local_data_float f
+local_data_char mat
 
-t1 = 2
-param t1
-t2 = 3
-param t2
-t3 = call suma,2
-x = t3
+t1 = 0
+acc = t1
+t2 = 0
+i = t2
+read name
+t3 = name
+print t3
+t4 = 1
+t5 = 0
+t6 = 0
+mat[t5][t6] = t4
+t7 = 2
+t8 = 0
+t9 = 1
+mat[t8][t9] = t7
+t10 = 3
+t11 = 0
+t12 = 2
+mat[t11][t12] = t10
+t13 = 4
+t14 = 1
+t15 = 0
+mat[t14][t15] = t13
+t16 = 5
+t17 = 1
+t18 = 1
+mat[t17][t18] = t16
+t19 = 6
+t20 = 1
+t21 = 2
+mat[t20][t21] = t19
+t22 = 7
+t23 = 2
+t24 = 0
+mat[t23][t24] = t22
+t25 = 8
+t26 = 2
+t27 = 1
+mat[t26][t27] = t25
+t28 = 9
+t29 = 2
+t30 = 2
+mat[t29][t30] = t28
+main_for_1:
+main_for_1_ini:
+t31 = 0
+i = t31
+main_for_1_cond:
+t32 = i
+t33 = 3
+t34 = t32 < t33
+if t34 main_for_1_bloque
+goto main_for_1_end
+main_for_1_modif:
+t35 = i
+t36 = t35 + 1
+i = t36
+goto main_for_1_cond
+main_for_1_bloque:
+t37 = acc
+param t37
+t38 = i
+t39 = i
+t40 = mat[t38][t39]
+param t40
+t41 = call sum2,2
+tmp = t41
+t42 = tmp
+acc = t42
+main_decide_1:
+main_decide_1_cond_1:
+t43 = acc
+t44 = 12
+t45 = t43 > t44
+if t45 main_decide_1_bloque_1
+goto main_decide_1_cond_2
+main_decide_1_bloque_1:
+t46 = "acc > 12"
+print t46
+goto main_for_1_end
+goto main_decide_1_end
+main_decide_1_cond_2:
+t47 = acc
+t48 = 12
+t49 = t47 == t48
+if t49 main_decide_1_bloque_2
+goto main_decide_1_else
+main_decide_1_bloque_2:
+t50 = "acc == 12"
+print t50
+goto main_decide_1_end
+main_decide_1_else:
+t51 = "acc < 12"
+print t51
+goto main_decide_1_end
+main_decide_1_end:
+goto main_for_1_modif
+main_for_1_end:
+t52 = 0.5
+f = t52
+main_loop_1:
+main_loop_1_body:
+t53 = f
+t54 = 1.25
+t55 = t53 + t54
+f = t55
+t56 = f
+print t56
+t57 = acc
+param t57
+t58 = call isBig,1
+ok = t58
+t59 = ok
+print t59
+main_decide_2:
+main_decide_2_cond_1:
+t60 = ok
+t61 = 1
+t62 = t60 == t61
+if t62 main_decide_2_bloque_1
+goto main_decide_2_end
+main_decide_2_bloque_1:
+t63 = "breaking loop"
+print t63
+goto main_loop_1_end
+goto main_decide_2_end
+main_decide_2_end:
+t64 = acc
+t65 = 1
+t66 = t64 + t65
+acc = t66
+t67 = acc
+t68 = 20
+t69 = t67 > t68
+if t69 main_loop_1_end
+goto main_loop_1_body
+main_loop_1_end:
+t70 = acc
+print t70
+t71 = acc
+return t71
 main_end:
