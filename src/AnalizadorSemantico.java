@@ -12,13 +12,11 @@ public class AnalizadorSemantico {
         if (raiz == null) return;
 
         System.out.println("\n[DEBUG] ===== ANALISIS SEMANTICO =====");
-        System.out.println("[DEBUG] SCOPE RESETEADO A GLOBAL");
         ts.resetearScopeAGlobal();
-
-        recorrer(raiz, false);
+        recorrer(raiz);
     }
 
-    private void recorrer(Nodo n, boolean enDeclaracion) {
+    private void recorrer(Nodo n) {
         if (n == null) return;
 
         String lx = safe(n.lexema);
@@ -26,177 +24,142 @@ public class AnalizadorSemantico {
         /* =====================
            DECLARACIONES
            ===================== */
-
         if (lx.equals("declaracion_global") || lx.equals("declaracion_local")) {
-
-            System.out.println("\n[DEBUG] >>> ENTRA A " + lx);
-            System.out.println("[DEBUG] Hijos:");
-
-            for (Nodo h : n.hijos) {
-                System.out.println("   - " + safe(h.lexema));
-            }
 
             Nodo tipoNodo = null;
             Nodo idNodo   = null;
 
             for (Nodo h : n.hijos) {
-                if (tipoNodo == null && esTipo(h.lexema)) {
+                if (tipoNodo == null && esTipo(h.lexema))
                     tipoNodo = h;
-                    System.out.println("[DEBUG] Tipo detectado: " + h.lexema);
-                } 
-                else if (idNodo == null && esIdentificador(h.lexema)) {
+                else if (idNodo == null && esIdentificador(h.lexema))
                     idNodo = h;
-                    System.out.println("[DEBUG] ID detectado: " + h.lexema);
-                }
             }
 
             Nodo exprNodo = obtenerExpresionAsignada(n);
-
-            if (exprNodo != null) {
-                System.out.println("[DEBUG] Expresion asignada encontrada: "
-                        + safe(exprNodo.lexema));
-            } else {
-                System.out.println("[DEBUG] NO hay expresion asignada");
-            }
 
             if (tipoNodo != null && idNodo != null && exprNodo != null) {
 
                 String tipoVar  = normalizarTipo(tipoNodo.lexema);
                 String tipoExpr = evaluarTipo(exprNodo);
 
-                System.out.println("[DEBUG] CHECK ASIGNACION: " +
+                System.out.println("[DEBUG] CHECK: " +
                         extraerIdentificador(idNodo.lexema) +
                         " : " + tipoVar + " = " + tipoExpr);
 
                 if (!sonCompatibles(tipoVar, tipoExpr)) {
                     ts.getErrores().add(
-                        "ERROR SEMÁNTICO: No se puede asignar " + tipoExpr +
-                        " a " + tipoVar +
-                        ". [L:" + n.getLinea() + ", C:" + n.getColumna() + "]"
+                        "ERROR SEMÁNTICO: No se puede asignar " +
+                        tipoExpr + " a " + tipoVar +
+                        ". [L:" + n.getLinea() +
+                        ", C:" + n.getColumna() + "]"
                     );
                 }
             }
-
-            for (Nodo h : n.hijos) {
-                recorrer(h, true);
-            }
-            return;
+            return; // 🔑 NO recorrer hijos otra vez
         }
 
         /* =====================
-           USO DE IDENTIFICADORES
+           ASIGNACIONES
            ===================== */
+        if (lx.equals("asignacion")) {
 
-        if (esIdentificador(lx)) {
-            if (!enDeclaracion) {
-                System.out.println("[DEBUG] USO de identificador: "
-                        + extraerIdentificador(lx));
-                ts.usarIdentificador(
-                        extraerIdentificador(lx),
-                        n.getLinea(),
-                        n.getColumna()
-                );
+            Nodo id = null;
+            Nodo expr = null;
+
+            for (Nodo h : n.hijos) {
+                if (id == null && esIdentificador(h.lexema))
+                    id = h;
+                if (safe(h.lexema).equals("="))
+                    expr = obtenerExpresionAsignada(n);
+            }
+
+            if (id != null && expr != null) {
+
+                String nombre = extraerIdentificador(id.lexema);
+                Simbolo s = ts.buscarSimbolo(nombre);
+
+                if (s == null) {
+                    ts.getErrores().add(
+                        "ERROR SEMÁNTICO: Uso de '" + nombre +
+                        "' sin declarar. [L:" + id.getLinea() +
+                        ", C:" + id.getColumna() + "]"
+                    );
+                } else {
+                    String tipoExpr = evaluarTipo(expr);
+                    if (!sonCompatibles(s.tipo, tipoExpr)) {
+                        ts.getErrores().add(
+                            "ERROR SEMÁNTICO: No se puede asignar " +
+                            tipoExpr + " a " + s.tipo +
+                            ". [L:" + n.getLinea() +
+                            ", C:" + n.getColumna() + "]"
+                        );
+                    }
+                }
             }
             return;
         }
 
-        for (Nodo h : n.hijos) {
-            recorrer(h, false);
-        }
+        for (Nodo h : n.hijos)
+            recorrer(h);
     }
 
     /* =====================
        EVALUACIÓN DE TIPOS
        ===================== */
-
     private String evaluarTipo(Nodo n) {
-        if (n == null) {
-            System.out.println("[DEBUG][TIPO] Nodo null → desconocido");
+        if (n == null) return "desconocido";
+
+        String lx = safe(n.lexema);
+
+        if (lx.equals("op")) {
+            if (n.hijos.size() != 3) return "desconocido";
+
+            String operador = safe(n.hijos.get(0).lexema);
+            String t1 = evaluarTipo(n.hijos.get(1));
+            String t2 = evaluarTipo(n.hijos.get(2));
+
+            if (operador.equals("+")) {
+                if (t1.equals("int") && t2.equals("int")) return "int";
+                if (t1.equals("float") && t2.equals("float")) return "float";
+            }
             return "desconocido";
         }
 
-        String lx = safe(n.lexema);
-        System.out.println("[DEBUG][TIPO] Evaluando nodo: " + lx);
+        if (lx.startsWith("Entero(")) return "int";
+        if (lx.startsWith("Flotante(") || lx.startsWith("Decimal(")) return "float";
+        if (lx.startsWith("Cadena(")) return "string";
+        if (lx.startsWith("Caracter(")) return "char";
+        if (lx.startsWith("Booleano(")) return "bool";
 
-        /* === LITERALES DEL AST === */
-
-        if (lx.startsWith("Entero(") && lx.endsWith(")")) {
-            System.out.println("[DEBUG][TIPO] Literal Entero detectado");
-            return "int";
-        }
-
-        if (lx.startsWith("Decimal(") && lx.endsWith(")")) {
-            System.out.println("[DEBUG][TIPO] Literal Decimal detectado");
-            return "float";
-        }
-
-        if (lx.startsWith("Cadena(") && lx.endsWith(")")) {
-            System.out.println("[DEBUG][TIPO] Literal Cadena detectado");
-            return "string";
-        }
-
-        if (lx.startsWith("Caracter(") && lx.endsWith(")")) {
-            System.out.println("[DEBUG][TIPO] Literal Caracter detectado");
-            return "char";
-        }
-
-        if (lx.startsWith("Booleano(") && lx.endsWith(")")) {
-            System.out.println("[DEBUG][TIPO] Literal Booleano detectado");
-            return "bool";
-        }
-
-
-        /* === LITERALES PLANOS (backup) === */
-
+        if (lx.equalsIgnoreCase("true") || lx.equalsIgnoreCase("false")) return "bool";
         if (lx.matches("-?\\d+")) return "int";
         if (lx.matches("-?\\d+\\.\\d+")) return "float";
         if (lx.startsWith("\"") && lx.endsWith("\"")) return "string";
         if (lx.startsWith("'") && lx.endsWith("'")) return "char";
-        if (lx.equals("true") || lx.equals("false")) return "bool";
-
-        /* === IDENTIFICADORES === */
 
         if (esIdentificador(lx)) {
-            String id = extraerIdentificador(lx);
-            Simbolo s = ts.buscarSimbolo(id);
-            if (s != null) {
-                System.out.println("[DEBUG][TIPO] Tipo de ID " + id + " = " + s.tipo);
-                return s.tipo;
-            } else {
-                System.out.println("[DEBUG][TIPO] ID no encontrado: " + id);
-            }
+            Simbolo s = ts.buscarSimbolo(extraerIdentificador(lx));
+            if (s != null) return s.tipo;
         }
 
-        /* === RECORRIDO === */
-
-        for (Nodo h : n.hijos) {
-            String t = evaluarTipo(h);
-            if (!t.equals("desconocido")) return t;
-        }
-
-        System.out.println("[DEBUG][TIPO] No se pudo inferir tipo → desconocido");
         return "desconocido";
     }
 
     private boolean sonCompatibles(String var, String expr) {
-        if (var.equals(expr)) return true;
-        if (var.equals("float") && expr.equals("int")) return true;
-        return false;
+        return var.equals(expr);
     }
 
     /* =====================
        UTILIDADES
        ===================== */
-
     private Nodo obtenerExpresionAsignada(Nodo n) {
-        System.out.println("[DEBUG] Buscando '=' en declaracion");
-
         for (int i = 0; i < n.hijos.size(); i++) {
-            System.out.println("   hijo[" + i + "] = " + safe(n.hijos.get(i).lexema));
-            if ("=".equals(n.hijos.get(i).lexema)) {
-                System.out.println("[DEBUG] '=' encontrado en posicion " + i);
-                if (i + 1 < n.hijos.size()) {
-                    return n.hijos.get(i + 1);
+            if ("=".equals(safe(n.hijos.get(i).lexema))) {
+                for (int j = i + 1; j < n.hijos.size(); j++) {
+                    String lx = safe(n.hijos.get(j).lexema);
+                    if (!lx.equals("endl"))
+                        return n.hijos.get(j);
                 }
             }
         }
@@ -205,10 +168,8 @@ public class AnalizadorSemantico {
 
     private boolean esTipo(String lx) {
         lx = safe(lx).toLowerCase();
-        return lx.contains("int") ||
-               lx.contains("float") ||
-               lx.contains("string") ||
-               lx.contains("bool") ||
+        return lx.contains("int") || lx.contains("float") ||
+               lx.contains("string") || lx.contains("bool") ||
                lx.contains("char");
     }
 
@@ -220,10 +181,6 @@ public class AnalizadorSemantico {
         return lx.substring(6, lx.length() - 1);
     }
 
-    private String safe(String s) {
-        return (s == null) ? "" : s.trim();
-    }
-
     private String normalizarTipo(String lx) {
         lx = safe(lx).toLowerCase();
         if (lx.contains("int")) return "int";
@@ -232,5 +189,9 @@ public class AnalizadorSemantico {
         if (lx.contains("bool")) return "bool";
         if (lx.contains("char")) return "char";
         return "desconocido";
+    }
+
+    private String safe(String s) {
+        return (s == null) ? "" : s.trim();
     }
 }

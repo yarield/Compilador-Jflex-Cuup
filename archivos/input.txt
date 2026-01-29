@@ -1,11 +1,18 @@
-
  
- world int ii endl 
+ world float ii = 1.0 endl 
  world int  var = 1  endl
  world string va = "a" endl
  world bool variable = true endl
  world char vas = 'a' endl
 
  coal navidad ¿  ?  ¡ | sintactico
+ local float ii = 1.0 endl 
+ local int  var = 1  endl
+ local string va = "a" endl
+ local bool variable = true endl
+ local char vas = 'a' endl
+ local int hola = 2   endl
+ ii = 1.0 + ii endl
+
 
  ! 
