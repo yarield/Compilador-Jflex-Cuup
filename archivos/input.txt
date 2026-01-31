@@ -9,20 +9,19 @@ gift float _mi_  ¿ int dif, char _otra_  ?¡
 local int var endl
 var = 2 endl
 dif = 3 endl
+var = ++var endl
 !
 
 gift float _mi ¿?¡
 
 !
  coal navidad ¿  ?  ¡ | sintactico
- local float ii = 1.0 // "hols" endl 
- local string va = "a" endl
- local bool variable = true endl
-
  local int hola = 2   endl
- ii = 1.0 + "hola" endl
- local int var = hola endl
  local char arrays[3][3] = ¡¡1,5,10!¡2,4,5!¡20,40,50!! endl 
  _mi_ ¿hola,vas?  endl  
- local char papasfritas234 = 1 endl
+ local char papasfritas234 = 'h' endl
+
+  local float ii = -1.0 / 2.0 endl 
+  ii = -1.0 - 2.0 endl
+  
  !
