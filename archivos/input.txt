@@ -5,14 +5,24 @@
  world bool variable = true endl
  world char vas = 'a' endl
 
+gift float _mi_  ¿ int dif, char _otra_  ?¡
+local int var endl
+var = 2 endl
+dif = 3 endl
+!
+
+gift float _mi ¿?¡
+
+!
  coal navidad ¿  ?  ¡ | sintactico
  local float ii = 1.0 endl 
- local int  var = 1  endl
  local string va = "a" endl
  local bool variable = true endl
  local char vas = 'a' endl
  local int hola = 2   endl
  ii = 1.0 + ii endl
-
-
- ! 
+ local int var = hola endl
+ local char arrays[3][3] = ¡¡1,5,10!¡2,4,5!¡20,40,50!! endl 
+| _mi_ ¿?  endl  
+ 
+ !

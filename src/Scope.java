@@ -2,9 +2,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class Scope {
-    public final String nombre; // ej: "global", "main", "func:foo", "bloque#3"
+    public final String nombre;
     public final Scope padre;
-
     private final Map<String, Simbolo> tabla = new LinkedHashMap<>();
 
     public Scope(String nombre, Scope padre) {

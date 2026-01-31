@@ -13,13 +13,32 @@ public class AnalizadorSemantico {
 
         System.out.println("\n[DEBUG] ===== ANALISIS SEMANTICO =====");
         ts.resetearScopeAGlobal();
-        recorrer(raiz);
+        recorrer(raiz, false);
     }
 
-    private void recorrer(Nodo n) {
+    /**
+     * @param enEncabezadoFuncion true cuando estamos recorriendo
+     *        nombre de función o parámetros
+     */
+    private void recorrer(Nodo n, boolean enEncabezadoFuncion) {
         if (n == null) return;
 
         String lx = safe(n.lexema);
+
+        /* =====================
+           FUNCIÓN
+           ===================== */
+        if (lx.equals("funcion")) {
+            // Todo hasta el bloque es encabezado
+            for (Nodo h : n.hijos) {
+                if (safe(h.lexema).equals("bloque")) {
+                    recorrer(h, false); // cuerpo real
+                } else {
+                    recorrer(h, true);  // nombre + parámetros
+                }
+            }
+            return;
+        }
 
         /* =====================
            DECLARACIONES
@@ -36,16 +55,17 @@ public class AnalizadorSemantico {
                     idNodo = h;
             }
 
+            if (tipoNodo == null || idNodo == null) return;
+
+            String nombre  = extraerIdentificador(idNodo.lexema);
+            String tipoVar = normalizarTipo(tipoNodo.lexema);
+
             Nodo exprNodo = obtenerExpresionAsignada(n);
-
-            if (tipoNodo != null && idNodo != null && exprNodo != null) {
-
-                String tipoVar  = normalizarTipo(tipoNodo.lexema);
+            if (exprNodo != null) {
                 String tipoExpr = evaluarTipo(exprNodo);
 
                 System.out.println("[DEBUG] CHECK: " +
-                        extraerIdentificador(idNodo.lexema) +
-                        " : " + tipoVar + " = " + tipoExpr);
+                        nombre + " : " + tipoVar + " = " + tipoExpr);
 
                 if (!sonCompatibles(tipoVar, tipoExpr)) {
                     ts.getErrores().add(
@@ -56,7 +76,7 @@ public class AnalizadorSemantico {
                     );
                 }
             }
-            return; // 🔑 NO recorrer hijos otra vez
+            return;
         }
 
         /* =====================
@@ -70,38 +90,57 @@ public class AnalizadorSemantico {
             for (Nodo h : n.hijos) {
                 if (id == null && esIdentificador(h.lexema))
                     id = h;
-                if (safe(h.lexema).equals("="))
+                if ("=".equals(safe(h.lexema)))
                     expr = obtenerExpresionAsignada(n);
             }
 
-            if (id != null && expr != null) {
+            if (id == null || expr == null) return;
 
-                String nombre = extraerIdentificador(id.lexema);
-                Simbolo s = ts.buscarSimbolo(nombre);
+            String nombre = extraerIdentificador(id.lexema);
+            Simbolo s = ts.buscarSimbolo(nombre);
 
-                if (s == null) {
-                    ts.getErrores().add(
-                        "ERROR SEMÁNTICO: Uso de '" + nombre +
-                        "' sin declarar. [L:" + id.getLinea() +
-                        ", C:" + id.getColumna() + "]"
-                    );
-                } else {
-                    String tipoExpr = evaluarTipo(expr);
-                    if (!sonCompatibles(s.tipo, tipoExpr)) {
-                        ts.getErrores().add(
-                            "ERROR SEMÁNTICO: No se puede asignar " +
-                            tipoExpr + " a " + s.tipo +
-                            ". [L:" + n.getLinea() +
-                            ", C:" + n.getColumna() + "]"
-                        );
-                    }
-                }
+            if (s == null) {
+                ts.getErrores().add(
+                    "ERROR SEMÁNTICO: Uso de '" + nombre +
+                    "' sin declarar. [L:" +
+                    id.getLinea() + ", C:" +
+                    id.getColumna() + "]"
+                );
+                return;
+            }
+
+            String tipoExpr = evaluarTipo(expr);
+            if (!sonCompatibles(s.tipo, tipoExpr)) {
+                ts.getErrores().add(
+                    "ERROR SEMÁNTICO: No se puede asignar " +
+                    tipoExpr + " a " + s.tipo +
+                    ". [L:" + n.getLinea() +
+                    ", C:" + n.getColumna() + "]"
+                );
             }
             return;
         }
 
+        /* =====================
+           USO DE IDENTIFICADORES
+           ===================== */
+        if (esIdentificador(lx) && !enEncabezadoFuncion) {
+
+            String nombre = extraerIdentificador(lx);
+            Simbolo s = ts.buscarSimbolo(nombre);
+
+            if (s == null) {
+                ts.getErrores().add(
+                    "ERROR SEMÁNTICO: Uso de '" + nombre +
+                    "' sin declarar. [L:" +
+                    n.getLinea() + ", C:" +
+                    n.getColumna() + "]"
+                );
+            }
+        }
+
         for (Nodo h : n.hijos)
-            recorrer(h);
+            recorrer(h, enEncabezadoFuncion);
     }
 
     /* =====================
@@ -115,11 +154,11 @@ public class AnalizadorSemantico {
         if (lx.equals("op")) {
             if (n.hijos.size() != 3) return "desconocido";
 
-            String operador = safe(n.hijos.get(0).lexema);
+            String op = safe(n.hijos.get(0).lexema);
             String t1 = evaluarTipo(n.hijos.get(1));
             String t2 = evaluarTipo(n.hijos.get(2));
 
-            if (operador.equals("+")) {
+            if (op.equals("+")) {
                 if (t1.equals("int") && t2.equals("int")) return "int";
                 if (t1.equals("float") && t2.equals("float")) return "float";
             }
@@ -157,8 +196,7 @@ public class AnalizadorSemantico {
         for (int i = 0; i < n.hijos.size(); i++) {
             if ("=".equals(safe(n.hijos.get(i).lexema))) {
                 for (int j = i + 1; j < n.hijos.size(); j++) {
-                    String lx = safe(n.hijos.get(j).lexema);
-                    if (!lx.equals("endl"))
+                    if (!"endl".equals(safe(n.hijos.get(j).lexema)))
                         return n.hijos.get(j);
                 }
             }
