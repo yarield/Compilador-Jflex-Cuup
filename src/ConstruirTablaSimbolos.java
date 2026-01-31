@@ -22,17 +22,12 @@ public class ConstruirTablaSimbolos {
 
         String lx = safe(n.lexema);
 
-        System.out.println("[DEBUG VISITAR] Nodo: " + lx + " (hijos: " + n.hijos.size() + ")");
-
         // 1) MAIN: manejar main correctamente
         if (lx.equals("main")) {
-            System.out.println("[DEBUG] Procesando main");
             ts.entrarFuncion("main");
             
             for (Nodo h : n.hijos) {
-                // Si hay un bloque dentro del main, procesar sus hijos directamente
                 if (safe(h.lexema).equals("bloque")) {
-                    System.out.println("[DEBUG] Encontrado bloque dentro de main, procesando hijos directamente");
                     for (Nodo hijoBloque : h.hijos) {
                         visitar(hijoBloque);
                     }
@@ -51,28 +46,21 @@ public class ConstruirTablaSimbolos {
             String tipoRetorno = extraerTipoRetornoFuncion(n);
             List<String> tiposParametros = extraerTiposParametrosFuncion(n);
             
-            System.out.println("[DEBUG] Declarando función: " + nombreFun + 
-                             " -> retorno: " + tipoRetorno + 
-                             ", params: " + tiposParametros);
-            
-            // 1. Declarar la función en el ámbito global
+            // Declarar la función en el ámbito global
             ts.declararFuncion(nombreFun, tipoRetorno, tiposParametros, -1, -1);
             
-            // 2. Entrar al scope de la función para procesar su cuerpo
+            // Entrar al scope de la función para procesar su cuerpo
             String key = "func:" + nombreFun;
             ts.entrarFuncion(key);
 
             // Procesar cuerpo de la función (parámetros y bloque)
             for (Nodo h : n.hijos) {
                 String hijoLex = safe(h.lexema);
-                // No procesar Gift, tipo ni nombre de función como identificadores
                 if (!hijoLex.equals("Gift") && 
                     !hijoLex.startsWith("tipo:") &&
                     !(hijoLex.startsWith("Ident(") && 
                       extraerIdentificador(h).equals(nombreFun))) {
                     visitar(h);
-                } else {
-                    System.out.println("[DEBUG] Saltando: " + hijoLex);
                 }
             }
 
@@ -82,11 +70,9 @@ public class ConstruirTablaSimbolos {
 
         // 3) BLOQUE: manejar bloques correctamente
         if (lx.equals("bloque")) {
-            // Solo crear bloque si no estamos ya en una situación especial
             if (!ts.getScopeActual().nombre.startsWith("bloque#")) {
                 contadorBloques++;
                 String nombreBloque = "bloque#" + contadorBloques;
-                System.out.println("[DEBUG] Creando nuevo bloque: " + nombreBloque);
                 ts.entrarBloque(nombreBloque);
 
                 for (Nodo h : n.hijos)
@@ -97,37 +83,22 @@ public class ConstruirTablaSimbolos {
             return;
         }
 
-        // 4) Parámetros
+        // 4) DECLARACIONES (LOCALES Y GLOBALES)
+        if (lx.equals("declaracion_local") || lx.equals("declaracion_global")) {
+            procesarDeclaracionConTipos(n, lx);
+        }
+
+        // 5) ASIGNACIÓN: con verificación de tipos
+        if (lx.equals("asignacion") && n.hijos.size() >= 2) {
+            procesarAsignacionConTipos(n);
+        }
+
+        // 6) Parámetros
         if (lx.equals("param")) {
             procesarParametro(n);
             for (Nodo h : n.hijos)
                 visitar(h);
             return;
-        }
-
-        // 5) Declaraciones
-        if (lx.equals("declaracion_local") || lx.equals("declaracion_global")) {
-            procesarDeclaracion(n, lx);
-            // IMPORTANTE: No hacer return aquí, seguir procesando hijos
-        }
-
-        // 6) Asignación: verificar uso del LHS y procesar RHS
-        if (lx.equals("asignacion")) {
-            System.out.println("[DEBUG] Procesando asignación");
-            if (!n.hijos.isEmpty()) {
-                // Procesar LHS
-                String id = extraerIdentificador(n.hijos.get(0));
-                if (!id.isEmpty()) {
-                    System.out.println("[DEBUG] LHS de asignación: " + id);
-                    ts.usarIdentificador(id, -1, -1);
-                }
-                
-                // Procesar RHS (expresión)
-                if (n.hijos.size() > 1) {
-                    System.out.println("[DEBUG] Procesando RHS de asignación");
-                    procesarExpresionCompleta(n.hijos.get(1));
-                }
-            }
         }
 
         // 7) LLAMADA A FUNCIÓN: Verificar que la función existe
@@ -136,11 +107,10 @@ public class ConstruirTablaSimbolos {
             return;
         }
 
-        // 8) Cualquier Ident(x) en expresiones
+        // 8) IDENTIFICADORES USADOS en expresiones
         if (lx.startsWith("Ident(")) {
             String id = extraerIdentificador(n);
             if (!id.isEmpty()) {
-                System.out.println("[DEBUG] Identificador encontrado: " + id);
                 ts.usarIdentificador(id, -1, -1);
             }
         }
@@ -150,15 +120,175 @@ public class ConstruirTablaSimbolos {
             visitar(h);
     }
 
-    // ==================== MÉTODOS PARA FUNCIONES ====================
+    // ==================== DECLARACIONES CON VERIFICACIÓN DE TIPOS ====================
+
+    private void procesarDeclaracionConTipos(Nodo n, String tipoDecl) {
+        String clase = tipoDecl.equals("declaracion_global") ? "global" : "local";
+        String tipoVar = "desconocido";
+        String id = "";
+        boolean esArreglo = false;
+        int dims = 0;
+
+        // Primero encontrar el tipo y el ID
+        boolean encontroTipo = false;
+        
+        for (Nodo h : n.hijos) {
+            String lx = safe(h.lexema);
+
+            if (lx.startsWith("tipo:")) {
+                tipoVar = lx.substring("tipo:".length());
+                encontroTipo = true;
+            }
+            
+            if (encontroTipo && lx.startsWith("Ident(")) {
+                id = extraerIdentificador(h);
+                break;
+            }
+            
+            if (lx.equals("arreglo")) {
+                esArreglo = true;
+                dims = contarDimensionesArreglo(h);
+            }
+        }
+
+        if (id.isEmpty()) return;
+
+        // Declarar el símbolo
+        Simbolo s = new Simbolo(
+            id, tipoVar, clase, ts.getScopeActual().nombre,
+            -1, -1,
+            esArreglo, dims, ""
+        );
+        ts.declarar(s);
+
+        // Buscar inicialización y verificar tipos
+        for (int i = 0; i < n.hijos.size(); i++) {
+            Nodo h = n.hijos.get(i);
+            String lx = safe(h.lexema);
+            
+            if (lx.equals("=")) {
+                if (i + 1 < n.hijos.size()) {
+                    Nodo expr = n.hijos.get(i + 1);
+                    String tipoExpr = evaluarTipoExpresion(expr);
+                    
+                    // Verificar compatibilidad de tipos
+                    if (!tipoExpr.equals("desconocido") && !tipoVar.equals("desconocido")) {
+                        ts.verificarTipos(tipoVar, tipoExpr, -1, -1);
+                    }
+                }
+                break;
+            }
+        }
+    }
+
+    // ==================== ASIGNACIONES CON VERIFICACIÓN DE TIPOS ====================
+
+    private void procesarAsignacionConTipos(Nodo n) {
+        if (n.hijos.size() < 2) return;
+        
+        Nodo lhs = n.hijos.get(0);
+        Nodo rhs = n.hijos.get(1);
+        
+        String id = extraerIdentificador(lhs);
+        if (!id.isEmpty()) {
+            // Marcar que se usa el identificador
+            ts.usarIdentificador(id, -1, -1);
+            
+            // Obtener tipo del LHS
+            Simbolo s = ts.buscarSimbolo(id);
+            if (s != null) {
+                String tipoVar = s.tipo;
+                String tipoExpr = evaluarTipoExpresion(rhs);
+                
+                // Verificar compatibilidad
+                if (!tipoExpr.equals("desconocido")) {
+                    ts.verificarTipos(tipoVar, tipoExpr, -1, -1);
+                }
+            }
+        }
+    }
+
+    // ==================== EVALUACIÓN DE EXPRESIONES (DEL PRIMER CÓDIGO) ====================
+
+    private String evaluarTipoExpresion(Nodo n) {
+        if (n == null) return "desconocido";
+
+        String lx = safe(n.lexema);
+
+        // LITERAL
+        String lit = tipoLiteral(lx);
+        if (!lit.equals("desconocido"))
+            return lit;
+
+        // IDENTIFICADOR
+        if (lx.startsWith("Ident(")) {
+            Simbolo s = ts.buscarSimbolo(extraerIdentificador(n));
+            return s != null ? s.tipo : "desconocido";
+        }
+
+        // OPERACIÓN BINARIA
+        if (lx.equals("op") && n.hijos.size() == 3) {
+            String op = safe(n.hijos.get(0).lexema);
+            String t1 = evaluarTipoExpresion(n.hijos.get(1));
+            String t2 = evaluarTipoExpresion(n.hijos.get(2));
+            return verificarOperacionBinaria(op, t1, t2);
+        }
+
+        // LLAMADA A FUNCIÓN
+        if (lx.equals("llamada_funcion")) {
+            // Buscar tipo de retorno de la función
+            String nombreFunc = "";
+            for (Nodo h : n.hijos) {
+                if (safe(h.lexema).startsWith("Ident(")) {
+                    nombreFunc = extraerIdentificador(h);
+                    break;
+                }
+            }
+            
+            if (!nombreFunc.isEmpty()) {
+                Simbolo s = ts.buscarFuncion(nombreFunc);
+                return s != null ? s.tipo : "desconocido";
+            }
+        }
+
+        return "desconocido";
+    }
+
+    private String verificarOperacionBinaria(String op, String t1, String t2) {
+        if (t1.equals("desconocido") || t2.equals("desconocido"))
+            return "desconocido";
+
+        if (op.equals("+")) {
+            if (t1.equals("string") && t2.equals("string"))
+                return "string";
+
+            if (t1.equals("int") && t2.equals("int"))
+                return "int";
+
+            if ((t1.equals("int") || t1.equals("float")) &&
+                (t2.equals("int") || t2.equals("float")))
+                return "float";
+        }
+
+        return "desconocido";
+    }
+
+    private String tipoLiteral(String lx) {
+        if (lx.contains("Entero")) return "int";
+        if (lx.contains("Flotante")) return "float";
+        if (lx.contains("Cadena")) return "string";
+        if (lx.contains("Caracter")) return "char";
+        if (lx.equals("True") || lx.equals("False")) return "bool";
+        return "desconocido";
+    }
+
+    // ==================== MÉTODOS PARA FUNCIONES (DEL SEGUNDO CÓDIGO) ====================
 
     private String extraerTipoRetornoFuncion(Nodo funcionNode) {
         for (Nodo h : funcionNode.hijos) {
             String lx = safe(h.lexema);
             if (lx.startsWith("tipo:")) {
-                String tipo = lx.substring("tipo:".length());
-                System.out.println("[DEBUG] Tipo de retorno extraído: " + tipo);
-                return tipo;
+                return lx.substring("tipo:".length());
             }
         }
         return "void";
@@ -167,26 +297,20 @@ public class ConstruirTablaSimbolos {
     private List<String> extraerTiposParametrosFuncion(Nodo funcionNode) {
         List<String> tipos = new ArrayList<>();
         
-        // Buscar nodo de parámetros
         for (Nodo h : funcionNode.hijos) {
             if (safe(h.lexema).equals("parametros")) {
-                // Procesar cada parámetro
                 for (Nodo param : h.hijos) {
                     if (safe(param.lexema).equals("param")) {
                         String tipoParam = extraerTipoParametro(param);
                         if (!tipoParam.isEmpty()) {
                             tipos.add(tipoParam);
                         }
-                    } else if (safe(param.lexema).equals(",")) {
-                        // Ignorar comas
-                        continue;
                     }
                 }
                 break;
             }
         }
         
-        System.out.println("[DEBUG] Tipos de parámetros extraídos: " + tipos);
         return tipos;
     }
 
@@ -204,24 +328,18 @@ public class ConstruirTablaSimbolos {
         String nombreFuncion = "";
         List<String> tiposArgumentos = new ArrayList<>();
         
-        System.out.println("[DEBUG] Procesando llamada a función");
-        
         for (Nodo h : llamadaNode.hijos) {
             String lx = safe(h.lexema);
             
             if (lx.startsWith("Ident(")) {
                 nombreFuncion = extraerIdentificador(h);
-                System.out.println("[DEBUG] Nombre de función llamada: " + nombreFuncion);
             } else if (lx.equals("argumentos") || lx.equals("expresion")) {
-                // Procesar argumentos y determinar sus tipos
                 List<String> tipos = extraerTiposArgumentos(h);
                 tiposArgumentos.addAll(tipos);
             }
         }
         
         if (!nombreFuncion.isEmpty()) {
-            System.out.println("[DEBUG] Verificando llamada a función: " + nombreFuncion + 
-                             " con argumentos: " + tiposArgumentos);
             ts.verificarLlamadaFuncion(nombreFuncion, tiposArgumentos, -1, -1);
         }
     }
@@ -229,15 +347,10 @@ public class ConstruirTablaSimbolos {
     private List<String> extraerTiposArgumentos(Nodo argumentosNode) {
         List<String> tipos = new ArrayList<>();
         
-        // Este método necesita ser implementado según tu estructura de AST
-        // Por ahora, asumiremos que todos los argumentos son del tipo "desconocido"
-        // o implementaremos una lógica básica
-        
         for (Nodo h : argumentosNode.hijos) {
             String lx = safe(h.lexema);
             
             if (lx.startsWith("Ident(")) {
-                // Si es un identificador, buscar su tipo en la tabla
                 String id = extraerIdentificador(h);
                 Simbolo s = ts.buscarSimbolo(id);
                 if (s != null) {
@@ -245,61 +358,23 @@ public class ConstruirTablaSimbolos {
                 } else {
                     tipos.add("desconocido");
                 }
-            } else if (lx.contains("Entero")) {
-                tipos.add("int");
-            } else if (lx.contains("Flotante")) {
-                tipos.add("float");
-            } else if (lx.contains("Cadena")) {
-                tipos.add("string");
-            } else if (lx.contains("Caracter")) {
-                tipos.add("char");
-            } else if (lx.equals("True") || lx.equals("False")) {
-                tipos.add("bool");
-            }
-            // Si el nodo tiene hijos, procesarlos recursivamente
-            else if (!h.hijos.isEmpty()) {
-                tipos.addAll(extraerTiposArgumentos(h));
+            } else {
+                String tipoLit = tipoLiteral(lx);
+                if (!tipoLit.equals("desconocido")) {
+                    tipos.add(tipoLit);
+                } else if (!h.hijos.isEmpty()) {
+                    tipos.addAll(extraerTiposArgumentos(h));
+                }
             }
         }
         
         return tipos;
     }
 
-    // ==================== MÉTODOS EXISTENTES ====================
-
-    // NUEVO MÉTODO: Procesar expresiones completas
-    private void procesarExpresionCompleta(Nodo expr) {
-        if (expr == null) return;
-        
-        String lx = safe(expr.lexema);
-        
-        System.out.println("[DEBUG EXPR] Procesando expresión: " + lx);
-        
-        // Identificador en expresión
-        if (lx.startsWith("Ident(")) {
-            String id = extraerIdentificador(expr);
-            if (!id.isEmpty()) {
-                System.out.println("[DEBUG EXPR] Identificador en expresión: " + id);
-                ts.usarIdentificador(id, -1, -1);
-            }
-        }
-        
-        // Llamada a función en expresión
-        if (lx.equals("llamada_funcion")) {
-            procesarLlamadaFuncion(expr);
-        }
-        
-        // Recursivamente procesar hijos
-        for (Nodo h : expr.hijos) {
-            procesarExpresionCompleta(h);
-        }
-    }
-
     private String extraerNombreFuncion(Nodo funcionNode) {
         for (Nodo h : funcionNode.hijos) {
             String id = extraerIdentificador(h);
             if (!id.isEmpty()) {
-                System.out.println("[DEBUG] Nombre de función extraído: " + id);
                 return id.trim();
             }
         }
@@ -320,74 +395,16 @@ public class ConstruirTablaSimbolos {
 
         if (id.isEmpty())
             return;
-
-        System.out.println("[DEBUG] Declarando parámetro: " + id + " tipo: " + tipo);
         
         Simbolo s = new Simbolo(
-                id, tipo, "parametro", ts.getScopeActual().nombre,
-                -1, -1,
-                false, 0, "");
+            id, tipo, "parametro", ts.getScopeActual().nombre,
+            -1, -1,
+            false, 0, ""
+        );
         ts.declarar(s);
     }
 
-    private void procesarDeclaracion(Nodo n, String tipoDecl) {
-        System.out.println("[DEBUG] Procesando declaración: " + tipoDecl);
-        
-        String clase = tipoDecl.equals("declaracion_global") ? "global" : "local";
-        String tipo = "desconocido";
-        String id = "";
-        boolean esArreglo = false;
-        int dims = 0;
-
-        // Buscar en orden específico: primero el tipo, luego el ID
-        boolean encontroTipo = false;
-        
-        for (Nodo h : n.hijos) {
-            String lx = safe(h.lexema);
-
-            if (lx.startsWith("tipo:")) {
-                tipo = lx.substring("tipo:".length());
-                System.out.println("[DEBUG] Tipo encontrado: " + tipo);
-                encontroTipo = true;
-            }
-            
-            // Solo tomar como ID si ya encontramos el tipo
-            if (encontroTipo && lx.startsWith("Ident(")) {
-                id = extraerIdentificador(h);
-                System.out.println("[DEBUG] ID encontrado: " + id);
-                break; // Solo el primer ID después del tipo
-            }
-            
-            if (lx.equals("arreglo")) {
-                esArreglo = true;
-                dims = contarDimensionesArreglo(h);
-            }
-        }
-
-        if (id.isEmpty()) {
-            System.out.println("[DEBUG] ID vacío, omitiendo declaración");
-            return;
-        }
-
-        // Declarar el símbolo
-        String ambitoActual = ts.getScopeActual().nombre;
-        System.out.println("[DEBUG] Declarando símbolo: " + id + " en ámbito: " + ambitoActual);
-        
-        Simbolo s = new Simbolo(
-                id, tipo, clase, ambitoActual,
-                -1, -1,
-                esArreglo, dims, "");
-        ts.declarar(s);
-        
-        // Buscar y procesar expresión de inicialización
-        for (Nodo h : n.hijos) {
-            String lx = safe(h.lexema);
-            if (lx.equals("expresion") || lx.equals("=") || lx.equals("asignacion_simple")) {
-                System.out.println("[DEBUG] Procesando expresión de inicialización para: " + id);
-                procesarExpresionCompleta(h);
-            }
-        }
-    }
+    // ==================== MÉTODOS UTILITARIOS ====================
 
     private int contarDimensionesArreglo(Nodo arreglo) {
         int corchetes = contarLexema(arreglo, "[");
@@ -408,9 +425,7 @@ public class ConstruirTablaSimbolos {
     private String extraerIdentificador(Nodo n) {
         String lx = safe(n.lexema);
         if (lx.startsWith("Ident(") && lx.endsWith(")")) {
-            String id = lx.substring(6, lx.length() - 1);
-            System.out.println("[DEBUG] Extraído identificador: " + id);
-            return id;
+            return lx.substring(6, lx.length() - 1);
         }
         return "";
     }

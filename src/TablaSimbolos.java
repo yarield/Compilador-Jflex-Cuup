@@ -350,16 +350,51 @@ public class TablaSimbolos {
     // VERIFICACIÓN DE TIPOS
     // ===============================
     
-    public boolean verificarTipos(String tipo1, String tipo2, int linea, int columna) {
-        if (tiposCompatibles(tipo1, tipo2)) {
-            System.out.println("[DEBUG TIPOS] ✓ Tipos compatibles: " + tipo1 + " y " + tipo2);
-            return true;
-        } else {
-            String error = "ERROR SEMÁNTICO: Tipos incompatibles: " + tipo1 + 
-                          " y " + tipo2 + " [L:" + linea + ", C:" + columna + "]";
-            System.out.println("[DEBUG TIPOS] ✗ " + error);
-            errores.add(error);
-            return false;
+    public void verificarTipos(String tipoVar, String tipoExpr, int linea, int columna) {
+
+        if (tipoExpr.equals("desconocido")) return;
+
+        // Mismo tipo → OK
+        if (tipoVar.equals(tipoExpr)) return;
+
+        // int → float permitido
+        if (tipoVar.equals("float") && tipoExpr.equals("int")) return;
+
+        // ❌ TODO LO DEMÁS ES ERROR
+        errores.add(
+            "ERROR SEMÁNTICO: No se puede asignar " +
+            tipoExpr + " a " + tipoVar
+        );
+    }
+
+    public void verificarParametrosFuncion(Simbolo f, List<String> args) {
+
+    List<String> params = f.getParametros();
+
+    if (params.size() != args.size()) {
+        errores.add(
+            "ERROR SEMÁNTICO: La función " + f.nombre +
+            " espera " + params.size() +
+            " parámetros y recibió " + args.size()
+        );
+        return;
+    }
+
+    for (int i = 0; i < args.size(); i++) {
+        String esperado = params.get(i);
+        String recibido = args.get(i);
+
+        if (!tiposCompatibles(esperado, recibido)) {
+            errores.add(
+                "ERROR SEMÁNTICO: Parámetro " + (i + 1) +
+                " de " + f.nombre +
+                " esperaba " + esperado +
+                " y recibió " + recibido
+            );
         }
     }
+}
+
+
+
 }

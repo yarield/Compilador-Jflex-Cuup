@@ -426,10 +426,22 @@
     "columna": 5
   },
   {
+    "nombre": "Division_entera",
+    "valor": "//",
+    "linea": 18,
+    "columna": 6
+  },
+  {
+    "nombre": "Cadena",
+    "valor": "\"hols\"",
+    "linea": 18,
+    "columna": 7
+  },
+  {
     "nombre": "Endl",
     "valor": "endl",
     "linea": 18,
-    "columna": 6
+    "columna": 8
   },
   {
     "nombre": "Local",
@@ -506,42 +518,6 @@
   {
     "nombre": "Local",
     "valor": "local",
-    "linea": 21,
-    "columna": 1
-  },
-  {
-    "nombre": "Char",
-    "valor": "char",
-    "linea": 21,
-    "columna": 2
-  },
-  {
-    "nombre": "Identificador",
-    "valor": "vas",
-    "linea": 21,
-    "columna": 3
-  },
-  {
-    "nombre": "Igual",
-    "valor": "=",
-    "linea": 21,
-    "columna": 4
-  },
-  {
-    "nombre": "Caracter",
-    "valor": "'a'",
-    "linea": 21,
-    "columna": 5
-  },
-  {
-    "nombre": "Endl",
-    "valor": "endl",
-    "linea": 21,
-    "columna": 6
-  },
-  {
-    "nombre": "Local",
-    "valor": "local",
     "linea": 22,
     "columna": 1
   },
@@ -600,8 +576,8 @@
     "columna": 4
   },
   {
-    "nombre": "Identificador",
-    "valor": "ii",
+    "nombre": "Cadena",
+    "valor": "\"hola\"",
     "linea": 23,
     "columna": 5
   },
@@ -850,6 +826,84 @@
     "valor": "endl",
     "linea": 25,
     "columna": 34
+  },
+  {
+    "nombre": "Identificador",
+    "valor": "_mi_",
+    "linea": 26,
+    "columna": 1
+  },
+  {
+    "nombre": "S_pregunta_a",
+    "valor": "¿",
+    "linea": 26,
+    "columna": 2
+  },
+  {
+    "nombre": "Identificador",
+    "valor": "hola",
+    "linea": 26,
+    "columna": 3
+  },
+  {
+    "nombre": "Coma",
+    "valor": ",",
+    "linea": 26,
+    "columna": 4
+  },
+  {
+    "nombre": "Identificador",
+    "valor": "vas",
+    "linea": 26,
+    "columna": 5
+  },
+  {
+    "nombre": "S_pregunta_c",
+    "valor": "?",
+    "linea": 26,
+    "columna": 6
+  },
+  {
+    "nombre": "Endl",
+    "valor": "endl",
+    "linea": 26,
+    "columna": 7
+  },
+  {
+    "nombre": "Local",
+    "valor": "local",
+    "linea": 27,
+    "columna": 1
+  },
+  {
+    "nombre": "Char",
+    "valor": "char",
+    "linea": 27,
+    "columna": 2
+  },
+  {
+    "nombre": "Identificador",
+    "valor": "papasfritas234",
+    "linea": 27,
+    "columna": 3
+  },
+  {
+    "nombre": "Igual",
+    "valor": "=",
+    "linea": 27,
+    "columna": 4
+  },
+  {
+    "nombre": "Entero",
+    "valor": "1",
+    "linea": 27,
+    "columna": 5
+  },
+  {
+    "nombre": "Endl",
+    "valor": "endl",
+    "linea": 27,
+    "columna": 6
   },
   {
     "nombre": "S_exclamacion_c",

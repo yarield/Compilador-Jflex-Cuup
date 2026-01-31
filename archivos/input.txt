@@ -15,14 +15,14 @@ gift float _mi ¿?¡
 
 !
  coal navidad ¿  ?  ¡ | sintactico
- local float ii = 1.0 endl 
+ local float ii = 1.0 // "hols" endl 
  local string va = "a" endl
  local bool variable = true endl
- local char vas = 'a' endl
+
  local int hola = 2   endl
- ii = 1.0 + ii endl
+ ii = 1.0 + "hola" endl
  local int var = hola endl
  local char arrays[3][3] = ¡¡1,5,10!¡2,4,5!¡20,40,50!! endl 
-| _mi_ ¿?  endl  
- 
+ _mi_ ¿hola,vas?  endl  
+ local char papasfritas234 = 1 endl
  !
