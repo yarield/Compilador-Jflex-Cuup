@@ -272,56 +272,99 @@ public class ConstruirTablaSimbolos {
         enLoop = prevEnLoop;
     }
 
-private void procesarFor(Nodo n) {
-    boolean prevEnLoop = enLoop;
-    enLoop = true;
-    
-    // PRIMERO procesar la declaración de la variable
-    for (Nodo h : n.hijos) {
-        String lx = safe(h.lexema);
-        if (lx.equals("¿")) {
-            // Buscar declaración dentro del for
-            for (Nodo hijoFor : h.hijos) {
-                String hijoLex = safe(hijoFor.lexema);
-                if (hijoLex.startsWith("tipo:")) {
-                    // Encontró una declaración de tipo
-                    // El siguiente nodo debería ser el identificador
-                    String tipoVar = hijoLex.substring("tipo:".length());
-                    String id = "";
-                    
-                    // Buscar el identificador siguiente
-                    for (Nodo hermano : h.hijos) {
-                        String hermanoLex = safe(hermano.lexema);
-                        if (hermanoLex.startsWith("Ident(")) {
-                            id = extraerIdentificador(hermano);
-                            break;
-                        }
-                    }
-                    
-                    if (!id.isEmpty()) {
-                        // Declarar la variable ANTES de usarla
-                        Simbolo s = new Simbolo(
-                            id, tipoVar, "local", ts.getScopeActual().nombre,
-                            -1, -1,
-                            false, 0, ""
-                        );
-                        ts.declarar(s);
-                    }
-                    break;
-                }
+    private void procesarFor(Nodo n) {
+        boolean prevEnLoop = enLoop;
+        enLoop = true;
+        
+        // 1. PRIMERO: Buscar y procesar el init_for (declaración de i)
+        Nodo initFor = null;
+        Nodo condicionFor = null;
+        Nodo updateFor = null;
+        Nodo cuerpoFor = null;
+        
+        // Identificar los nodos importantes
+        for (Nodo h : n.hijos) {
+            String lx = safe(h.lexema);
+            if (lx.equals("init_for")) {
+                initFor = h;
+            } else if (lx.equals("op_logico") || lx.equals("op")) {
+                condicionFor = h;
+            } else if (lx.equals("update_for")) {
+                updateFor = h;
+            } else if (lx.equals("bloque")) {
+                cuerpoFor = h;
             }
-            break;
+        }
+        
+        // 2. PROCESAR init_for ANTES que nada
+        if (initFor != null) {
+            procesarInitFor(initFor);
+        }
+        
+        // 3. LUEGO procesar la condición (que ya puede usar i)
+        if (condicionFor != null) {
+            visitar(condicionFor);
+        }
+        
+        // 4. Procesar el update (++i)
+        if (updateFor != null) {
+            visitar(updateFor);
+        }
+        
+        // 5. Finalmente procesar el cuerpo
+        if (cuerpoFor != null) {
+            visitar(cuerpoFor);
+        }
+        
+        // 6. Procesar cualquier otro hijo no manejado
+        for (Nodo h : n.hijos) {
+            String lx = safe(h.lexema);
+            if (!lx.equals("init_for") && !lx.equals("op_logico") && 
+                !lx.equals("op") && !lx.equals("update_for") && 
+                !lx.equals("bloque")) {
+                visitar(h);
+            }
+        }
+        
+        enLoop = prevEnLoop;
+    }
+
+    private void procesarInitFor(Nodo initFor) {
+        // El init_for tiene la estructura: [tipo:int, Ident(i), =, Entero(0)]
+        String tipoVar = "int";
+        String id = "";
+        
+        for (Nodo h : initFor.hijos) {
+            String lx = safe(h.lexema);
+            
+            if (lx.startsWith("tipo:")) {
+                tipoVar = lx.substring("tipo:".length());
+            }
+            
+            if (lx.startsWith("Ident(")) {
+                id = extraerIdentificador(h);
+            }
+        }
+        
+        if (!id.isEmpty()) {
+            // Declarar la variable en el scope actual
+            Simbolo s = new Simbolo(
+                id, tipoVar, "local", ts.getScopeActual().nombre,
+                -1, -1,
+                false, 0, ""
+            );
+            ts.declarar(s);
+            System.out.println("[DEBUG] Declarada variable de for: " + id + " tipo: " + tipoVar);
+        }
+        
+        // También procesar la inicialización si hay (= Entero(0))
+        for (Nodo h : initFor.hijos) {
+            String lx = safe(h.lexema);
+            if (!lx.startsWith("tipo:") && !lx.startsWith("Ident(")) {
+                visitar(h);
+            }
         }
     }
-    
-    // LUEGO procesar todo normalmente
-    for (Nodo h : n.hijos) {
-        visitar(h);
-    }
-    
-    enLoop = prevEnLoop;
-}
-
 
     private void procesarDecideOf(Nodo n) {
         boolean prevEnDecideOf = enDecideOf;
