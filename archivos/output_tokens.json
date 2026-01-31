@@ -217,7 +217,7 @@
   },
   {
     "nombre": "Flotante",
-    "valor": "1.0",
+    "valor": "2.0",
     "linea": 6,
     "columna": 7
   },
@@ -360,8 +360,8 @@
     "columna": 1
   },
   {
-    "nombre": "Float",
-    "valor": "float",
+    "nombre": "Int",
+    "valor": "int",
     "linea": 15,
     "columna": 2
   },
@@ -456,14 +456,14 @@
     "columna": 6
   },
   {
-    "nombre": "Division",
-    "valor": "/",
+    "nombre": "Division_entera",
+    "valor": "//",
     "linea": 16,
     "columna": 7
   },
   {
-    "nombre": "Flotante",
-    "valor": "2.0",
+    "nombre": "Entero",
+    "valor": "2",
     "linea": 16,
     "columna": 8
   },
@@ -1302,8 +1302,8 @@
     "columna": 9
   },
   {
-    "nombre": "Entero",
-    "valor": "10",
+    "nombre": "Caracter",
+    "valor": "'a'",
     "linea": 46,
     "columna": 10
   },
@@ -1764,8 +1764,8 @@
     "columna": 1
   },
   {
-    "nombre": "Float",
-    "valor": "float",
+    "nombre": "Int",
+    "valor": "int",
     "linea": 61,
     "columna": 2
   },

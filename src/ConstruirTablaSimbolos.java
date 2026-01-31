@@ -208,9 +208,12 @@ public class ConstruirTablaSimbolos {
                     Nodo expr = n.hijos.get(i + 1);
                     String tipoExpr = evaluarTipoExpresion(expr);
                     
-                    // Verificar compatibilidad de tipos
+                    // Verificar compatibilidad de tipos - DEBEN SER IGUALES
                     if (!tipoExpr.equals("desconocido") && !tipoVar.equals("desconocido")) {
-                        ts.verificarTipos(tipoVar, tipoExpr, -1, -1);
+                        if (!tipoVar.equals(tipoExpr)) {
+                            reportarError("No se puede asignar " + tipoExpr + " a " + tipoVar + 
+                                        " (se requieren tipos iguales)", -1, -1);
+                        }
                     }
                 }
                 break;
@@ -228,18 +231,17 @@ public class ConstruirTablaSimbolos {
         
         String id = extraerIdentificador(lhs);
         if (!id.isEmpty()) {
-            // Marcar que se usa el identificador
             ts.usarIdentificador(id, -1, -1);
             
-            // Obtener tipo del LHS
             Simbolo s = ts.buscarSimbolo(id);
             if (s != null) {
                 String tipoVar = s.tipo;
                 String tipoExpr = evaluarTipoExpresion(rhs);
                 
-                // Verificar compatibilidad
-                if (!tipoExpr.equals("desconocido")) {
-                    ts.verificarTipos(tipoVar, tipoExpr, -1, -1);
+                // Verificar compatibilidad - DEBEN SER IGUALES
+                if (!tipoExpr.equals("desconocido") && !tipoVar.equals(tipoExpr)) {
+                    reportarError("No se puede asignar " + tipoExpr + " a " + tipoVar + 
+                                " (se requieren tipos iguales)", -1, -1);
                 }
             }
         }
@@ -520,88 +522,108 @@ public class ConstruirTablaSimbolos {
             op.equals("<") || op.equals(">") || 
             op.equals("<=") || op.equals(">=")) {
             
-            if (sonComparables(t1, t2)) {
-                return "bool";
-            } else {
-                reportarError("Tipos incompatibles para operador '" + op + "': " + t1 + " y " + t2, -1, -1);
+            if (!t1.equals(t2)) {  // SOLO tipos iguales
+                reportarError("Tipos incompatibles para operador '" + op + "': " + 
+                            t1 + " y " + t2 + ". Se requieren tipos iguales.", -1, -1);
                 return "desconocido";
             }
+            
+            // Solo permitir comparación de tipos numéricos y bool
+            if (!t1.equals("int") && !t1.equals("float") && 
+                !t1.equals("bool") && !t1.equals("char")) {
+                reportarError("Tipo '" + t1 + "' no puede usarse en comparación", -1, -1);
+                return "desconocido";
+            }
+            
+            return "bool";
         }
 
-        // SUMA
+        // SUMA - Solo permitir tipos iguales
         if (op.equals("+")) {
             if (t1.equals("string") && t2.equals("string"))
                 return "string";
             
-            if (t1.equals("int") && t2.equals("int"))
-                return "int";
+            if (!t1.equals(t2)) {
+                reportarError("Suma requiere tipos iguales, recibió: " + t1 + " + " + t2, -1, -1);
+                return "desconocido";
+            }
             
-            if (t1.equals("float") && t2.equals("float"))
-                return "float";
-            
-            if ((t1.equals("float") && t2.equals("int")) || 
-                (t1.equals("int") && t2.equals("float")))
-                return "float";
-            
-            reportarErrorOperacion("+", t1, t2, -1, -1);
+            if (t1.equals("int") || t1.equals("float"))
+                return t1;
+                
+            reportarError("Suma no permitida para tipo: " + t1, -1, -1);
             return "desconocido";
         }
         
-        // RESTA y MULTIPLICACIÓN
+        // RESTA, MULTIPLICACIÓN - Solo tipos iguales
         if (op.equals("-") || op.equals("*")) {
-            if (t1.equals("int") && t2.equals("int"))
-                return "int";
+            if (!t1.equals(t2)) {
+                reportarError("Operador '" + op + "' requiere tipos iguales: " + 
+                            t1 + " y " + t2, -1, -1);
+                return "desconocido";
+            }
             
-            if (t1.equals("float") && t2.equals("float"))
-                return "float";
-            
-            if ((t1.equals("float") && t2.equals("int")) || 
-                (t1.equals("int") && t2.equals("float")))
-                return "float";
-            
-            reportarErrorOperacion(op, t1, t2, -1, -1);
+            if (t1.equals("int") || t1.equals("float"))
+                return t1;
+                
+            reportarError("Operador '" + op + "' no permitido para tipo: " + t1, -1, -1);
             return "desconocido";
         }
         
-        // DIVISIÓN NORMAL
+        // DIVISIÓN NORMAL - Solo float con float
         if (op.equals("/")) {
-            if (t1.equals("float") && t2.equals("float"))
-                return "float";
-            
-            reportarErrorOperacion("/", t1, t2, -1, -1);
-            return "desconocido";
+            if (!t1.equals("float") || !t2.equals("float")) {
+                reportarError("División '/' solo permite tipos float, recibió: " + 
+                            t1 + " / " + t2, -1, -1);
+                return "desconocido";
+            }
+            return "float";
         }
         
-        // DIVISIÓN ENTERA
+        // DIVISIÓN ENTERA - Solo int con int
         if (op.equals("//")) {
-            if (t1.equals("int") && t2.equals("int"))
-                return "int";
-            
-            reportarErrorOperacion("//", t1, t2, -1, -1);
-            return "desconocido";
+            if (!t1.equals("int") || !t2.equals("int")) {
+                reportarError("División entera '//' solo permite tipos int, recibió: " + 
+                            t1 + " // " + t2, -1, -1);
+                return "desconocido";
+            }
+            return "int";
         }
         
-        // MÓDULO
+        // MÓDULO - Solo tipos iguales (int o float)
         if (op.equals("%")) {
-            if (t1.equals("int") && t2.equals("int"))
-                return "int";
+            if (!t1.equals(t2)) {
+                reportarError("Módulo '%' requiere tipos iguales, recibió: " + 
+                            t1 + " % " + t2, -1, -1);
+                return "desconocido";
+            }
             
-            reportarErrorOperacion("%", t1, t2, -1, -1);
-            return "desconocido";
+            if (!t1.equals("int") && !t1.equals("float")) {
+                reportarError("Módulo '%' solo permite int o float, recibió: " + t1, -1, -1);
+                return "desconocido";
+            }
+            
+            return t1; // Retorna el mismo tipo (int o float)
         }
-        
-        // POTENCIA
+
+        // POTENCIA - Solo tipos iguales (int o float)
         if (op.equals("^")) {
-            if (t1.equals("float") && t2.equals("float"))
-                return "float";
+            if (!t1.equals(t2)) {
+                reportarError("Potencia '^' requiere tipos iguales, recibió: " + 
+                            t1 + " ^ " + t2, -1, -1);
+                return "desconocido";
+            }
             
-            reportarErrorOperacion("^", t1, t2, -1, -1);
-            return "desconocido";
+            if (!t1.equals("int") && !t1.equals("float")) {
+                reportarError("Potencia '^' solo permite int o float, recibió: " + t1, -1, -1);
+                return "desconocido";
+            }
+            
+            return t1; // Retorna el mismo tipo (int o float)
         }
         
         return "desconocido";
     }
-
     // ==================== VERIFICACIÓN ESTRICTA DE OPERACIONES ====================
 
     private void procesarOperacionBinariaEStricta(Nodo opNode) {
@@ -632,48 +654,36 @@ public class ConstruirTablaSimbolos {
     }
 
     private boolean verificarSumaEstricta(String tipo1, String tipo2, int linea, int columna) {
-        if (tipo1.equals("string") && tipo2.equals("string")) {
+        if (!tipo1.equals(tipo2)) {
+            reportarError("Suma requiere tipos iguales: " + tipo1 + " + " + tipo2, linea, columna);
+            return false;
+        }
+        
+        if (tipo1.equals("string")) {
+            return true; // Concatenación de strings
+        }
+        
+        if (tipo1.equals("int") || tipo1.equals("float")) {
             return true;
         }
         
-        if (tipo1.equals("int") && tipo2.equals("int")) {
-            return true;
-        }
-        
-        if (tipo1.equals("float") && tipo2.equals("float")) {
-            return true;
-        }
-        
-        if (tipo1.equals("float") && tipo2.equals("int")) {
-            return true;
-        }
-        
-        if (tipo1.equals("int") && tipo2.equals("float")) {
-            return true;
-        }
-        
-        reportarError("Tipos incompatibles para suma: " + tipo1 + " + " + tipo2, linea, columna);
+        reportarError("Suma no permitida para tipo: " + tipo1, linea, columna);
         return false;
     }
 
     private boolean verificarRestaEstricta(String tipo1, String tipo2, int linea, int columna) {
-        if (tipo1.equals("int") && tipo2.equals("int")) {
-            return true;
-        }
-        
-        if (tipo1.equals("float") && tipo2.equals("float")) {
-            return true;
-        }
-        
         if (!tipo1.equals(tipo2)) {
-            reportarError("Tipos diferentes en resta: " + tipo1 + " - " + tipo2, linea, columna);
+            reportarError("Resta requiere tipos iguales: " + tipo1 + " - " + tipo2, linea, columna);
             return false;
         }
         
-        reportarError("Tipo no soportado para resta: " + tipo1, linea, columna);
+        if (tipo1.equals("int") || tipo1.equals("float")) {
+            return true;
+        }
+        
+        reportarError("Resta no permitida para tipo: " + tipo1, linea, columna);
         return false;
     }
-
     private boolean verificarMultiplicacionEstricta(String tipo1, String tipo2, int linea, int columna) {
         if (tipo1.equals("int") && tipo2.equals("int")) {
             return true;
@@ -721,33 +731,32 @@ public class ConstruirTablaSimbolos {
     }
 
     private boolean verificarModuloEstricto(String tipo1, String tipo2, int linea, int columna) {
-        if (tipo1.equals("int") && tipo2.equals("int")) {
-            return true;
-        }
-        
         if (!tipo1.equals(tipo2)) {
             reportarError("Tipos diferentes en módulo: " + tipo1 + " % " + tipo2, linea, columna);
             return false;
         }
         
-        reportarError("Operador módulo '%' exclusivo para tipos int, recibió: " + tipo1, linea, columna);
-        return false;
+        if (!tipo1.equals("int") && !tipo1.equals("float")) {
+            reportarError("Operador módulo '%' solo permite int o float, recibió: " + tipo1, linea, columna);
+            return false;
+        }
+        
+        return true;
     }
 
     private boolean verificarPotenciaEstricta(String tipo1, String tipo2, int linea, int columna) {
-        if (tipo1.equals("float") && tipo2.equals("float")) {
-            return true;
-        }
-        
         if (!tipo1.equals(tipo2)) {
             reportarError("Tipos diferentes en potencia: " + tipo1 + " ^ " + tipo2, linea, columna);
             return false;
         }
         
-        reportarError("Potencia '^' exclusiva para tipos float, recibió: " + tipo1, linea, columna);
-        return false;
+        if (!tipo1.equals("int") && !tipo1.equals("float")) {
+            reportarError("Potencia '^' solo permite int o float, recibió: " + tipo1, linea, columna);
+            return false;
+        }
+        
+        return true;
     }
-
     // ==================== MÉTODOS PARA FUNCIONES ====================
 
     private String extraerTipoRetornoFuncion(Nodo funcionNode) {
@@ -894,18 +903,13 @@ public class ConstruirTablaSimbolos {
 
     
     private boolean sonComparables(String t1, String t2) {
+        // Si algún tipo es desconocido, no podemos verificar
         if (t1.equals("desconocido") || t2.equals("desconocido")) {
-            return true;
+            return true; // Permitir temporalmente
         }
         
-        if (t1.equals(t2)) return true;
-        
-        if ((t1.equals("int") && t2.equals("float")) ||
-            (t1.equals("float") && t2.equals("int"))) {
-            return true;
-        }
-        
-        return false;
+        // SOLO tipos iguales pueden compararse
+        return t1.equals(t2);
     }
 
     // ==================== MÉTODOS UTILITARIOS ====================
