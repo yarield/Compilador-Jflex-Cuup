@@ -145,7 +145,15 @@ public class ConstruirTablaSimbolos {
             return;
         }
 
-        // 14) IDENTIFICADORES
+        // 14) ACCESO A ARRAY (NUEVO)
+        if (lx.equals("acceso_array")) {
+            procesarAccesoArray(n);
+            for (Nodo h : n.hijos)
+                visitar(h);
+            return;
+        }
+
+        // 15) IDENTIFICADORES
         if (lx.startsWith("Ident(")) {
             String id = extraerIdentificador(n);
             if (!id.isEmpty()) {
@@ -153,7 +161,7 @@ public class ConstruirTablaSimbolos {
             }
         }
 
-        // 15) Recorrido normal
+        // 16) Recorrido normal
         for (Nodo h : n.hijos)
             visitar(h);
     }
@@ -167,48 +175,67 @@ public class ConstruirTablaSimbolos {
         boolean esArreglo = false;
         int dims = 0;
 
-        boolean encontroTipo = false;
+        System.out.println("[DEBUG] Procesando declaración: " + tipoDecl);
         
+        // PRIMERO: Buscar información básica (tipo, nombre)
         for (Nodo h : n.hijos) {
             String lx = safe(h.lexema);
 
             if (lx.startsWith("tipo:")) {
                 tipoVar = lx.substring("tipo:".length());
-                encontroTipo = true;
+                System.out.println("[DEBUG] Tipo encontrado: " + tipoVar);
             }
             
-            if (encontroTipo && lx.startsWith("Ident(")) {
+            if (lx.startsWith("Ident(")) {
                 id = extraerIdentificador(h);
-                break;
+                System.out.println("[DEBUG] Identificador: " + id);
             }
-            
-            if (lx.equals("arreglo")) {
+        }
+        
+        // SEGUNDO: Verificar si es arreglo y contar dimensiones
+        for (Nodo h : n.hijos) {
+            if (safe(h.lexema).equals("arreglo")) {
                 esArreglo = true;
-                dims = contarDimensionesArreglo(h);
+                dims = contarDimensionesArregloCompleto(h);
+                System.out.println("[DEBUG] Es arreglo de " + dims + " dimensiones");
+                break;
             }
         }
 
         if (id.isEmpty()) return;
 
-        // Declarar el símbolo
+        // TERCERO: Declarar el símbolo en la tabla
         Simbolo s = new Simbolo(
             id, tipoVar, clase, ts.getScopeActual().nombre,
             -1, -1,
             esArreglo, dims, ""
         );
         ts.declarar(s);
+        
+        System.out.println("[DEBUG] Símbolo declarado: " + id + " tipo: " + tipoVar + 
+                          " arreglo: " + esArreglo + " dims: " + dims);
 
-        // Buscar inicialización y verificar tipos
+        // CUARTO: Buscar inicialización y verificar
         for (int i = 0; i < n.hijos.size(); i++) {
             Nodo h = n.hijos.get(i);
             String lx = safe(h.lexema);
             
-            if (lx.equals("=")) {
+            if (esArreglo && lx.equals("init_array_2d")) {
+                System.out.println("[DEBUG] Inicialización 2D encontrada");
+                verificarInicializacionArreglo2D(h, tipoVar);
+                break;
+            }
+            else if (esArreglo && lx.equals("init_array_1d")) {
+                System.out.println("[DEBUG] Inicialización 1D encontrada");
+                verificarInicializacionArreglo1D(h, tipoVar);
+                break;
+            }
+            else if (!esArreglo && lx.equals("=")) {
+                // Para variables simples (no arreglos)
                 if (i + 1 < n.hijos.size()) {
                     Nodo expr = n.hijos.get(i + 1);
                     String tipoExpr = evaluarTipoExpresion(expr);
                     
-                    // Verificar compatibilidad de tipos - DEBEN SER IGUALES
                     if (!tipoExpr.equals("desconocido") && !tipoVar.equals("desconocido")) {
                         if (!tipoVar.equals(tipoExpr)) {
                             reportarError("No se puede asignar " + tipoExpr + " a " + tipoVar + 
@@ -236,12 +263,23 @@ public class ConstruirTablaSimbolos {
             Simbolo s = ts.buscarSimbolo(id);
             if (s != null) {
                 String tipoVar = s.tipo;
-                String tipoExpr = evaluarTipoExpresion(rhs);
                 
-                // Verificar compatibilidad - DEBEN SER IGUALES
-                if (!tipoExpr.equals("desconocido") && !tipoVar.equals(tipoExpr)) {
-                    reportarError("No se puede asignar " + tipoExpr + " a " + tipoVar + 
-                                " (se requieren tipos iguales)", -1, -1);
+                // Si es arreglo, verificar inicialización
+                if (s.esArreglo && safe(rhs.lexema).equals("init_array_2d")) {
+                    verificarInicializacionArreglo2D(rhs, tipoVar);
+                }
+                else if (s.esArreglo && safe(rhs.lexema).equals("init_array_1d")) {
+                    verificarInicializacionArreglo1D(rhs, tipoVar);
+                }
+                // Para variables normales
+                else if (!s.esArreglo) {
+                    String tipoExpr = evaluarTipoExpresion(rhs);
+                    
+                    // Verificar compatibilidad - DEBEN SER IGUALES
+                    if (!tipoExpr.equals("desconocido") && !tipoVar.equals(tipoExpr)) {
+                        reportarError("No se puede asignar " + tipoExpr + " a " + tipoVar + 
+                                    " (se requieren tipos iguales)", -1, -1);
+                    }
                 }
             }
         }
@@ -745,18 +783,19 @@ public class ConstruirTablaSimbolos {
     }
 
     private boolean verificarPotenciaEstricta(String tipo1, String tipo2, int linea, int columna) {
+        if (tipo1.equals("float") && tipo2.equals("float")) {
+            return true;
+        }
+        
         if (!tipo1.equals(tipo2)) {
             reportarError("Tipos diferentes en potencia: " + tipo1 + " ^ " + tipo2, linea, columna);
             return false;
         }
         
-        if (!tipo1.equals("int") && !tipo1.equals("float")) {
-            reportarError("Potencia '^' solo permite int o float, recibió: " + tipo1, linea, columna);
-            return false;
-        }
-        
-        return true;
+        reportarError("Potencia '^' exclusiva para tipos float, recibió: " + tipo1, linea, columna);
+        return false;
     }
+
     // ==================== MÉTODOS PARA FUNCIONES ====================
 
     private String extraerTipoRetornoFuncion(Nodo funcionNode) {
@@ -879,6 +918,146 @@ public class ConstruirTablaSimbolos {
         ts.declarar(s);
     }
 
+    // ==================== MÉTODOS PARA DETECTAR ARRAYS ====================
+
+    // Método para contar dimensiones del arreglo
+    private int contarDimensionesArregloCompleto(Nodo arregloNode) {
+        int dimensiones = 0;
+        
+        // Recorrer todos los hijos buscando nodos "[]"
+        for (Nodo h : arregloNode.hijos) {
+            if (safe(h.lexema).equals("[]")) {
+                dimensiones++;
+            }
+            // También revisar hijos recursivamente
+            dimensiones += contarDimensionesArregloCompleto(h);
+        }
+        
+        return dimensiones;
+    }
+
+    // Método para verificar inicialización de arreglo 2D
+    private void verificarInicializacionArreglo2D(Nodo initArray2D, String tipoEsperado) {
+        System.out.println("[DEBUG] Verificando inicialización arreglo 2D para tipo: " + tipoEsperado);
+        
+        // Buscar la lista de filas
+        for (Nodo h : initArray2D.hijos) {
+            if (safe(h.lexema).equals("lista_filas")) {
+                int contadorFilas = 0;
+                
+                // Revisar cada fila
+                for (Nodo fila : h.hijos) {
+                    if (safe(fila.lexema).equals("fila")) {
+                        contadorFilas++;
+                        verificarFilaArreglo(fila, tipoEsperado);
+                    }
+                }
+                
+                System.out.println("[DEBUG] Total de filas: " + contadorFilas);
+            }
+        }
+    }
+
+    // Método para verificar inicialización de arreglo 1D
+    private void verificarInicializacionArreglo1D(Nodo initArray1D, String tipoEsperado) {
+        System.out.println("[DEBUG] Verificando inicialización arreglo 1D para tipo: " + tipoEsperado);
+        
+        // Buscar la lista de expresiones
+        for (Nodo h : initArray1D.hijos) {
+            if (safe(h.lexema).equals("lista_expresiones")) {
+                int contadorElementos = 0;
+                
+                // Revisar cada expresión
+                for (Nodo expr : h.hijos) {
+                    String lx = safe(expr.lexema);
+                    if (!lx.equals(",")) {
+                        verificarTipoElemento(lx, tipoEsperado);
+                        contadorElementos++;
+                    }
+                }
+                
+                System.out.println("[DEBUG] Total de elementos: " + contadorElementos);
+            }
+        }
+    }
+
+    // Método para verificar una fila del arreglo
+    private void verificarFilaArreglo(Nodo filaNode, String tipoEsperado) {
+        // Buscar la lista de expresiones
+        for (Nodo h : filaNode.hijos) {
+            if (safe(h.lexema).equals("lista_expresiones")) {
+                int contadorElementos = 0;
+                
+                // Revisar cada expresión en la fila
+                for (Nodo expr : h.hijos) {
+                    String lx = safe(expr.lexema);
+                    
+                    // Verificar tipo del elemento
+                    if (!lx.equals(",")) {
+                        verificarTipoElemento(lx, tipoEsperado);
+                        contadorElementos++;
+                    }
+                }
+                
+                System.out.println("[DEBUG] Elementos en fila: " + contadorElementos);
+            }
+        }
+    }
+
+    // Método para verificar tipo de un elemento
+    private void verificarTipoElemento(String lexemaElemento, String tipoEsperado) {
+        if (lexemaElemento.contains("Cadena")) {
+            if (!tipoEsperado.equals("string")) {
+                reportarError("Elemento string en arreglo de tipo " + tipoEsperado, -1, -1);
+            }
+        }
+        else if (lexemaElemento.contains("Entero")) {
+            if (!tipoEsperado.equals("int")) {
+                reportarError("Elemento int en arreglo de tipo " + tipoEsperado, -1, -1);
+            }
+        }
+        else if (lexemaElemento.contains("Flotante")) {
+            if (!tipoEsperado.equals("float")) {
+                reportarError("Elemento float en arreglo de tipo " + tipoEsperado, -1, -1);
+            }
+        }
+        else if (lexemaElemento.contains("Caracter")) {
+            if (!tipoEsperado.equals("char")) {
+                reportarError("Elemento char en arreglo de tipo " + tipoEsperado, -1, -1);
+            }
+        }
+        else if (lexemaElemento.equals("True") || lexemaElemento.equals("False")) {
+            if (!tipoEsperado.equals("bool")) {
+                reportarError("Elemento bool en arreglo de tipo " + tipoEsperado, -1, -1);
+            }
+        }
+    }
+
+    // Método para procesar acceso a elementos de array
+    private void procesarAccesoArray(Nodo accesoNode) {
+        String id = "";
+        
+        // Buscar el identificador
+        for (Nodo h : accesoNode.hijos) {
+            if (safe(h.lexema).startsWith("Ident(")) {
+                id = extraerIdentificador(h);
+                break;
+            }
+        }
+        
+        if (!id.isEmpty()) {
+            // Verificar que exista
+            ts.usarIdentificador(id, -1, -1);
+            
+            Simbolo s = ts.buscarSimbolo(id);
+            if (s != null) {
+                if (!s.esArreglo) {
+                    reportarError(id + " no es un arreglo", -1, -1);
+                }
+            }
+        }
+    }
+
     // ==================== MÉTODOS AUXILIARES ====================
 
     private String tipoLiteral(String lx) {
@@ -915,12 +1094,8 @@ public class ConstruirTablaSimbolos {
     // ==================== MÉTODOS UTILITARIOS ====================
 
     private int contarDimensionesArreglo(Nodo arreglo) {
-        int corchetes = contarLexema(arreglo, "[");
-        if (corchetes >= 2)
-            return 2;
-        if (corchetes == 1)
-            return 1;
-        return 1;
+        // Usar el método más completo que creamos
+        return contarDimensionesArregloCompleto(arreglo);
     }
 
     private int contarLexema(Nodo n, String target) {

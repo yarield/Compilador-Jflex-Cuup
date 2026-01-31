@@ -37,7 +37,7 @@ coal navidad ¿? ¡
     !
     end decide endl
     
-    local int resultado[][] = ¡¡1,2!¡3,4!! endl 
+    local int  resultado[][] = ¡¡1,2!¡3,4!! endl 
     local string textos[][] = ¡¡"hola","mundo"!¡"foo","bar"!! endl
     
     show ¿ 5 ? endl 

@@ -1122,8 +1122,8 @@
     "columna": 10
   },
   {
-    "nombre": "Cadena",
-    "valor": "\"hola\"",
+    "nombre": "Entero",
+    "valor": "1",
     "linea": 41,
     "columna": 11
   },
