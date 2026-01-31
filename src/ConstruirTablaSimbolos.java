@@ -5,6 +5,9 @@ public class ConstruirTablaSimbolos {
 
     private final TablaSimbolos ts;
     private int contadorBloques = 0;
+    private boolean enLoop = false;         
+    private boolean enDecideOf = false;         
+    private String funcionActual = "";       
 
     public ConstruirTablaSimbolos(TablaSimbolos ts) {
         this.ts = ts;
@@ -22,7 +25,7 @@ public class ConstruirTablaSimbolos {
 
         String lx = safe(n.lexema);
 
-        // 1) MAIN: manejar main correctamente
+        // 1) MAIN
         if (lx.equals("main")) {
             ts.entrarFuncion("main");
             
@@ -40,20 +43,17 @@ public class ConstruirTablaSimbolos {
             return;
         }
 
-        // 2) FUNCIÓN: Declarar función en tabla global y procesar cuerpo
+        // 2) FUNCIÓN
         if (lx.equals("funcion")) {
             String nombreFun = extraerNombreFuncion(n);
             String tipoRetorno = extraerTipoRetornoFuncion(n);
             List<String> tiposParametros = extraerTiposParametrosFuncion(n);
             
-            // Declarar la función en el ámbito global
             ts.declararFuncion(nombreFun, tipoRetorno, tiposParametros, -1, -1);
             
-            // Entrar al scope de la función para procesar su cuerpo
             String key = "func:" + nombreFun;
             ts.entrarFuncion(key);
 
-            // Procesar cuerpo de la función (parámetros y bloque)
             for (Nodo h : n.hijos) {
                 String hijoLex = safe(h.lexema);
                 if (!hijoLex.equals("Gift") && 
@@ -68,7 +68,7 @@ public class ConstruirTablaSimbolos {
             return;
         }
 
-        // 3) BLOQUE: manejar bloques correctamente
+        // 3) BLOQUE
         if (lx.equals("bloque")) {
             if (!ts.getScopeActual().nombre.startsWith("bloque#")) {
                 contadorBloques++;
@@ -83,26 +83,55 @@ public class ConstruirTablaSimbolos {
             return;
         }
 
-        // 4) DECLARACIONES (LOCALES Y GLOBALES)
+        // 4) DECLARACIONES
         if (lx.equals("declaracion_local") || lx.equals("declaracion_global")) {
             procesarDeclaracionConTipos(n, lx);
         }
 
-        // 5) ASIGNACIÓN: con verificación de tipos
+        // 5) ASIGNACIÓN
         if (lx.equals("asignacion") && n.hijos.size() >= 2) {
             procesarAsignacionConTipos(n);
         }
 
-        // 6) OPERACIONES BINARIAS: Verificar tipos durante la visita
+        // 6) OPERACIONES BINARIAS
         if (lx.equals("op")) {
             procesarOperacionBinariaEStricta(n);
-            // Continuar procesando hijos para detectar más usos
             for (Nodo h : n.hijos)
                 visitar(h);
             return;
         }
 
-        // 7) Parámetros
+        // 7) LOOP
+        if (lx.equals("loop")) {
+            procesarLoop(n);
+            return;
+        }
+
+        // 8) FOR
+        if (lx.equals("for")) {
+            procesarFor(n);
+            return;
+        }
+
+        // 9) DECIDE/OF
+        if (lx.equals("decide_of")) {
+            procesarDecideOf(n);
+            return;
+        }
+
+        // 10) RETURN
+        if (lx.equals("return")) {
+            procesarReturn(n);
+            return;
+        }
+
+        // 11) BREAK
+        if (lx.equals("break")) {
+            procesarBreak(n);
+            return;
+        }
+
+        // 12) Parámetros
         if (lx.equals("param")) {
             procesarParametro(n);
             for (Nodo h : n.hijos)
@@ -110,14 +139,13 @@ public class ConstruirTablaSimbolos {
             return;
         }
         
-
-        // 8) LLAMADA A FUNCIÓN: Verificar que la función existe
+        // 13) LLAMADA A FUNCIÓN
         if (lx.equals("llamada_funcion")) {
             procesarLlamadaFuncion(n);
             return;
         }
 
-        // 9) IDENTIFICADORES USADOS en expresiones
+        // 14) IDENTIFICADORES
         if (lx.startsWith("Ident(")) {
             String id = extraerIdentificador(n);
             if (!id.isEmpty()) {
@@ -125,12 +153,12 @@ public class ConstruirTablaSimbolos {
             }
         }
 
-        // 10) Recorrido normal de hijos
+        // 15) Recorrido normal
         for (Nodo h : n.hijos)
             visitar(h);
     }
 
-    // ==================== DECLARACIONES CON VERIFICACIÓN DE TIPOS ====================
+    // ==================== DECLARACIONES ====================
 
     private void procesarDeclaracionConTipos(Nodo n, String tipoDecl) {
         String clase = tipoDecl.equals("declaracion_global") ? "global" : "local";
@@ -139,7 +167,6 @@ public class ConstruirTablaSimbolos {
         boolean esArreglo = false;
         int dims = 0;
 
-        // Primero encontrar el tipo y el ID
         boolean encontroTipo = false;
         
         for (Nodo h : n.hijos) {
@@ -191,7 +218,7 @@ public class ConstruirTablaSimbolos {
         }
     }
 
-    // ==================== ASIGNACIONES CON VERIFICACIÓN DE TIPOS ====================
+    // ==================== ASIGNACIONES ====================
 
     private void procesarAsignacionConTipos(Nodo n) {
         if (n.hijos.size() < 2) return;
@@ -216,6 +243,148 @@ public class ConstruirTablaSimbolos {
                 }
             }
         }
+    }
+
+    // ==================== ESTRUCTURAS DE CONTROL ====================
+
+    private void procesarLoop(Nodo n) {
+        boolean prevEnLoop = enLoop;
+        enLoop = true;
+        
+        for (Nodo h : n.hijos) {
+            visitar(h);
+        }
+        
+        // Verificar la condición del Exit When
+        for (int i = 0; i < n.hijos.size(); i++) {
+            if (safe(n.hijos.get(i).lexema).equals("When")) {
+                if (i + 1 < n.hijos.size()) {
+                    Nodo cond = n.hijos.get(i + 1);
+                    String tipoCond = evaluarTipoExpresion(cond);
+                    if (!tipoCond.equals("bool") && !tipoCond.equals("desconocido")) {
+                        reportarError("Condición en 'exit when' debe ser bool, es " + tipoCond, -1, -1);
+                    }
+                }
+                break;
+            }
+        }
+        
+        enLoop = prevEnLoop;
+    }
+
+private void procesarFor(Nodo n) {
+    boolean prevEnLoop = enLoop;
+    enLoop = true;
+    
+    // PRIMERO procesar la declaración de la variable
+    for (Nodo h : n.hijos) {
+        String lx = safe(h.lexema);
+        if (lx.equals("¿")) {
+            // Buscar declaración dentro del for
+            for (Nodo hijoFor : h.hijos) {
+                String hijoLex = safe(hijoFor.lexema);
+                if (hijoLex.startsWith("tipo:")) {
+                    // Encontró una declaración de tipo
+                    // El siguiente nodo debería ser el identificador
+                    String tipoVar = hijoLex.substring("tipo:".length());
+                    String id = "";
+                    
+                    // Buscar el identificador siguiente
+                    for (Nodo hermano : h.hijos) {
+                        String hermanoLex = safe(hermano.lexema);
+                        if (hermanoLex.startsWith("Ident(")) {
+                            id = extraerIdentificador(hermano);
+                            break;
+                        }
+                    }
+                    
+                    if (!id.isEmpty()) {
+                        // Declarar la variable ANTES de usarla
+                        Simbolo s = new Simbolo(
+                            id, tipoVar, "local", ts.getScopeActual().nombre,
+                            -1, -1,
+                            false, 0, ""
+                        );
+                        ts.declarar(s);
+                    }
+                    break;
+                }
+            }
+            break;
+        }
+    }
+    
+    // LUEGO procesar todo normalmente
+    for (Nodo h : n.hijos) {
+        visitar(h);
+    }
+    
+    enLoop = prevEnLoop;
+}
+
+
+    private void procesarDecideOf(Nodo n) {
+        boolean prevEnDecideOf = enDecideOf;
+        enDecideOf = true;
+        
+        for (Nodo h : n.hijos) {
+            visitar(h);
+        }
+        
+        for (Nodo h : n.hijos) {
+            if (safe(h.lexema).equals("lista_decide_of")) {
+                verificarCasosDecideOf(h);
+            }
+        }
+        
+        enDecideOf = prevEnDecideOf;
+    }
+
+    private void verificarCasosDecideOf(Nodo listaCasos) {
+        for (Nodo caso : listaCasos.hijos) {
+            if (safe(caso.lexema).equals("case")) {
+                if (!caso.hijos.isEmpty()) {
+                    Nodo expr = caso.hijos.get(0);
+                    String tipoExpr = evaluarTipoExpresion(expr);
+                    
+                    if (!tipoExpr.equals("bool") && !tipoExpr.equals("desconocido")) {
+                        reportarError("Expresión en 'decide of' debe ser bool, es " + tipoExpr, -1, -1);
+                    }
+                }
+            }
+        }
+    }
+    private void procesarReturn(Nodo n) {
+        if (!n.hijos.isEmpty()) {
+            Nodo expr = n.hijos.get(0);
+            String tipoExpr = evaluarTipoExpresion(expr);
+            
+            // Obtener tipo de retorno de la función actual
+            String tipoEsperado = obtenerTipoRetornoFuncionActual();
+            if (!tipoEsperado.equals("void")) {
+                ts.verificarTipos(tipoEsperado, tipoExpr, -1, -1);
+            }
+        }
+    }
+
+    private String obtenerTipoRetornoFuncionActual() {
+        // Por ahora, devuelve "void" como placeholder
+        // Necesitarías llevar registro del tipo de función actual
+        return "void";
+    }
+
+    private void procesarBreak(Nodo n) {
+        if (!enLoop && !enDecideOf) {
+            reportarError("'break' solo puede usarse dentro de loop o decide of", -1, -1);
+        }
+    }
+
+    private boolean estaEnLoop() {
+        return enLoop;
+    }
+
+    private boolean estaEnDecideOf() {
+        return enDecideOf;
     }
 
     // ==================== EVALUACIÓN DE EXPRESIONES ====================
@@ -258,7 +427,6 @@ public class ConstruirTablaSimbolos {
 
         // LLAMADA A FUNCIÓN
         if (lx.equals("llamada_funcion")) {
-            // Buscar tipo de retorno de la función
             String nombreFunc = "";
             for (Nodo h : n.hijos) {
                 if (safe(h.lexema).startsWith("Ident(")) {
@@ -273,13 +441,49 @@ public class ConstruirTablaSimbolos {
             }
         }
 
+        // AQUÍ FALTA EL CASO PARA EXPRESIONES DE COMPARACIÓN (==, !=, <, >, etc.)
+        // Agrega este bloque justo aquí:
+        if (lx.equals("¿") && !n.hijos.isEmpty()) {
+            // Buscar el contenido dentro de ¿ ?
+            for (Nodo h : n.hijos) {
+                if (!safe(h.lexema).equals("?")) {
+                    // Evaluar recursivamente lo que hay dentro
+                    String tipoInterno = evaluarTipoExpresion(h);
+                    return tipoInterno;
+                }
+            }
+            return "desconocido";
+        }
+
+        // AQUÍ TAMBIÉN FALTA MANEJAR EXPRESIONES DE COMPARACIÓN DIRECTAS
+        // Si el nodo es una comparación (debería ser "op" pero a veces no)
+        // Revisar si es una expresión simple
+        for (Nodo h : n.hijos) {
+            if (safe(h.lexema).equals("op")) {
+                String tipoHijo = evaluarTipoExpresion(h);
+                return tipoHijo;
+            }
+        }
+
         return "desconocido";
     }
 
-    
     private String verificarOperacionBinaria(String op, String t1, String t2) {
         if (t1.equals("desconocido") || t2.equals("desconocido"))
             return "desconocido";
+
+        // OPERADORES DE COMPARACIÓN (retornan bool)
+        if (op.equals("==") || op.equals("!=") || 
+            op.equals("<") || op.equals(">") || 
+            op.equals("<=") || op.equals(">=")) {
+            
+            if (sonComparables(t1, t2)) {
+                return "bool";
+            } else {
+                reportarError("Tipos incompatibles para operador '" + op + "': " + t1 + " y " + t2, -1, -1);
+                return "desconocido";
+            }
+        }
 
         // SUMA
         if (op.equals("+")) {
@@ -315,11 +519,9 @@ public class ConstruirTablaSimbolos {
             reportarErrorOperacion(op, t1, t2, -1, -1);
             return "desconocido";
         }
-
         
-        // DIVISIÓN NORMAL: solo float / float (EXCLUSIVO)
+        // DIVISIÓN NORMAL
         if (op.equals("/")) {
-            // float / float -> float
             if (t1.equals("float") && t2.equals("float"))
                 return "float";
             
@@ -327,9 +529,8 @@ public class ConstruirTablaSimbolos {
             return "desconocido";
         }
         
-        // DIVISIÓN ENTERA: solo int // int (EXCLUSIVO)
+        // DIVISIÓN ENTERA
         if (op.equals("//")) {
-            // int // int -> int
             if (t1.equals("int") && t2.equals("int"))
                 return "int";
             
@@ -337,9 +538,8 @@ public class ConstruirTablaSimbolos {
             return "desconocido";
         }
         
-        // MÓDULO: solo int % int (EXCLUSIVO)
+        // MÓDULO
         if (op.equals("%")) {
-            // int % int -> int
             if (t1.equals("int") && t2.equals("int"))
                 return "int";
             
@@ -347,9 +547,8 @@ public class ConstruirTablaSimbolos {
             return "desconocido";
         }
         
-        // POTENCIA: solo float ^ float (EXCLUSIVO)
+        // POTENCIA
         if (op.equals("^")) {
-            // float ^ float -> float
             if (t1.equals("float") && t2.equals("float"))
                 return "float";
             
@@ -360,16 +559,7 @@ public class ConstruirTablaSimbolos {
         return "desconocido";
     }
 
-    private String tipoLiteral(String lx) {
-        if (lx.contains("Entero")) return "int";
-        if (lx.contains("Flotante")) return "float";
-        if (lx.contains("Cadena")) return "string";
-        if (lx.contains("Caracter")) return "char";
-        if (lx.equals("True") || lx.equals("False")) return "bool";
-        return "desconocido";
-    }
-
-    // ==================== VERIFICACIÓN ESTRICTA DE OPERACIONES BINARIAS ====================
+    // ==================== VERIFICACIÓN ESTRICTA DE OPERACIONES ====================
 
     private void procesarOperacionBinariaEStricta(Nodo opNode) {
         if (opNode.hijos.size() < 3) return;
@@ -381,10 +571,8 @@ public class ConstruirTablaSimbolos {
         String tipo1 = evaluarTipoExpresion(operando1);
         String tipo2 = evaluarTipoExpresion(operando2);
         
-        // Verificar operadores aritméticos con reglas estrictas
-        if (esOperadorAritmetico(operador)) {
-            verificarOperacionAritmeticaEstricta(operador, tipo1, tipo2, -1, -1);
-        }
+        // La verificación de tipos ya se hace en verificarOperacionBinaria
+        verificarOperacionBinaria(operador, tipo1, tipo2);
     }
 
     private boolean verificarOperacionAritmeticaEstricta(String operador, String tipo1, String tipo2, int linea, int columna) {
@@ -401,144 +589,118 @@ public class ConstruirTablaSimbolos {
     }
 
     private boolean verificarSumaEstricta(String tipo1, String tipo2, int linea, int columna) {
-        // string + string -> string (✅)
         if (tipo1.equals("string") && tipo2.equals("string")) {
             return true;
         }
         
-        // int + int -> int (✅)
         if (tipo1.equals("int") && tipo2.equals("int")) {
             return true;
         }
         
-        // float + float -> float (✅)
         if (tipo1.equals("float") && tipo2.equals("float")) {
             return true;
         }
         
-        // float + int -> float (⚠️ Conversión implícita)
         if (tipo1.equals("float") && tipo2.equals("int")) {
             return true;
         }
         
-        // int + float -> float (⚠️ Conversión implícita)
         if (tipo1.equals("int") && tipo2.equals("float")) {
             return true;
         }
         
-        // Tipos diferentes no numéricos -> ERROR (❌)
         reportarError("Tipos incompatibles para suma: " + tipo1 + " + " + tipo2, linea, columna);
         return false;
     }
 
     private boolean verificarRestaEstricta(String tipo1, String tipo2, int linea, int columna) {
-        // int - int -> int (✅)
         if (tipo1.equals("int") && tipo2.equals("int")) {
             return true;
         }
         
-        // float - float -> float (✅)
         if (tipo1.equals("float") && tipo2.equals("float")) {
             return true;
         }
         
-        // Tipos diferentes -> ERROR (❌)
         if (!tipo1.equals(tipo2)) {
             reportarError("Tipos diferentes en resta: " + tipo1 + " - " + tipo2, linea, columna);
             return false;
         }
         
-        // Mismo tipo pero no soportado
         reportarError("Tipo no soportado para resta: " + tipo1, linea, columna);
         return false;
     }
 
     private boolean verificarMultiplicacionEstricta(String tipo1, String tipo2, int linea, int columna) {
-        // int * int -> int (✅)
         if (tipo1.equals("int") && tipo2.equals("int")) {
             return true;
         }
         
-        // float * float -> float (✅)
         if (tipo1.equals("float") && tipo2.equals("float")) {
             return true;
         }
         
-        // Tipos diferentes -> ERROR (❌)
         if (!tipo1.equals(tipo2)) {
             reportarError("Tipos diferentes en multiplicación: " + tipo1 + " * " + tipo2, linea, columna);
             return false;
         }
         
-        // Mismo tipo pero no soportado
         reportarError("Tipo no soportado para multiplicación: " + tipo1, linea, columna);
         return false;
     }
 
     private boolean verificarDivisionEstricta(String tipo1, String tipo2, int linea, int columna) {
-        // float / float -> float (✅ EXCLUSIVO)
         if (tipo1.equals("float") && tipo2.equals("float")) {
             return true;
         }
         
-        // Tipos diferentes -> ERROR (❌)
         if (!tipo1.equals(tipo2)) {
             reportarError("Tipos diferentes en división: " + tipo1 + " / " + tipo2, linea, columna);
             return false;
         }
         
-        // Mismo tipo pero no float
         reportarError("División '/' exclusiva para tipos float, recibió: " + tipo1, linea, columna);
         return false;
     }
 
     private boolean verificarDivisionEnteraEstricta(String tipo1, String tipo2, int linea, int columna) {
-        // int // int -> int (✅ EXCLUSIVO)
         if (tipo1.equals("int") && tipo2.equals("int")) {
             return true;
         }
         
-        // Tipos diferentes -> ERROR (❌)
         if (!tipo1.equals(tipo2)) {
             reportarError("Tipos diferentes en división entera: " + tipo1 + " // " + tipo2, linea, columna);
             return false;
         }
         
-        // Mismo tipo pero no int
         reportarError("División entera '//' exclusiva para tipos int, recibió: " + tipo1, linea, columna);
         return false;
     }
 
     private boolean verificarModuloEstricto(String tipo1, String tipo2, int linea, int columna) {
-        // int % int -> int (✅ EXCLUSIVO)
         if (tipo1.equals("int") && tipo2.equals("int")) {
             return true;
         }
         
-        // Tipos diferentes -> ERROR (❌)
         if (!tipo1.equals(tipo2)) {
             reportarError("Tipos diferentes en módulo: " + tipo1 + " % " + tipo2, linea, columna);
             return false;
         }
         
-        // Mismo tipo pero no int
         reportarError("Operador módulo '%' exclusivo para tipos int, recibió: " + tipo1, linea, columna);
         return false;
     }
 
     private boolean verificarPotenciaEstricta(String tipo1, String tipo2, int linea, int columna) {
-        // float ^ float -> float (✅ EXCLUSIVO)
         if (tipo1.equals("float") && tipo2.equals("float")) {
             return true;
         }
         
-        // Tipos diferentes -> ERROR (❌)
         if (!tipo1.equals(tipo2)) {
             reportarError("Tipos diferentes en potencia: " + tipo1 + " ^ " + tipo2, linea, columna);
             return false;
         }
         
-        // Mismo tipo pero no float
         reportarError("Potencia '^' exclusiva para tipos float, recibió: " + tipo1, linea, columna);
         return false;
     }
@@ -667,22 +829,40 @@ public class ConstruirTablaSimbolos {
 
     // ==================== MÉTODOS AUXILIARES ====================
 
-    private boolean esOperadorAritmetico(String op) {
-        return op.equals("+") || op.equals("-") || op.equals("*") || 
-               op.equals("/") || op.equals("//") || op.equals("%") || 
-               op.equals("^");
+    private String tipoLiteral(String lx) {
+        if (lx.contains("Entero")) return "int";
+        if (lx.contains("Flotante")) return "float";
+        if (lx.contains("Cadena")) return "string";
+        if (lx.contains("Caracter")) return "char";
+        if (lx.equals("True") || lx.equals("False")) return "bool";
+        return "desconocido";
     }
 
     private void reportarError(String mensaje, int linea, int columna) {
         if (ts != null) {
             ts.verificarTipos("error_tipo", "error_tipo", linea, columna);
         }
-        System.err.println("ERROR SEMÁNTICO: " + mensaje + 
-                          (linea > 0 ? " [L:" + linea + ", C:" + columna + "]" : ""));
+        System.err.println("ERROR SEMÁNTICO: " + mensaje);
     }
 
     private void reportarErrorOperacion(String operador, String tipo1, String tipo2, int linea, int columna) {
         reportarError("Operación inválida '" + operador + "' entre " + tipo1 + " y " + tipo2, linea, columna);
+    }
+
+    
+    private boolean sonComparables(String t1, String t2) {
+        if (t1.equals("desconocido") || t2.equals("desconocido")) {
+            return true;
+        }
+        
+        if (t1.equals(t2)) return true;
+        
+        if ((t1.equals("int") && t2.equals("float")) ||
+            (t1.equals("float") && t2.equals("int"))) {
+            return true;
+        }
+        
+        return false;
     }
 
     // ==================== MÉTODOS UTILITARIOS ====================

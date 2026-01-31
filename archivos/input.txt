@@ -1,27 +1,81 @@
- 
- world float ii = 1.0 endl 
- world int  var = 1  endl
- world string va = "a" endl
- world bool variable = true endl
- world char vas = 'a' endl
+world char letra  = 'h' endl
+world string texto  = "12" endl
 
-gift float _mi_  ¿ int dif, char _otra_  ?¡
-local int var endl
-var = 2 endl
-dif = 3 endl
-var = ++var endl
+gift int funcion ¿int papas, int holamundo, float jua? ¡
+    local int a endl
+    local float b = 2.0 ^ 1.0 endl 
+return 1 endl
 !
 
-gift float _mi ¿?¡
-
+| Funciones auxiliares (deben estar en ámbito global)
+gift int suma ¿int a, int b? ¡
+    return a + b endl
 !
- coal navidad ¿  ?  ¡ | sintactico
- local int hola = 2   endl
- local char arrays[3][3] = ¡¡1,5,10!¡2,4,5!¡20,40,50!! endl 
- _mi_ ¿hola,vas?  endl  
- local char papasfritas234 = 'h' endl
 
-  local float ii = -1.0 / 2.0 endl 
-  ii = -1.0 - 2.0 endl
-  
- !
+gift float promedio ¿int x, int y? ¡
+    return ¿x + y? / 2.0 endl
+!
+
+coal navidad ¿? ¡
+    local int a endl
+    local float b = 2.0 ^ 1.0 endl 
+    local int c = a + 2 endl
+    local int d = -8 + -8 endl
+
+    decide of a == b -> ¡
+        | código si a = b
+    ! 
+    end decide endl 
+
+    decide of a == b -> ¡
+        decide of a > 0 -> ¡
+            local int nuevo endl
+        ! 
+        end decide endl 
+    ! else -> ¡
+        | otra cosa
+    !
+    end decide endl
+    
+    local int resultado[][] = ¡¡1,2!¡3,4!! endl 
+    local string textos[][] = ¡¡"hola","mundo"!¡"foo","bar"!! endl
+    
+    show ¿ 5 ? endl 
+    show ¿ "!|" ? endl  
+
+    for ¿ int i = 0 endl i < 10 endl ++i ? ¡ 
+        local int temp = resultado[1][1] endl   
+    !
+    
+    local int res = 0 endl
+    loop
+        res = res + 1 endl   
+        exit when res >= 1 endl
+    end loop endl
+
+    local int matriz[3][3] endl
+    matriz[1][2] = 5 endl
+
+    local int x = suma¿5, 3? endl
+    local float y = promedio¿x, 4? * 2 endl
+    show¿promedio¿x, y?? endl
+
+    decide of
+        a >= 10 -> ¡
+            show¿"mayor que 10"? endl
+        !
+        a > 5 -> ¡
+            show¿"mayor que 5"? endl
+        !
+        a > 0 -> ¡
+            show¿"mayor que 0"? endl
+        !
+        else -> ¡
+            show¿"cero o negativo"? endl
+        !
+    end decide endl
+
+    local char caracter = 'x' endl
+    local char siguiente = Σcaracter endl
+    show¿siguiente? endl
+!
