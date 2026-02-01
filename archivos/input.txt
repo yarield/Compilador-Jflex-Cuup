@@ -1,8 +1,9 @@
 world char letra  = 'h' endl
 world string texto  = "12" endl
+world int a endl
 
 gift int funcion ¿int papas, int holamundo, float jua? ¡
-    local int a endl
+    
     local float b = 2.0 ^ 2.0 endl 
 return 1 endl
 !
@@ -59,7 +60,7 @@ coal navidad ¿? ¡
 
     local int x = suma¿5, 3? endl
     local int y = promedio¿x, 4? * 2 endl
-    show¿promedio¿x, y?? endl
+    show¿promedio¿x,y?? endl
 
     decide of
         a >= 10 -> ¡
@@ -76,7 +77,13 @@ coal navidad ¿? ¡
         !
     end decide endl
 
-    local char caracter = 'x' endl
-    local char siguiente = Σcaracter endl
+    local int caracter = 1 endl
+    local bool siguiente = Σfalse endl
     show¿siguiente? endl
+
+    local bool ab = true endl
+    local bool bb = false endl 
+    local bool cb = ab @ bb endl
+    local bool distin = ab ~ bb endl
+    local bool e = Σ ab endl
 !

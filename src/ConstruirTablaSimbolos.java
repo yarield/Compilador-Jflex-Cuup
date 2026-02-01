@@ -160,6 +160,17 @@ public class ConstruirTablaSimbolos {
                 ts.usarIdentificador(id, -1, -1);
             }
         }
+         // 17) OPERACIONES LÓGICAS CON @ y ~
+        if (lx.equals("op_logico") || (lx.equals("op") && !n.hijos.isEmpty())) {
+            // Verificar si es @ o ~
+            if (!n.hijos.isEmpty()) {
+                String op = safe(n.hijos.get(0).lexema);
+                if (op.equals("@") || op.equals("~")) {
+                    procesarOperacionLogica(n);
+                    return;
+                }
+            }
+        }
 
         // 16) Recorrido normal
         for (Nodo h : n.hijos)
@@ -168,6 +179,23 @@ public class ConstruirTablaSimbolos {
 
     // ==================== DECLARACIONES ====================
 
+
+    private void procesarOperacionLogica(Nodo n) {
+        if (n.hijos.size() >= 3) {
+            String operador = safe(n.hijos.get(0).lexema);
+            Nodo operando1 = n.hijos.get(1);
+            Nodo operando2 = n.hijos.get(2);
+            
+            String tipo1 = evaluarTipoExpresion(operando1);
+            String tipo2 = evaluarTipoExpresion(operando2);
+            
+            verificarOperacionBinaria(operador, tipo1, tipo2);
+        }
+        
+        // Visitar hijos para continuar análisis
+        for (Nodo h : n.hijos)
+            visitar(h);
+    }
     private void procesarDeclaracionConTipos(Nodo n, String tipoDecl) {
         String clase = tipoDecl.equals("declaracion_global") ? "global" : "local";
         String tipoVar = "desconocido";
@@ -175,20 +203,16 @@ public class ConstruirTablaSimbolos {
         boolean esArreglo = false;
         int dims = 0;
 
-        System.out.println("[DEBUG] Procesando declaración: " + tipoDecl);
-        
         // PRIMERO: Buscar información básica (tipo, nombre)
         for (Nodo h : n.hijos) {
             String lx = safe(h.lexema);
 
             if (lx.startsWith("tipo:")) {
                 tipoVar = lx.substring("tipo:".length());
-                System.out.println("[DEBUG] Tipo encontrado: " + tipoVar);
             }
             
             if (lx.startsWith("Ident(")) {
                 id = extraerIdentificador(h);
-                System.out.println("[DEBUG] Identificador: " + id);
             }
         }
         
@@ -197,7 +221,6 @@ public class ConstruirTablaSimbolos {
             if (safe(h.lexema).equals("arreglo")) {
                 esArreglo = true;
                 dims = contarDimensionesArregloCompleto(h);
-                System.out.println("[DEBUG] Es arreglo de " + dims + " dimensiones");
                 break;
             }
         }
@@ -212,21 +235,16 @@ public class ConstruirTablaSimbolos {
         );
         ts.declarar(s);
         
-        System.out.println("[DEBUG] Símbolo declarado: " + id + " tipo: " + tipoVar + 
-                          " arreglo: " + esArreglo + " dims: " + dims);
-
         // CUARTO: Buscar inicialización y verificar
         for (int i = 0; i < n.hijos.size(); i++) {
             Nodo h = n.hijos.get(i);
             String lx = safe(h.lexema);
             
             if (esArreglo && lx.equals("init_array_2d")) {
-                System.out.println("[DEBUG] Inicialización 2D encontrada");
                 verificarInicializacionArreglo2D(h, tipoVar);
                 break;
             }
             else if (esArreglo && lx.equals("init_array_1d")) {
-                System.out.println("[DEBUG] Inicialización 1D encontrada");
                 verificarInicializacionArreglo1D(h, tipoVar);
                 break;
             }
@@ -394,7 +412,6 @@ public class ConstruirTablaSimbolos {
                 false, 0, ""
             );
             ts.declarar(s);
-            System.out.println("[DEBUG] Declarada variable de for: " + id + " tipo: " + tipoVar);
         }
         
         // También procesar la inicialización si hay (= Entero(0))
@@ -462,14 +479,6 @@ public class ConstruirTablaSimbolos {
         }
     }
 
-    private boolean estaEnLoop() {
-        return enLoop;
-    }
-
-    private boolean estaEnDecideOf() {
-        return enDecideOf;
-    }
-
     // ==================== EVALUACIÓN DE EXPRESIONES ====================
 
     private String evaluarTipoExpresion(Nodo n) {
@@ -490,6 +499,21 @@ public class ConstruirTablaSimbolos {
                 String tipoValor = evaluarTipoExpresion(valor);
                 // -int → int, -float → float
                 return tipoValor;
+            }
+            return "desconocido";
+        }
+
+        if (lx.equals("negacion")) {
+            if (n.hijos.size() >= 2) {
+                Nodo operando = n.hijos.get(1); // El operando está después del token "Negacion"
+                String tipoOperando = evaluarTipoExpresion(operando);
+                
+                // Verificar que el operando sea booleano
+                if (!tipoOperando.equals("bool") && !tipoOperando.equals("desconocido")) {
+                    reportarError("Negación 'Negacion' requiere operando bool, recibió: " + 
+                                tipoOperando, -1, -1);
+                }
+                return "bool";
             }
             return "desconocido";
         }
@@ -659,6 +683,15 @@ public class ConstruirTablaSimbolos {
             
             return t1; // Retorna el mismo tipo (int o float)
         }
+
+        if (op.equals("@") || op.equals("~")) {  // AND y OR
+            if (!t1.equals("bool") || !t2.equals("bool")) {
+                reportarError("Operador lógico '" + op + "' requiere operandos bool, recibió: " + 
+                            t1 + " y " + t2, -1, -1);
+                return "desconocido";
+            }
+            return "bool";
+        }
         
         return "desconocido";
     }
@@ -698,7 +731,7 @@ public class ConstruirTablaSimbolos {
         }
         
         if (tipo1.equals("string")) {
-            return true; // Concatenación de strings
+            return true; 
         }
         
         if (tipo1.equals("int") || tipo1.equals("float")) {
@@ -938,45 +971,34 @@ public class ConstruirTablaSimbolos {
 
     // Método para verificar inicialización de arreglo 2D
     private void verificarInicializacionArreglo2D(Nodo initArray2D, String tipoEsperado) {
-        System.out.println("[DEBUG] Verificando inicialización arreglo 2D para tipo: " + tipoEsperado);
-        
         // Buscar la lista de filas
         for (Nodo h : initArray2D.hijos) {
             if (safe(h.lexema).equals("lista_filas")) {
-                int contadorFilas = 0;
-                
+        
                 // Revisar cada fila
                 for (Nodo fila : h.hijos) {
                     if (safe(fila.lexema).equals("fila")) {
-                        contadorFilas++;
                         verificarFilaArreglo(fila, tipoEsperado);
                     }
                 }
-                
-                System.out.println("[DEBUG] Total de filas: " + contadorFilas);
             }
         }
     }
 
     // Método para verificar inicialización de arreglo 1D
-    private void verificarInicializacionArreglo1D(Nodo initArray1D, String tipoEsperado) {
-        System.out.println("[DEBUG] Verificando inicialización arreglo 1D para tipo: " + tipoEsperado);
-        
+    private void verificarInicializacionArreglo1D(Nodo initArray1D, String tipoEsperado) { 
         // Buscar la lista de expresiones
         for (Nodo h : initArray1D.hijos) {
             if (safe(h.lexema).equals("lista_expresiones")) {
-                int contadorElementos = 0;
-                
                 // Revisar cada expresión
                 for (Nodo expr : h.hijos) {
                     String lx = safe(expr.lexema);
                     if (!lx.equals(",")) {
                         verificarTipoElemento(lx, tipoEsperado);
-                        contadorElementos++;
                     }
                 }
                 
-                System.out.println("[DEBUG] Total de elementos: " + contadorElementos);
+               
             }
         }
     }
@@ -986,7 +1008,6 @@ public class ConstruirTablaSimbolos {
         // Buscar la lista de expresiones
         for (Nodo h : filaNode.hijos) {
             if (safe(h.lexema).equals("lista_expresiones")) {
-                int contadorElementos = 0;
                 
                 // Revisar cada expresión en la fila
                 for (Nodo expr : h.hijos) {
@@ -995,11 +1016,8 @@ public class ConstruirTablaSimbolos {
                     // Verificar tipo del elemento
                     if (!lx.equals(",")) {
                         verificarTipoElemento(lx, tipoEsperado);
-                        contadorElementos++;
                     }
                 }
-                
-                System.out.println("[DEBUG] Elementos en fila: " + contadorElementos);
             }
         }
     }
@@ -1074,35 +1092,6 @@ public class ConstruirTablaSimbolos {
             ts.verificarTipos("error_tipo", "error_tipo", linea, columna);
         }
         System.err.println("ERROR SEMÁNTICO: " + mensaje);
-    }
-
-    private void reportarErrorOperacion(String operador, String tipo1, String tipo2, int linea, int columna) {
-        reportarError("Operación inválida '" + operador + "' entre " + tipo1 + " y " + tipo2, linea, columna);
-    }
-
-    
-    private boolean sonComparables(String t1, String t2) {
-        // Si algún tipo es desconocido, no podemos verificar
-        if (t1.equals("desconocido") || t2.equals("desconocido")) {
-            return true; // Permitir temporalmente
-        }
-        
-        // SOLO tipos iguales pueden compararse
-        return t1.equals(t2);
-    }
-
-    // ==================== MÉTODOS UTILITARIOS ====================
-
-    private int contarDimensionesArreglo(Nodo arreglo) {
-        // Usar el método más completo que creamos
-        return contarDimensionesArregloCompleto(arreglo);
-    }
-
-    private int contarLexema(Nodo n, String target) {
-        int c = safe(n.lexema).equals(target) ? 1 : 0;
-        for (Nodo h : n.hijos)
-            c += contarLexema(h, target);
-        return c;
     }
 
     private String extraerIdentificador(Nodo n) {

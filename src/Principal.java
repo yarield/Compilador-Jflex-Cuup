@@ -157,9 +157,6 @@ private static String obtenerNombreToken(int tipoToken) {
             ts.resetearScopeAGlobal();
 
 
-            AnalizadorSemantico sem = new AnalizadorSemantico(ts);
-            sem.analizar(parser.raiz);
-
             // ERRORES
             if (!ts.getErrores().isEmpty()) {
                 System.out.println("\n------ ERRORES SEMÁNTICOS --------");
@@ -167,7 +164,6 @@ private static String obtenerNombreToken(int tipoToken) {
                     System.out.println(e);
             }
             // IMPRESION DE LA TABLA DE SIMBOLOS
-            System.out.println("\n------ TABLA DE SIMBOLOS --------");
             ts.imprimir();
 
 
