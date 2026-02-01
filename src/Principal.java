@@ -181,9 +181,28 @@ public class Principal {
             System.out.println("\n------ TABLA DE SIMBOLOS --------");
             ts.imprimir();
 
-            // ------- GENERAR TAC (3 direcciones) -------
+            // ------- GENERAR TAC (3 direc ciones) -------
             TacGenerator tacGen = new TacGenerator();
             tacGen.generateAndWrite(parser.raiz, "./archivos/tac.txt");
+
+            /// ------- GENERAR ASM (MIPS) -------
+            Path tacPath = Paths.get("./archivos/tac.txt");
+
+            // nombre base del archivo fuente (input.txt -> input.asm)
+            Path fuentePath = Paths.get("./archivos/input.txt");
+            String baseName = fuentePath.getFileName().toString();
+            int dot = baseName.lastIndexOf('.');
+            if (dot != -1) {
+                baseName = baseName.substring(0, dot);
+            }
+
+            // siempre se genera en ./archivos/
+            Path asmPath = Paths.get("./archivos", baseName + ".asm");
+
+            // llamada al backend TAC -> MIPS
+            MipsBackend.compile(tacPath, asmPath);
+
+            System.out.println("ASM generado en: " + asmPath);
 
             return new ResultadoSintactico(true, "Análisis ejecutado", -1, -1, null);
 

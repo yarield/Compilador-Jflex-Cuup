@@ -39,9 +39,6 @@ public class TacGenerator {
         try {
             Files.writeString(Path.of(outputFile), content, StandardCharsets.UTF_8);
         } catch (IOException e) {
-            // En entrega final se podría omitir prints. Aquí solo se deja el throw
-            // silencioso.
-            // Si se prefiere, se puede re-lanzar como RuntimeException.
         }
     }
 
@@ -50,7 +47,6 @@ public class TacGenerator {
     // -------------------------
 
     private void visitPrograma(Nodo n) {
-        // "programa" tiene: [elementos_del_programa]? + main
         // Recorre hijos en orden
         for (Nodo h : n.getHijos()) {
             String lx = safe(h.getLexema());
