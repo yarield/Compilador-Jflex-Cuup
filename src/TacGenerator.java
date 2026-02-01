@@ -24,7 +24,8 @@ public class TacGenerator {
     }
 
     public String generate(Nodo raiz) {
-        if (raiz == null) return "";
+        if (raiz == null)
+            return "";
         visitPrograma(raiz);
         return out.build();
     }
@@ -33,12 +34,11 @@ public class TacGenerator {
     // ESCRITURA DE ARCHIVO (TacWriter dentro)
     // -------------------------
     private void writeFile(String outputFile, String content) {
-        if (outputFile == null || outputFile.isBlank()) return;
+        if (outputFile == null || outputFile.isBlank())
+            return;
         try {
             Files.writeString(Path.of(outputFile), content, StandardCharsets.UTF_8);
         } catch (IOException e) {
-            // En entrega final se podría omitir prints. Aquí solo se deja el throw silencioso.
-            // Si se prefiere, se puede re-lanzar como RuntimeException.
         }
     }
 
@@ -47,7 +47,6 @@ public class TacGenerator {
     // -------------------------
 
     private void visitPrograma(Nodo n) {
-        // "programa" tiene: [elementos_del_programa]? + main
         // Recorre hijos en orden
         for (Nodo h : n.getHijos()) {
             String lx = safe(h.getLexema());
@@ -69,11 +68,13 @@ public class TacGenerator {
     }
 
     private void visit(Nodo n) {
-        if (n == null) return;
+        if (n == null)
+            return;
         String lx = safe(n.getLexema());
 
         if (lx.equals("elemento_del_programa") || lx.equals("elemento") || lx.equals("lista_elementos")) {
-            for (Nodo h : n.getHijos()) visit(h);
+            for (Nodo h : n.getHijos())
+                visit(h);
             return;
         }
 
@@ -117,11 +118,24 @@ public class TacGenerator {
             return;
         }
 
-        // show/get aún no los incluiste en la lista mínima.
-        // Si después los ocupan, se agregan aquí.
+        if (lx.equals("show")) {
+            visitShow(n);
+            return;
+        }
+
+        if (lx.equals("get")) {
+            visitGet(n);
+            return;
+        }
+
+        if (lx.equals("break")) {
+            visitBreak(n);
+            return;
+        }
 
         // default: recorrer hijos
-        for (Nodo h : n.getHijos()) visit(h);
+        for (Nodo h : n.getHijos())
+            visit(h);
     }
 
     // -------------------------
@@ -183,7 +197,8 @@ public class TacGenerator {
         // En el AST tus hijos incluyen tokens "¡" / "!" y quizá "lista_elementos"
         for (Nodo h : bloque.getHijos()) {
             String lx = safe(h.getLexema());
-            if (lx.equals("¡") || lx.equals("!")) continue;
+            if (lx.equals("¡") || lx.equals("!"))
+                continue;
             visit(h);
         }
     }
@@ -198,15 +213,18 @@ public class TacGenerator {
         // cada param -> tipo:* + Ident(x)
         for (Nodo h : parametros.getHijos()) {
             String lx = safe(h.getLexema());
-            if (lx.equals(",") || lx.equals("parametros")) continue;
+            if (lx.equals(",") || lx.equals("parametros"))
+                continue;
 
             if (lx.equals("param")) {
                 String tipo = "desconocido";
                 String id = "";
                 for (Nodo ph : h.getHijos()) {
                     String plx = safe(ph.getLexema());
-                    if (plx.startsWith("tipo:")) tipo = plx.substring("tipo:".length());
-                    if (plx.startsWith("Ident(")) id = extraerIdent(ph);
+                    if (plx.startsWith("tipo:"))
+                        tipo = plx.substring("tipo:".length());
+                    if (plx.startsWith("Ident("))
+                        id = extraerIdent(ph);
                 }
                 if (!id.isBlank()) {
                     out.emit("param_data_" + tipo + " " + id);
@@ -219,11 +237,13 @@ public class TacGenerator {
         for (Map.Entry<String, String> e : locals.entrySet()) {
             String id = e.getKey();
             String tipo = e.getValue();
-            if (localsEmitidos.contains(id)) continue;
+            if (localsEmitidos.contains(id))
+                continue;
             localsEmitidos.add(id);
             out.emit("local_data_" + tipo + " " + id);
         }
-        if (!locals.isEmpty()) out.blank();
+        if (!locals.isEmpty())
+            out.blank();
     }
 
     private Map<String, String> collectLocals(Nodo root) {
@@ -234,7 +254,8 @@ public class TacGenerator {
     }
 
     private void collectLocalsRec(Nodo n, Map<String, String> locals) {
-        if (n == null) return;
+        if (n == null)
+            return;
         String lx = safe(n.getLexema());
 
         if (lx.equals("declaracion_local")) {
@@ -242,15 +263,18 @@ public class TacGenerator {
             String id = "";
             for (Nodo h : n.getHijos()) {
                 String hlx = safe(h.getLexema());
-                if (hlx.startsWith("tipo:")) tipo = hlx.substring("tipo:".length());
-                if (hlx.startsWith("Ident(")) id = extraerIdent(h);
+                if (hlx.startsWith("tipo:"))
+                    tipo = hlx.substring("tipo:".length());
+                if (hlx.startsWith("Ident("))
+                    id = extraerIdent(h);
             }
             if (!id.isBlank()) {
                 locals.putIfAbsent(id, tipo);
             }
         }
 
-        for (Nodo h : n.getHijos()) collectLocalsRec(h, locals);
+        for (Nodo h : n.getHijos())
+            collectLocalsRec(h, locals);
     }
 
     // -------------------------
@@ -259,9 +283,10 @@ public class TacGenerator {
 
     private void visitAsignacion(Nodo asig) {
         // asignacion:
-        //  - Ident(x) "=" expr
-        //  - Ident(A) arreglo "=" expr
-        if (asig.getHijos().isEmpty()) return;
+        // - Ident(x) "=" expr
+        // - Ident(A) arreglo "=" expr
+        if (asig.getHijos().isEmpty())
+            return;
 
         // LHS puede ser Ident o (Ident + arreglo)
         Nodo first = asig.getHijos().get(0);
@@ -273,14 +298,16 @@ public class TacGenerator {
 
         for (Nodo h : asig.getHijos()) {
             String lx = safe(h.getLexema());
-            if (lx.equals("arreglo")) arrNode = h;
+            if (lx.equals("arreglo"))
+                arrNode = h;
         }
 
         // RHS es el último hijo que sea expresión (no "=", no "arreglo")
         for (int i = asig.getHijos().size() - 1; i >= 0; i--) {
             Nodo h = asig.getHijos().get(i);
             String lx = safe(h.getLexema());
-            if (lx.equals("=") || lx.equals("arreglo")) continue;
+            if (lx.equals("=") || lx.equals("arreglo"))
+                continue;
             exprNode = h;
             break;
         }
@@ -303,7 +330,8 @@ public class TacGenerator {
         Nodo expr = null;
         for (Nodo h : ret.getHijos()) {
             String lx = safe(h.getLexema());
-            if (lx.equals("Return") || lx.equals("endl")) continue;
+            if (lx.equals("Return") || lx.equals("endl"))
+                continue;
             expr = h;
             break;
         }
@@ -332,8 +360,9 @@ public class TacGenerator {
         // hijos esperados (según tu gramática):
         // "For", "¿", init, "endl", cond, "endl", update, "?", bloque
         Nodo init = findFirst(n, "init_for");
-        if (init == null) init = findFirst(n, "init_for2");
-        Nodo cond = findNthExprLike(n, 1); // cond suele ser un "op_logico" o "op" o "Ident" ...
+        if (init == null)
+            init = findFirst(n, "init_for2");
+        Nodo cond = findNthExprLike(n, 1);
         Nodo upd = findFirst(n, "update_for");
         Nodo bloque = findFirst(n, "bloque");
 
@@ -351,7 +380,16 @@ public class TacGenerator {
         out.emit("goto " + L_cond);
 
         out.label(L_bloque);
-        if (bloque != null) visitBloque(bloque);
+
+        // ✅ break dentro de este for debe saltar a L_end
+        ctx.breakTargets.push(L_end);
+
+        if (bloque != null)
+            visitBloque(bloque);
+
+        // ✅ salir del contexto de break de este for
+        ctx.breakTargets.pop();
+
         out.emit("goto " + L_modif);
 
         out.label(L_end);
@@ -375,7 +413,14 @@ public class TacGenerator {
         out.label(L_loop);
         out.label(L_body);
 
-        if (lista != null) visit(lista);
+        // ✅ break dentro de este loop debe saltar a L_end
+        ctx.breakTargets.push(L_end);
+
+        if (lista != null)
+            visit(lista);
+
+        // ✅ salir del contexto de break de este loop
+        ctx.breakTargets.pop();
 
         String condPlace = evalExpr(cond);
         out.emit("if " + condPlace + " " + L_end);
@@ -408,7 +453,7 @@ public class TacGenerator {
             String L_cond = base + "_cond_" + idx;
             String L_bloque = base + "_bloque_" + idx;
             String L_next = (i < cases.length - 1) ? (base + "_cond_" + (idx + 1))
-                                                   : (elseBloque != null ? L_else : L_end);
+                    : (elseBloque != null ? L_else : L_end);
 
             out.label(L_cond);
 
@@ -424,7 +469,8 @@ public class TacGenerator {
             out.emit("goto " + L_next);
 
             out.label(L_bloque);
-            if (bloque != null) visitBloque(bloque);
+            if (bloque != null)
+                visitBloque(bloque);
             out.emit("goto " + L_end);
         }
 
@@ -451,7 +497,8 @@ public class TacGenerator {
         String lx = safe(expr.getLexema());
 
         // Literales
-        if (lx.startsWith("Entero(") || lx.startsWith("Flotante(") || lx.startsWith("Caracter(") || lx.startsWith("Cadena(")) {
+        if (lx.startsWith("Entero(") || lx.startsWith("Flotante(") || lx.startsWith("Caracter(")
+                || lx.startsWith("Cadena(")) {
             String t = ctx.newTemp();
             out.emit(t + " = " + literalRaw(lx));
             return t;
@@ -533,7 +580,8 @@ public class TacGenerator {
             Nodo inner = null;
             for (Nodo h : expr.getHijos()) {
                 String hlx = safe(h.getLexema());
-                if (hlx.equals("¿") || hlx.equals("?")) continue;
+                if (hlx.equals("¿") || hlx.equals("?"))
+                    continue;
                 inner = h;
                 break;
             }
@@ -557,7 +605,8 @@ public class TacGenerator {
 
         // fallback: evaluar hijos y devolver último temp
         String last = null;
-        for (Nodo h : expr.getHijos()) last = evalExpr(h);
+        for (Nodo h : expr.getHijos())
+            last = evalExpr(h);
         if (last == null) {
             String t = ctx.newTemp();
             out.emit(t + " = 0");
@@ -573,8 +622,10 @@ public class TacGenerator {
 
         for (Nodo h : callNode.getHijos()) {
             String lx = safe(h.getLexema());
-            if (lx.startsWith("Ident(")) fname = extraerIdent(h);
-            if (lx.equals("argumentos")) args = h;
+            if (lx.startsWith("Ident("))
+                fname = extraerIdent(h);
+            if (lx.equals("argumentos"))
+                args = h;
         }
 
         int count = 0;
@@ -582,7 +633,8 @@ public class TacGenerator {
             // argumentos: expr ( , expr )*
             for (Nodo h : args.getHijos()) {
                 String lx = safe(h.getLexema());
-                if (lx.equals(",")) continue;
+                if (lx.equals(","))
+                    continue;
                 String a = evalExpr(h);
                 out.emit("param " + a);
                 count++;
@@ -595,11 +647,79 @@ public class TacGenerator {
     }
 
     // -------------------------
+    // SHOW / GET / BREAK
+    // -------------------------
+
+    private void visitShow(Nodo n) {
+        // show -> "Show" "¿" expr "?" "endl"
+        Nodo expr = null;
+        for (Nodo h : n.getHijos()) {
+            String lx = safe(h.getLexema());
+            if (lx.equals("Show") || lx.equals("¿") || lx.equals("?") || lx.equals("endl"))
+                continue;
+            expr = h;
+            break;
+        }
+
+        String p = evalExpr(expr);
+        out.emit("print " + p);
+    }
+
+    private void visitGet(Nodo n) {
+        // get -> "Get" "¿" expr "?" "endl"
+        Nodo expr = null;
+        for (Nodo h : n.getHijos()) {
+            String lx = safe(h.getLexema());
+            if (lx.equals("Get") || lx.equals("¿") || lx.equals("?") || lx.equals("endl"))
+                continue;
+            expr = h;
+            break;
+        }
+
+        // Ideal: que sea Ident(x) o acceso_arreglo
+        String elx = (expr != null) ? safe(expr.getLexema()) : "";
+
+        if (elx.startsWith("Ident(")) {
+            String id = extraerIdent(expr);
+            out.emit("read " + id);
+            return;
+        }
+
+        if (elx.equals("acceso_arreglo")) {
+            // leer directo a arreglo: A[i][j]
+            Nodo idNode = expr.getHijos().size() > 0 ? expr.getHijos().get(0) : null;
+            Nodo arrNode = expr.getHijos().size() > 1 ? expr.getHijos().get(1) : null;
+            String base = extraerIdent(idNode);
+
+            String i = evalArrayIndex(arrNode, 0);
+            String j = evalArrayIndex(arrNode, 1);
+
+            out.emit("read " + base + "[" + i + "][" + j + "]");
+            return;
+        }
+
+        // Si llega algo no válido, para TAC lo omitimos (o se podría emitir error
+        // interno)
+        // Como dijiste: semántico lo valida, entonces esto no debería ocurrir en inputs
+        // correctos.
+    }
+
+    private void visitBreak(Nodo n) {
+        // break -> "Break" "endl"
+        if (ctx.breakTargets.isEmpty()) {
+            // break fuera de ciclo: semántico debería evitarlo
+            return;
+        }
+        out.emit("goto " + ctx.breakTargets.peek());
+    }
+
+    // -------------------------
     // HELPERS FOR / LOOP / DECIDE
     // -------------------------
 
     private void emitInitFor(Nodo init) {
-        if (init == null) return;
+        if (init == null)
+            return;
 
         // init_for: tipo, Ident, "=", expr
         // init_for2: Ident, "=", expr
@@ -608,14 +728,16 @@ public class TacGenerator {
 
         for (Nodo h : init.getHijos()) {
             String lx = safe(h.getLexema());
-            if (lx.startsWith("Ident(")) id = extraerIdent(h);
+            if (lx.startsWith("Ident("))
+                id = extraerIdent(h);
         }
 
         // expr es el último hijo no token
         for (int i = init.getHijos().size() - 1; i >= 0; i--) {
             Nodo h = init.getHijos().get(i);
             String lx = safe(h.getLexema());
-            if (lx.equals("=") || lx.startsWith("tipo:") || lx.equals(",")) continue;
+            if (lx.equals("=") || lx.startsWith("tipo:") || lx.equals(","))
+                continue;
             expr = h;
             break;
         }
@@ -625,15 +747,18 @@ public class TacGenerator {
     }
 
     private void emitUpdateFor(Nodo upd) {
-        if (upd == null) return;
+        if (upd == null)
+            return;
         // update_for: "++" Ident OR "--" Ident
         String op = "";
         String id = "";
 
         for (Nodo h : upd.getHijos()) {
             String lx = safe(h.getLexema());
-            if (lx.equals("++") || lx.equals("--")) op = lx;
-            if (lx.startsWith("Ident(")) id = extraerIdent(h);
+            if (lx.equals("++") || lx.equals("--"))
+                op = lx;
+            if (lx.startsWith("Ident("))
+                id = extraerIdent(h);
         }
 
         String t1 = ctx.newTemp();
@@ -659,11 +784,17 @@ public class TacGenerator {
         int found = 0;
         for (Nodo h : arreglo.getHijos()) {
             String lx = safe(h.getLexema());
-            if (lx.equals("[") || lx.equals("]") || lx.equals("[]")) continue;
+            if (lx.equals("[") || lx.equals("]") || lx.equals("[]"))
+                continue;
 
             // e1, e2 son nodos expresión
-            if (found == 0) { e1 = h; found++; }
-            else if (found == 1) { e2 = h; found++; }
+            if (found == 0) {
+                e1 = h;
+                found++;
+            } else if (found == 1) {
+                e2 = h;
+                found++;
+            }
         }
 
         Nodo target = (which == 0) ? e1 : e2;
@@ -671,19 +802,23 @@ public class TacGenerator {
     }
 
     private Nodo[] findCases(Nodo lista) {
-        if (lista == null) return new Nodo[0];
+        if (lista == null)
+            return new Nodo[0];
         return lista.getHijos().stream()
                 .filter(h -> safe(h.getLexema()).equals("case"))
                 .toArray(Nodo[]::new);
     }
 
     private Nodo findExprInsideCase(Nodo caseNode) {
-        if (caseNode == null) return null;
+        if (caseNode == null)
+            return null;
         for (Nodo h : caseNode.getHijos()) {
             String lx = safe(h.getLexema());
-            if (lx.equals("->") || lx.equals("bloque")) continue;
+            if (lx.equals("->") || lx.equals("bloque"))
+                continue;
             // el primer hijo que sea expr
-            if (!lx.equals("->")) return h;
+            if (!lx.equals("->"))
+                return h;
         }
         return null;
     }
@@ -693,47 +828,58 @@ public class TacGenerator {
         boolean seenElse = false;
         for (Nodo h : decideNode.getHijos()) {
             String lx = safe(h.getLexema());
-            if (lx.equals("Else")) seenElse = true;
-            if (seenElse && lx.equals("bloque")) return h;
+            if (lx.equals("Else"))
+                seenElse = true;
+            if (seenElse && lx.equals("bloque"))
+                return h;
         }
         return null;
     }
 
     private Nodo findFirst(Nodo n, String lexema) {
-        if (n == null) return null;
+        if (n == null)
+            return null;
         for (Nodo h : n.getHijos()) {
-            if (lexema == null) return h;
-            if (safe(h.getLexema()).equals(lexema)) return h;
+            if (lexema == null)
+                return h;
+            if (safe(h.getLexema()).equals(lexema))
+                return h;
         }
         // buscar en profundidad si no está en primer nivel
         for (Nodo h : n.getHijos()) {
             Nodo r = findFirst(h, lexema);
-            if (r != null) return r;
+            if (r != null)
+                return r;
         }
         return null;
     }
 
     private Nodo findNthExprLike(Nodo n, int nth) {
-        // Heurística: tomar el nth hijo que parezca expresión (op/op_logico/Ident/literal/llamada/etc.)
-        if (n == null) return null;
+        // Heurística: tomar el nth hijo que parezca expresión
+        // (op/op_logico/Ident/literal/llamada/etc.)
+        if (n == null)
+            return null;
         int count = 0;
         for (Nodo h : n.getHijos()) {
             String lx = safe(h.getLexema());
             if (looksLikeExpr(lx)) {
                 count++;
-                if (count == nth) return h;
+                if (count == nth)
+                    return h;
             }
         }
         // fallback: buscar profundo
         for (Nodo h : n.getHijos()) {
             Nodo r = findNthExprLike(h, nth);
-            if (r != null) return r;
+            if (r != null)
+                return r;
         }
         return null;
     }
 
     private boolean looksLikeExpr(String lx) {
-        if (lx == null) return false;
+        if (lx == null)
+            return false;
         lx = lx.trim();
         return lx.equals("op")
                 || lx.equals("op_logico")
@@ -761,7 +907,8 @@ public class TacGenerator {
         // primer Ident(...) que aparezca como hijo directo
         for (Nodo h : funcionNode.getHijos()) {
             String lx = safe(h.getLexema());
-            if (lx.startsWith("Ident(")) return extraerIdent(h);
+            if (lx.startsWith("Ident("))
+                return extraerIdent(h);
         }
         return "anonima";
     }
@@ -769,13 +916,15 @@ public class TacGenerator {
     private String extraerTipoFuncion(Nodo funcionNode) {
         for (Nodo h : funcionNode.getHijos()) {
             String lx = safe(h.getLexema());
-            if (lx.startsWith("tipo:")) return lx.substring("tipo:".length());
+            if (lx.startsWith("tipo:"))
+                return lx.substring("tipo:".length());
         }
         return "desconocido";
     }
 
     private String extraerIdent(Nodo n) {
-        if (n == null) return "";
+        if (n == null)
+            return "";
         String lx = safe(n.getLexema());
         if (lx.startsWith("Ident(") && lx.endsWith(")")) {
             return lx.substring(6, lx.length() - 1);
@@ -783,7 +932,8 @@ public class TacGenerator {
         // Si el nodo no es Ident(...) pero tiene hijos que sí
         for (Nodo h : n.getHijos()) {
             String r = extraerIdent(h);
-            if (!r.isBlank()) return r;
+            if (!r.isBlank())
+                return r;
         }
         return "";
     }
@@ -792,7 +942,8 @@ public class TacGenerator {
         // Entero(5) -> 5, Cadena("x") -> "x"
         int p = lexema.indexOf('(');
         int q = lexema.lastIndexOf(')');
-        if (p >= 0 && q > p) return lexema.substring(p + 1, q);
+        if (p >= 0 && q > p)
+            return lexema.substring(p + 1, q);
         return lexema;
     }
 

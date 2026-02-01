@@ -1,8 +1,4 @@
 main:
-local_data_float ii
-local_data_int var
-local_data_string va
-local_data_bool variable
-local_data_char vas
+local_data_int alocalo
 
 main_end:
