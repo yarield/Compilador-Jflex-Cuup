@@ -16,7 +16,6 @@ public class TacGenerator {
     private final Map<String, String> funcionMap = new LinkedHashMap<>();
     private final Set<String> globalesDeclaradas = new LinkedHashSet<>();
 
-    // Para que locals "al inicio" no se repitan
     private final Set<String> localsEmitidos = new LinkedHashSet<>();
 
     public String generateAndWrite(Nodo raiz, String outputFile) {
@@ -27,9 +26,7 @@ public class TacGenerator {
     }
 
 
-    // -------------------------
-    // ESCRITURA DE ARCHIVO (TacWriter dentro)
-    // -------------------------
+    // ESCRITURA DE ARCHIVO 
     private void writeFile(String outputFile, String content) {
         if (outputFile == null || outputFile.isBlank())
             return;
@@ -39,16 +36,12 @@ public class TacGenerator {
         }
     }
 
-    // -------------------------
     // VISITAS PRINCIPALES
-    // -------------------------
 
     private void visitGlobales(Nodo n) {
-        // Buscar todos los elementos_del_programa que contengan declaraciones_globales
         for (Nodo h : n.getHijos()) {
             String lx = safe(h.getLexema());
             if (lx.equals("elemento_del_programa")) {
-                // Dentro de elemento_del_programa, buscar declaracion_global
                 Nodo decl = findFirst(h, "declaracion_global");
                 if (decl != null) {
                     visitDeclaracionGlobal(decl);
@@ -71,18 +64,12 @@ public class TacGenerator {
     }
 
 private void generateFunctions(Nodo n) {
-    System.out.println("\nDEBUG generateFunctions: buscando funciones en " + safe(n.getLexema()));
-    
-    // Buscar funciones en elementos_del_programa
     for (Nodo h : n.getHijos()) {
         String lx = safe(h.getLexema());
-        System.out.println("  Revisando hijo: " + lx);
         
         if (lx.equals("elemento_del_programa")) {
-            // Dentro de elemento_del_programa, buscar funcion
             Nodo funcion = findFirst(h, "funcion");
             if (funcion != null) {
-                System.out.println("  ¡Encontrada función! Generando...");
                 visitFuncion(funcion);
             }
         }
@@ -97,12 +84,9 @@ private void generateMain(Nodo mainNode) {
     String nodoName = safe(mainNode.getLexema());
     if (!nodoName.equals("main")) {
         System.err.println("ERROR: generateMain recibió nodo que no es 'main': " + nodoName);
-        System.out.println("DEBUG: Estructura del nodo recibido:");
         printTree(mainNode, 0);
         return;
     }
-    
-    System.out.println("DEBUG generateMain: Procesando nodo main real");
     
     ctx.enterFunction("main");
     localsEmitidos.clear();
@@ -115,27 +99,19 @@ private void generateMain(Nodo mainNode) {
         contenidoMain = findFirst(mainNode, "bloque");
     }
     
-    if (contenidoMain != null) {
-        System.out.println("DEBUG: Contenido main encontrado: " + safe(contenidoMain.getLexema()));
-        
-        // Recolectar y emitir locales
+    if (contenidoMain != null) {  
         Map<String, String> locals = collectLocals(contenidoMain);
         emitLocals(locals);
         
-        // Visitar el contenido
         visit(contenidoMain);
     } else {
         System.err.println("ADVERTENCIA: No se encontró contenido dentro del main");
-        System.out.println("DEBUG: Estructura del main:");
         printTree(mainNode, 0);
     }
 
     out.label("main_end");
     out.blank();
-    
-    System.out.println("DEBUG: Main generado exitosamente");
 }
-// Método helper para debug
 private void printTree(Nodo n, int depth) {
     if (n == null) return;
     String indent = "  ".repeat(depth);
@@ -146,7 +122,6 @@ private void printTree(Nodo n, int depth) {
 }
 
     private String extraerNombreFuncion(Nodo funcionNode) {
-        // primer Ident(...) que aparezca como hijo directo
         for (Nodo h : funcionNode.getHijos()) {
             String lx = safe(h.getLexema());
             if (lx.startsWith("Ident("))
@@ -246,7 +221,7 @@ private void printTree(Nodo n, int depth) {
         if (lx.equals("True")) return "1";
         if (lx.equals("False")) return "0";
         
-        return null; // No es un literal simple
+        return null; 
     }
     
     // Clase para guardar inicializaciones complejas
@@ -265,17 +240,11 @@ private void printTree(Nodo n, int depth) {
 
     public String generate(Nodo raiz) {
         if (raiz == null) return "";
-        
-        System.out.println("\n=== INICIO GENERACIÓN TAC ===");
-        System.out.println("Nodo raíz: " + safe(raiz.getLexema()));
-        
-        // Buscar los nodos principales
         Nodo elementos = null;
         Nodo mainNode = null;
         
         for (Nodo h : raiz.getHijos()) {
             String lx = safe(h.getLexema());
-            System.out.println("  Hijo: " + lx);
             if (lx.equals("elementos_del_programa")) {
                 elementos = h;
             } else if (lx.equals("main")) {
@@ -283,21 +252,12 @@ private void printTree(Nodo n, int depth) {
             }
         }
         
-        System.out.println("DEBUG: elementos encontrado: " + (elementos != null));
-        System.out.println("DEBUG: main encontrado: " + (mainNode != null));
-        
-        // PRIMERO: Procesar globales
         if (elementos != null) {
-            System.out.println("DEBUG: Procesando globales desde elementos");
             visitGlobales(elementos);
         } else {
-            System.out.println("DEBUG: Buscando globales directamente en raíz");
             procesarGlobales(raiz);
         }
         
-        System.out.println("DEBUG: Globales procesadas: " + globalesDeclaradas.size());
-        
-        // Luego procesar inicializaciones complejas de globales
         if (!inicializacionesGlobales.isEmpty()) {
             for (InicializacionGlobal ig : inicializacionesGlobales) {
                 String temp = evalExpr(ig.expr);
@@ -305,28 +265,21 @@ private void printTree(Nodo n, int depth) {
             }
             out.blank();
         }
-        
-        // SEGUNDO: Funciones
+
         if (elementos != null) {
-            System.out.println("DEBUG: Recolectando funciones desde elementos");
             collectFunctions(elementos);
             generateFunctions(elementos);
         } else {
-            System.out.println("DEBUG: Recolectando funciones desde raíz");
             collectFunctions(raiz);
             generateFunctions(raiz);
         }
         
-        // TERCERO: Main (¡IMPORTANTE! Usar el nodo correcto)
         if (mainNode != null) {
-            System.out.println("DEBUG: Generando main desde nodo main real");
-            generateMain(mainNode);  // ¡Pasar el nodo main, NO elementos!
+            generateMain(mainNode); 
         } else {
             System.err.println("ERROR: No se encontró nodo main en la raíz");
-            // Buscar recursivamente
             mainNode = findFirst(raiz, "main");
             if (mainNode != null) {
-                System.out.println("DEBUG: Main encontrado recursivamente");
                 generateMain(mainNode);
             } else {
                 System.err.println("ERROR CRÍTICO: No se pudo encontrar el main en ningún lugar");
@@ -334,11 +287,6 @@ private void printTree(Nodo n, int depth) {
         }
         
         String result = out.build();
-        
-        System.out.println("\n=== TAC GENERADO COMPLETO ===");
-        System.out.println(result);
-        System.out.println("=============================\n");
-        
         return result;
     }
 
@@ -357,9 +305,7 @@ private void printTree(Nodo n, int depth) {
     }
 
 
-    // -------------------------
     // FUNCIONES Y MAIN
-    // -------------------------
     
     private void visitFuncion(Nodo funcion) {
        String tipo = extraerTipoFuncion(funcion);
@@ -373,20 +319,17 @@ private void printTree(Nodo n, int depth) {
 
         out.label(labelFun);
 
-        // Params (cabecera)
         Nodo paramsNode = findFirst(funcion, "parametros");
         if (paramsNode != null) {
             emitParametros(paramsNode);
         }
 
-        // Locals al inicio: recolectar dentro del bloque
         Nodo bloque = findFirst(funcion, "bloque");
         if (bloque != null) {
             Map<String, String> locals = collectLocals(bloque);
             emitLocals(locals);
         }
 
-        // Cuerpo: visitar bloque completo (asignaciones, control, return, etc.)
         if (bloque != null) {
             visitBloque(bloque);
         }
@@ -436,7 +379,6 @@ private void printTree(Nodo n, int depth) {
     }
 
     private void visitDeclaracionLocal(Nodo decl) {
-        // Estructura: declaracion_local -> tipo:*, Ident(x), "=", expr, endl
         
         String tipo = "desconocido";
         String id = "";
@@ -452,7 +394,6 @@ private void printTree(Nodo n, int depth) {
             }
         }
         
-        // Buscar la expresión de inicialización (último hijo que sea expr)
         for (int i = decl.getHijos().size() - 1; i >= 0; i--) {
             Nodo h = decl.getHijos().get(i);
             String hlx = safe(h.getLexema());
@@ -476,23 +417,17 @@ private void printTree(Nodo n, int depth) {
         }
     }
 
-    private void visitDeclaracionGlobal(Nodo decl) {
-        System.out.println("\nDEBUG: visitDeclaracionGlobal llamado");
-        System.out.println("DEBUG: lexema nodo: " + safe(decl.getLexema()));
-        
+    private void visitDeclaracionGlobal(Nodo decl) {    
         boolean esGlobal = false;
         for (Nodo h : decl.getHijos()) {
             String hlx = safe(h.getLexema());
-            System.out.println("  Hijo: " + hlx);
             if (hlx.equals("World")) {
                 esGlobal = true;
                 break;
             }
         }
-        System.out.println("DEBUG: esGlobal = " + esGlobal);
         
         if (!esGlobal) {
-            System.out.println("DEBUG: No es global, retornando");
             return;
         }
         
@@ -525,30 +460,24 @@ private void printTree(Nodo n, int depth) {
         if (!id.isBlank() && !globalesDeclaradas.contains(id)) {
             globalesDeclaradas.add(id);
             
-            // CORRECCIÓN: Usar emitGlobal() para que vaya a la sección de globales
             out.emitGlobal("global_data_" + tipo + " " + id);
             
-            // Emitir inicialización si existe
             if (expr != null) {
                 String valor = extraerValorLiteral(expr);
                 if (valor != null) {
                     out.emitGlobal(id + " = " + valor);
                 } else {
-                    // Si es expresión compleja, guardar temporalmente
                     inicializacionesGlobales.add(new InicializacionGlobal(id, expr));
                 }
             }
-            out.blankGlobal();  // Usar blankGlobal() en lugar de blank()
+            out.blankGlobal();
         }
     }
-    // -------------------------
+
     // CABECERAS: PARAMS Y LOCALS
-    // -------------------------
+
 
     private void emitParametros(Nodo parametros) {
-        // Estructura que generaste:
-        // parametros -> (param) ("," param) ...
-        // cada param -> tipo:* + Ident(x)
         for (Nodo h : parametros.getHijos()) {
             String lx = safe(h.getLexema());
             if (lx.equals(",") || lx.equals("parametros"))
@@ -585,7 +514,6 @@ private void printTree(Nodo n, int depth) {
     }
 
     private Map<String, String> collectLocals(Nodo root) {
-        // Recolecta "declaracion_local" en todo el subárbol
         Map<String, String> locals = new LinkedHashMap<>();
         collectLocalsRec(root, locals);
         return locals;
@@ -617,22 +545,15 @@ private void printTree(Nodo n, int depth) {
         }
     }
 
-    // -------------------------
     // SENTENCIAS
-    // -------------------------
 
     private void visitAsignacion(Nodo asig) {
-        // asignacion:
-        // - Ident(x) "=" expr
-        // - Ident(A) arreglo "=" expr
         if (asig.getHijos().isEmpty())
             return;
 
-        // LHS puede ser Ident o (Ident + arreglo)
         Nodo first = asig.getHijos().get(0);
         String lhsName = extraerIdent(first);
 
-        // Buscar si hay "arreglo" como segundo hijo (para A[i][j])
         Nodo arrNode = null;
         Nodo exprNode = null;
 
@@ -642,7 +563,6 @@ private void printTree(Nodo n, int depth) {
                 arrNode = h;
         }
 
-        // RHS es el último hijo que sea expresión (no "=", no "arreglo")
         for (int i = asig.getHijos().size() - 1; i >= 0; i--) {
             Nodo h = asig.getHijos().get(i);
             String lx = safe(h.getLexema());
@@ -655,10 +575,8 @@ private void printTree(Nodo n, int depth) {
         String rhsPlace = evalExpr(exprNode);
 
         if (arrNode == null) {
-            // x = rhs
             out.emit(lhsName + " = " + rhsPlace);
         } else {
-            // A[i][j] = rhs
             String iPlace = evalArrayIndex(arrNode, 0);
             String jPlace = evalArrayIndex(arrNode, 1);
             out.emit(lhsName + "[" + iPlace + "][" + jPlace + "] = " + rhsPlace);
@@ -666,7 +584,6 @@ private void printTree(Nodo n, int depth) {
     }
 
     private void visitReturn(Nodo ret) {
-        // return expr endl
         Nodo expr = null;
         for (Nodo h : ret.getHijos()) {
             String lx = safe(h.getLexema());
@@ -679,9 +596,7 @@ private void printTree(Nodo n, int depth) {
         out.emit("return " + place);
     }
 
-    // -------------------------
     // CONTROL: FOR / LOOP / DECIDE
-    // -------------------------
 
     private void visitFor(Nodo n) {
         ctx.forCount++;
@@ -697,8 +612,6 @@ private void printTree(Nodo n, int depth) {
         String L_modif = base + "_modif";
         String L_end = base + "_end";
 
-        // hijos esperados (según tu gramática):
-        // "For", "¿", init, "endl", cond, "endl", update, "?", bloque
         Nodo init = findFirst(n, "init_for");
         if (init == null)
             init = findFirst(n, "init_for2");
@@ -721,13 +634,11 @@ private void printTree(Nodo n, int depth) {
 
         out.label(L_bloque);
 
-        // ✅ break dentro de este for debe saltar a L_end
         ctx.breakTargets.push(L_end);
 
         if (bloque != null)
             visitBloque(bloque);
 
-        // ✅ salir del contexto de break de este for
         ctx.breakTargets.pop();
 
         out.emit("goto " + L_modif);
@@ -746,20 +657,17 @@ private void printTree(Nodo n, int depth) {
         String L_body = base + "_body";
         String L_end = base + "_end";
 
-        // loop: Loop lista_elementos Exit When expr endl End Loop endl
         Nodo lista = findFirst(n, "lista_elementos");
         Nodo cond = findNthExprLike(n, 1);
 
         out.label(L_loop);
         out.label(L_body);
 
-        // ✅ break dentro de este loop debe saltar a L_end
         ctx.breakTargets.push(L_end);
 
         if (lista != null)
             visit(lista);
 
-        // ✅ salir del contexto de break de este loop
         ctx.breakTargets.pop();
 
         String condPlace = evalExpr(cond);
@@ -782,11 +690,10 @@ private void printTree(Nodo n, int depth) {
 
         out.label(L_decide);
 
-        // lista_decide_of contiene "case" repetidos
-        Nodo lista = findFirst(n, "lista_decide_of");
-        Nodo elseBloque = findElseBloque(n); // bloque después de Else ->
 
-        // Recolectar cases en orden
+        Nodo lista = findFirst(n, "lista_decide_of");
+        Nodo elseBloque = findElseBloque(n); 
+
         Nodo[] cases = findCases(lista);
         for (int i = 0; i < cases.length; i++) {
             int idx = i + 1;
@@ -797,11 +704,9 @@ private void printTree(Nodo n, int depth) {
 
             out.label(L_cond);
 
-            Nodo condExpr = findFirst(cases[i], null); // primer hijo del case es expr
+            Nodo condExpr = findFirst(cases[i], null); 
             Nodo bloque = findFirst(cases[i], "bloque");
 
-            // case -> (expr) "->" bloque
-            // el primer hijo que no sea "->" y no sea "bloque" debe ser la expr
             condExpr = findExprInsideCase(cases[i]);
 
             String condPlace = evalExpr(condExpr);
@@ -823,10 +728,6 @@ private void printTree(Nodo n, int depth) {
         out.label(L_end);
     }
 
-    // -------------------------
-    // EXPRESIONES (devuelven "place")
-    // -------------------------
-
     private String evalExpr(Nodo expr) {
         if (expr == null) {
             String t = ctx.newTemp();
@@ -836,7 +737,7 @@ private void printTree(Nodo n, int depth) {
 
         String lx = safe(expr.getLexema());
 
-        // Literales
+     
         if (lx.startsWith("Entero(") || lx.startsWith("Flotante(") || lx.startsWith("Caracter(")
                 || lx.startsWith("Cadena(")) {
             String t = ctx.newTemp();
@@ -849,7 +750,6 @@ private void printTree(Nodo n, int depth) {
             return t;
         }
 
-        // Ident(x) -> carga a temporal (estilo profe)
         if (lx.startsWith("Ident(")) {
             String id = extraerIdent(expr);
             String t = ctx.newTemp();
@@ -873,9 +773,9 @@ private void printTree(Nodo n, int depth) {
             return t;
         }
 
-        // negativo (unario)
+        // negativo 
         if (lx.equals("negativo")) {
-            // hijos: "-" , literal/expr
+
             Nodo inner = expr.getHijos().size() > 1 ? expr.getHijos().get(1) : null;
             String p = evalExpr(inner);
             String t = ctx.newTemp();
@@ -883,7 +783,7 @@ private void printTree(Nodo n, int depth) {
             return t;
         }
 
-        // negacion (Σ en fuente, normalizada a ! en TAC)
+        // negacion 
         if (lx.equals("negacion")) {
             Nodo inner = expr.getHijos().size() > 1 ? expr.getHijos().get(1) : null;
             String p = evalExpr(inner);
@@ -892,9 +792,8 @@ private void printTree(Nodo n, int depth) {
             return t;
         }
 
-        // pre_inc / pre_dec
+    
         if (lx.equals("pre_inc") || lx.equals("pre_dec")) {
-            // hijos: "++"/"--", Ident(x)
             Nodo idNode = expr.getHijos().size() > 1 ? expr.getHijos().get(1) : null;
             String id = extraerIdent(idNode);
 
@@ -916,7 +815,7 @@ private void printTree(Nodo n, int depth) {
 
         // parentesis
         if (lx.equals("parentesis")) {
-            // hijos: "¿", expr, "?"
+
             Nodo inner = null;
             for (Nodo h : expr.getHijos()) {
                 String hlx = safe(h.getLexema());
@@ -930,7 +829,6 @@ private void printTree(Nodo n, int depth) {
 
         // acceso_arreglo como expr
         if (lx.equals("acceso_arreglo")) {
-            // hijos: Ident(A), arreglo
             Nodo idNode = expr.getHijos().size() > 0 ? expr.getHijos().get(0) : null;
             Nodo arrNode = expr.getHijos().size() > 1 ? expr.getHijos().get(1) : null;
             String base = extraerIdent(idNode);
@@ -943,7 +841,6 @@ private void printTree(Nodo n, int depth) {
             return t;
         }
 
-        // fallback: evaluar hijos y devolver último temp
         String last = null;
         for (Nodo h : expr.getHijos())
             last = evalExpr(h);
@@ -981,22 +878,18 @@ private void printTree(Nodo n, int depth) {
 
         String t = ctx.newTemp();
         
-        // Buscar nombre completo en el mapa
         String nombreCompleto = funcionMap.get(fname);
         if (nombreCompleto == null) {
-            // Intentar adivinar el tipo
-            nombreCompleto = "function_int_" + fname; // Fallback común
+            nombreCompleto = "function_int_" + fname; 
         }
         
         out.emit(t + " = call " + nombreCompleto + "," + count);
         return t;
     }
-    // -------------------------
+
     // SHOW / GET / BREAK
-    // -------------------------
 
     private void visitShow(Nodo n) {
-        // show -> "Show" "¿" expr "?" "endl"
         Nodo expr = null;
         for (Nodo h : n.getHijos()) {
             String lx = safe(h.getLexema());
@@ -1011,7 +904,6 @@ private void printTree(Nodo n, int depth) {
     }
 
     private void visitGet(Nodo n) {
-        // get -> "Get" "¿" expr "?" "endl"
         Nodo expr = null;
         for (Nodo h : n.getHijos()) {
             String lx = safe(h.getLexema());
@@ -1021,7 +913,6 @@ private void printTree(Nodo n, int depth) {
             break;
         }
 
-        // Ideal: que sea Ident(x) o acceso_arreglo
         String elx = (expr != null) ? safe(expr.getLexema()) : "";
 
         if (elx.startsWith("Ident(")) {
@@ -1031,7 +922,6 @@ private void printTree(Nodo n, int depth) {
         }
 
         if (elx.equals("acceso_arreglo")) {
-            // leer directo a arreglo: A[i][j]
             Nodo idNode = expr.getHijos().size() > 0 ? expr.getHijos().get(0) : null;
             Nodo arrNode = expr.getHijos().size() > 1 ? expr.getHijos().get(1) : null;
             String base = extraerIdent(idNode);
@@ -1043,31 +933,22 @@ private void printTree(Nodo n, int depth) {
             return;
         }
 
-        // Si llega algo no válido, para TAC lo omitimos (o se podría emitir error
-        // interno)
-        // Como dijiste: semántico lo valida, entonces esto no debería ocurrir en inputs
-        // correctos.
     }
 
     private void visitBreak(Nodo n) {
-        // break -> "Break" "endl"
-        if (ctx.breakTargets.isEmpty()) {
-            // break fuera de ciclo: semántico debería evitarlo
+        if (ctx.breakTargets.isEmpty()) { 
             return;
         }
         out.emit("goto " + ctx.breakTargets.peek());
     }
 
-    // -------------------------
     // HELPERS FOR / LOOP / DECIDE
-    // -------------------------
 
     private void emitInitFor(Nodo init) {
         if (init == null)
             return;
 
-        // init_for: tipo, Ident, "=", expr
-        // init_for2: Ident, "=", expr
+
         String id = "";
         Nodo expr = null;
 
@@ -1077,7 +958,6 @@ private void printTree(Nodo n, int depth) {
                 id = extraerIdent(h);
         }
 
-        // expr es el último hijo no token
         for (int i = init.getHijos().size() - 1; i >= 0; i--) {
             Nodo h = init.getHijos().get(i);
             String lx = safe(h.getLexema());
@@ -1094,7 +974,6 @@ private void printTree(Nodo n, int depth) {
     private void emitUpdateFor(Nodo upd) {
         if (upd == null)
             return;
-        // update_for: "++" Ident OR "--" Ident
         String op = "";
         String id = "";
 
@@ -1123,8 +1002,6 @@ private void printTree(Nodo n, int depth) {
             return t;
         }
 
-        // arreglo AST: "[" e1 "]" "[" e2 "]" o "[]""[]"
-        // Buscar expresiones dentro del arreglo:
         Nodo e1 = null, e2 = null;
         int found = 0;
         for (Nodo h : arreglo.getHijos()) {
@@ -1132,7 +1009,6 @@ private void printTree(Nodo n, int depth) {
             if (lx.equals("[") || lx.equals("]") || lx.equals("[]"))
                 continue;
 
-            // e1, e2 son nodos expresión
             if (found == 0) {
                 e1 = h;
                 found++;
@@ -1161,7 +1037,6 @@ private void printTree(Nodo n, int depth) {
             String lx = safe(h.getLexema());
             if (lx.equals("->") || lx.equals("bloque"))
                 continue;
-            // el primer hijo que sea expr
             if (!lx.equals("->"))
                 return h;
         }
@@ -1169,7 +1044,6 @@ private void printTree(Nodo n, int depth) {
     }
 
     private Nodo findElseBloque(Nodo decideNode) {
-        // En tu AST: decide_of -> Decide Of lista Else -> bloque End Decide
         boolean seenElse = false;
         for (Nodo h : decideNode.getHijos()) {
             String lx = safe(h.getLexema());
@@ -1190,7 +1064,6 @@ private void printTree(Nodo n, int depth) {
             if (safe(h.getLexema()).equals(lexema))
                 return h;
         }
-        // buscar en profundidad si no está en primer nivel
         for (Nodo h : n.getHijos()) {
             Nodo r = findFirst(h, lexema);
             if (r != null)
@@ -1200,8 +1073,6 @@ private void printTree(Nodo n, int depth) {
     }
 
     private Nodo findNthExprLike(Nodo n, int nth) {
-        // Heurística: tomar el nth hijo que parezca expresión
-        // (op/op_logico/Ident/literal/llamada/etc.)
         if (n == null)
             return null;
         int count = 0;
@@ -1213,7 +1084,6 @@ private void printTree(Nodo n, int depth) {
                     return h;
             }
         }
-        // fallback: buscar profundo
         for (Nodo h : n.getHijos()) {
             Nodo r = findNthExprLike(h, nth);
             if (r != null)
@@ -1244,9 +1114,7 @@ private void printTree(Nodo n, int depth) {
                 || lx.equals("False");
     }
 
-    // -------------------------
     // EXTRACCIONES: TIPO / NOMBRE
-    // -------------------------
 
     private String extraerTipoFuncion(Nodo funcionNode) {
         for (Nodo h : funcionNode.getHijos()) {
@@ -1264,7 +1132,7 @@ private void printTree(Nodo n, int depth) {
         if (lx.startsWith("Ident(") && lx.endsWith(")")) {
             return lx.substring(6, lx.length() - 1);
         }
-        // Si el nodo no es Ident(...) pero tiene hijos que sí
+
         for (Nodo h : n.getHijos()) {
             String r = extraerIdent(h);
             if (!r.isBlank())
@@ -1274,7 +1142,6 @@ private void printTree(Nodo n, int depth) {
     }
 
     private String literalRaw(String lexema) {
-        // Entero(5) -> 5, Cadena("x") -> "x"
         int p = lexema.indexOf('(');
         int q = lexema.lastIndexOf(')');
         if (p >= 0 && q > p)

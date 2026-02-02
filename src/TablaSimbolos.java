@@ -7,9 +7,7 @@ public class TablaSimbolos {
     private String funcionActual = "global";
     private final List<String> errores = new ArrayList<>();
 
-    // ===============================
     // INICIALIZACIÓN
-    // ===============================
 
     public void iniciarGlobal() {
         funcionActual = "global";
@@ -17,9 +15,7 @@ public class TablaSimbolos {
         tablasPorFuncion.put("global", new ArrayList<>(List.of(scopeActual)));
     }
 
-    // ===============================
     // FUNCIONES
-    // ===============================
 
     public void entrarFuncion(String nombreFuncion) {
         if (scopeActual == null) {
@@ -59,7 +55,7 @@ public class TablaSimbolos {
 
     public void declararFuncion(String nombre, String tipoRetorno, 
                                 List<String> parametros, int linea, int columna) {
-        // Verificar si ya existe
+
         Scope globalScope = tablasPorFuncion.get("global").get(0);
         if (globalScope.contieneEnEsteScope(nombre)) {
             String error = "ERROR SEMÁNTICO: Función '" + nombre + "' ya declarada";
@@ -138,9 +134,7 @@ public class TablaSimbolos {
         return null;
     }
 
-    // ===============================
     // BLOQUES
-    // ===============================
 
     public void entrarBloque(String nombre) {
         if (scopeActual == null) {
@@ -163,9 +157,7 @@ public class TablaSimbolos {
         }
     }
 
-    // ===============================
     // DECLARACIÓN Y USO DE VARIABLES
-    // ===============================
 
     public void declarar(Simbolo s) {
         if (scopeActual.contieneEnEsteScope(s.nombre)) {
@@ -190,9 +182,7 @@ public class TablaSimbolos {
         }
     }
 
-    // ===============================
     // BÚSQUEDA
-    // ===============================
 
     public Simbolo buscarSimbolo(String nombre) {
         return scopeActual.buscar(nombre);
@@ -202,9 +192,7 @@ public class TablaSimbolos {
         return scopeActual;
     }
 
-    // ===============================
     // RESET
-    // ===============================
 
     public void resetearScopeAGlobal() {
         if (tablasPorFuncion.containsKey("global") && !tablasPorFuncion.get("global").isEmpty()) {
@@ -213,9 +201,7 @@ public class TablaSimbolos {
         }
     }
 
-    // ===============================
     // UTILIDADES
-    // ===============================
 
     public List<String> getErrores() {
         return new ArrayList<>(errores);
@@ -252,10 +238,8 @@ public class TablaSimbolos {
         System.out.println("----------------------------------\n");
     }
     
-    // ===============================
     // VERIFICACIÓN DE TIPOS
-    // ===============================
-    
+
     public void verificarTipos(String tipoVar, String tipoExpr, int linea, int columna) {
         if (tipoExpr.equals("desconocido")) return;
 

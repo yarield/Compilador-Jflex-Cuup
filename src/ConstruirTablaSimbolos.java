@@ -6,8 +6,7 @@ public class ConstruirTablaSimbolos {
     private final TablaSimbolos ts;
     private int contadorBloques = 0;
     private boolean enLoop = false;         
-    private boolean enDecideOf = false;         
-    private String funcionActual = "";       
+    private boolean enDecideOf = false;            
 
     public ConstruirTablaSimbolos(TablaSimbolos ts) {
         this.ts = ts;
@@ -160,9 +159,8 @@ public class ConstruirTablaSimbolos {
                 ts.usarIdentificador(id, -1, -1);
             }
         }
-         // 17) OPERACIONES LÓGICAS CON @ y ~
+         // 16) OPERACIONES LÓGICAS CON @ y ~
         if (lx.equals("op_logico") || (lx.equals("op") && !n.hijos.isEmpty())) {
-            // Verificar si es @ o ~
             if (!n.hijos.isEmpty()) {
                 String op = safe(n.hijos.get(0).lexema);
                 if (op.equals("@") || op.equals("~")) {
@@ -172,14 +170,13 @@ public class ConstruirTablaSimbolos {
             }
         }
 
-        // 16) Recorrido normal
+        // 17) Recorrido normal
         for (Nodo h : n.hijos)
             visitar(h);
     }
 
+
     // ==================== DECLARACIONES ====================
-
-
     private void procesarOperacionLogica(Nodo n) {
         if (n.hijos.size() >= 3) {
             String operador = safe(n.hijos.get(0).lexema);
@@ -192,10 +189,11 @@ public class ConstruirTablaSimbolos {
             verificarOperacionBinaria(operador, tipo1, tipo2);
         }
         
-        // Visitar hijos para continuar análisis
         for (Nodo h : n.hijos)
             visitar(h);
     }
+
+
     private void procesarDeclaracionConTipos(Nodo n, String tipoDecl) {
         String clase = tipoDecl.equals("declaracion_global") ? "global" : "local";
         String tipoVar = "desconocido";
@@ -203,7 +201,6 @@ public class ConstruirTablaSimbolos {
         boolean esArreglo = false;
         int dims = 0;
 
-        // PRIMERO: Buscar información básica (tipo, nombre)
         for (Nodo h : n.hijos) {
             String lx = safe(h.lexema);
 
@@ -215,8 +212,7 @@ public class ConstruirTablaSimbolos {
                 id = extraerIdentificador(h);
             }
         }
-        
-        // SEGUNDO: Verificar si es arreglo y contar dimensiones
+
         for (Nodo h : n.hijos) {
             if (safe(h.lexema).equals("arreglo")) {
                 esArreglo = true;
@@ -227,7 +223,6 @@ public class ConstruirTablaSimbolos {
 
         if (id.isEmpty()) return;
 
-        // TERCERO: Declarar el símbolo en la tabla
         Simbolo s = new Simbolo(
             id, tipoVar, clase, ts.getScopeActual().nombre,
             -1, -1,
@@ -235,7 +230,6 @@ public class ConstruirTablaSimbolos {
         );
         ts.declarar(s);
         
-        // CUARTO: Buscar inicialización y verificar
         for (int i = 0; i < n.hijos.size(); i++) {
             Nodo h = n.hijos.get(i);
             String lx = safe(h.lexema);
@@ -249,7 +243,7 @@ public class ConstruirTablaSimbolos {
                 break;
             }
             else if (!esArreglo && lx.equals("=")) {
-                // Para variables simples (no arreglos)
+            
                 if (i + 1 < n.hijos.size()) {
                     Nodo expr = n.hijos.get(i + 1);
                     String tipoExpr = evaluarTipoExpresion(expr);
@@ -282,18 +276,18 @@ public class ConstruirTablaSimbolos {
             if (s != null) {
                 String tipoVar = s.tipo;
                 
-                // Si es arreglo, verificar inicialización
+               
                 if (s.esArreglo && safe(rhs.lexema).equals("init_array_2d")) {
                     verificarInicializacionArreglo2D(rhs, tipoVar);
                 }
                 else if (s.esArreglo && safe(rhs.lexema).equals("init_array_1d")) {
                     verificarInicializacionArreglo1D(rhs, tipoVar);
                 }
-                // Para variables normales
+         
                 else if (!s.esArreglo) {
                     String tipoExpr = evaluarTipoExpresion(rhs);
                     
-                    // Verificar compatibilidad - DEBEN SER IGUALES
+
                     if (!tipoExpr.equals("desconocido") && !tipoVar.equals(tipoExpr)) {
                         reportarError("No se puede asignar " + tipoExpr + " a " + tipoVar + 
                                     " (se requieren tipos iguales)", -1, -1);
@@ -313,7 +307,6 @@ public class ConstruirTablaSimbolos {
             visitar(h);
         }
         
-        // Verificar la condición del Exit When
         for (int i = 0; i < n.hijos.size(); i++) {
             if (safe(n.hijos.get(i).lexema).equals("When")) {
                 if (i + 1 < n.hijos.size()) {
@@ -334,13 +327,11 @@ public class ConstruirTablaSimbolos {
         boolean prevEnLoop = enLoop;
         enLoop = true;
         
-        // 1. PRIMERO: Buscar y procesar el init_for (declaración de i)
         Nodo initFor = null;
         Nodo condicionFor = null;
         Nodo updateFor = null;
         Nodo cuerpoFor = null;
         
-        // Identificar los nodos importantes
         for (Nodo h : n.hijos) {
             String lx = safe(h.lexema);
             if (lx.equals("init_for")) {
@@ -354,27 +345,22 @@ public class ConstruirTablaSimbolos {
             }
         }
         
-        // 2. PROCESAR init_for ANTES que nada
         if (initFor != null) {
             procesarInitFor(initFor);
         }
         
-        // 3. LUEGO procesar la condición (que ya puede usar i)
         if (condicionFor != null) {
             visitar(condicionFor);
         }
         
-        // 4. Procesar el update (++i)
         if (updateFor != null) {
             visitar(updateFor);
         }
         
-        // 5. Finalmente procesar el cuerpo
         if (cuerpoFor != null) {
             visitar(cuerpoFor);
         }
         
-        // 6. Procesar cualquier otro hijo no manejado
         for (Nodo h : n.hijos) {
             String lx = safe(h.lexema);
             if (!lx.equals("init_for") && !lx.equals("op_logico") && 
@@ -388,7 +374,6 @@ public class ConstruirTablaSimbolos {
     }
 
     private void procesarInitFor(Nodo initFor) {
-        // El init_for tiene la estructura: [tipo:int, Ident(i), =, Entero(0)]
         String tipoVar = "int";
         String id = "";
         
@@ -405,7 +390,6 @@ public class ConstruirTablaSimbolos {
         }
         
         if (!id.isEmpty()) {
-            // Declarar la variable en el scope actual
             Simbolo s = new Simbolo(
                 id, tipoVar, "local", ts.getScopeActual().nombre,
                 -1, -1,
@@ -414,7 +398,6 @@ public class ConstruirTablaSimbolos {
             ts.declarar(s);
         }
         
-        // También procesar la inicialización si hay (= Entero(0))
         for (Nodo h : initFor.hijos) {
             String lx = safe(h.lexema);
             if (!lx.startsWith("tipo:") && !lx.startsWith("Ident(")) {
@@ -459,7 +442,6 @@ public class ConstruirTablaSimbolos {
             Nodo expr = n.hijos.get(0);
             String tipoExpr = evaluarTipoExpresion(expr);
             
-            // Obtener tipo de retorno de la función actual
             String tipoEsperado = obtenerTipoRetornoFuncionActual();
             if (!tipoEsperado.equals("void")) {
                 ts.verificarTipos(tipoEsperado, tipoExpr, -1, -1);
@@ -468,8 +450,6 @@ public class ConstruirTablaSimbolos {
     }
 
     private String obtenerTipoRetornoFuncionActual() {
-        // Por ahora, devuelve "void" como placeholder
-        // Necesitarías llevar registro del tipo de función actual
         return "void";
     }
 
@@ -486,29 +466,25 @@ public class ConstruirTablaSimbolos {
 
         String lx = safe(n.lexema);
 
-        // LITERAL
         String lit = tipoLiteral(lx);
         if (!lit.equals("desconocido"))
             return lit;
 
-        // EXPRESIÓN NEGATIVA (-1.0, -5, etc.)
         if (lx.equals("negativo")) {
-            // El primer hijo es el operador "-", el segundo es el valor
             if (n.hijos.size() >= 2) {
-                Nodo valor = n.hijos.get(1); // El valor después del "-"
+                Nodo valor = n.hijos.get(1); 
                 String tipoValor = evaluarTipoExpresion(valor);
-                // -int → int, -float → float
                 return tipoValor;
             }
             return "desconocido";
         }
 
+        // Negacion
         if (lx.equals("negacion")) {
             if (n.hijos.size() >= 2) {
-                Nodo operando = n.hijos.get(1); // El operando está después del token "Negacion"
+                Nodo operando = n.hijos.get(1);
                 String tipoOperando = evaluarTipoExpresion(operando);
                 
-                // Verificar que el operando sea booleano
                 if (!tipoOperando.equals("bool") && !tipoOperando.equals("desconocido")) {
                     reportarError("Negación 'Negacion' requiere operando bool, recibió: " + 
                                 tipoOperando, -1, -1);
@@ -548,13 +524,10 @@ public class ConstruirTablaSimbolos {
             }
         }
 
-        // AQUÍ FALTA EL CASO PARA EXPRESIONES DE COMPARACIÓN (==, !=, <, >, etc.)
-        // Agrega este bloque justo aquí:
+   
         if (lx.equals("¿") && !n.hijos.isEmpty()) {
-            // Buscar el contenido dentro de ¿ ?
             for (Nodo h : n.hijos) {
                 if (!safe(h.lexema).equals("?")) {
-                    // Evaluar recursivamente lo que hay dentro
                     String tipoInterno = evaluarTipoExpresion(h);
                     return tipoInterno;
                 }
@@ -562,9 +535,6 @@ public class ConstruirTablaSimbolos {
             return "desconocido";
         }
 
-        // AQUÍ TAMBIÉN FALTA MANEJAR EXPRESIONES DE COMPARACIÓN DIRECTAS
-        // Si el nodo es una comparación (debería ser "op" pero a veces no)
-        // Revisar si es una expresión simple
         for (Nodo h : n.hijos) {
             if (safe(h.lexema).equals("op")) {
                 String tipoHijo = evaluarTipoExpresion(h);
@@ -584,7 +554,7 @@ public class ConstruirTablaSimbolos {
             op.equals("<") || op.equals(">") || 
             op.equals("<=") || op.equals(">=")) {
             
-            if (!t1.equals(t2)) {  // SOLO tipos iguales
+            if (!t1.equals(t2)) {  
                 reportarError("Tipos incompatibles para operador '" + op + "': " + 
                             t1 + " y " + t2 + ". Se requieren tipos iguales.", -1, -1);
                 return "desconocido";
@@ -600,7 +570,7 @@ public class ConstruirTablaSimbolos {
             return "bool";
         }
 
-        // SUMA - Solo permitir tipos iguales
+        // SUMA 
         if (op.equals("+")) {
             if (t1.equals("string") && t2.equals("string"))
                 return "string";
@@ -617,7 +587,7 @@ public class ConstruirTablaSimbolos {
             return "desconocido";
         }
         
-        // RESTA, MULTIPLICACIÓN - Solo tipos iguales
+        // RESTA, MULTIPLICACIÓN
         if (op.equals("-") || op.equals("*")) {
             if (!t1.equals(t2)) {
                 reportarError("Operador '" + op + "' requiere tipos iguales: " + 
@@ -632,7 +602,7 @@ public class ConstruirTablaSimbolos {
             return "desconocido";
         }
         
-        // DIVISIÓN NORMAL - Solo float con float
+        // DIVISIÓN NORMAL
         if (op.equals("/")) {
             if (!t1.equals("float") || !t2.equals("float")) {
                 reportarError("División '/' solo permite tipos float, recibió: " + 
@@ -642,7 +612,7 @@ public class ConstruirTablaSimbolos {
             return "float";
         }
         
-        // DIVISIÓN ENTERA - Solo int con int
+        // DIVISIÓN ENTERA
         if (op.equals("//")) {
             if (!t1.equals("int") || !t2.equals("int")) {
                 reportarError("División entera '//' solo permite tipos int, recibió: " + 
@@ -652,7 +622,7 @@ public class ConstruirTablaSimbolos {
             return "int";
         }
         
-        // MÓDULO - Solo tipos iguales (int o float)
+        // MÓDULO 
         if (op.equals("%")) {
             if (!t1.equals(t2)) {
                 reportarError("Módulo '%' requiere tipos iguales, recibió: " + 
@@ -665,10 +635,10 @@ public class ConstruirTablaSimbolos {
                 return "desconocido";
             }
             
-            return t1; // Retorna el mismo tipo (int o float)
+            return t1; 
         }
 
-        // POTENCIA - Solo tipos iguales (int o float)
+        // POTENCIA 
         if (op.equals("^")) {
             if (!t1.equals(t2)) {
                 reportarError("Potencia '^' requiere tipos iguales, recibió: " + 
@@ -681,10 +651,10 @@ public class ConstruirTablaSimbolos {
                 return "desconocido";
             }
             
-            return t1; // Retorna el mismo tipo (int o float)
+            return t1; 
         }
 
-        if (op.equals("@") || op.equals("~")) {  // AND y OR
+        if (op.equals("@") || op.equals("~")) {  
             if (!t1.equals("bool") || !t2.equals("bool")) {
                 reportarError("Operador lógico '" + op + "' requiere operandos bool, recibió: " + 
                             t1 + " y " + t2, -1, -1);
@@ -707,126 +677,7 @@ public class ConstruirTablaSimbolos {
         String tipo1 = evaluarTipoExpresion(operando1);
         String tipo2 = evaluarTipoExpresion(operando2);
         
-        // La verificación de tipos ya se hace en verificarOperacionBinaria
         verificarOperacionBinaria(operador, tipo1, tipo2);
-    }
-
-    private boolean verificarOperacionAritmeticaEstricta(String operador, String tipo1, String tipo2, int linea, int columna) {
-        switch(operador) {
-            case "+": return verificarSumaEstricta(tipo1, tipo2, linea, columna);
-            case "-": return verificarRestaEstricta(tipo1, tipo2, linea, columna);
-            case "*": return verificarMultiplicacionEstricta(tipo1, tipo2, linea, columna);
-            case "/": return verificarDivisionEstricta(tipo1, tipo2, linea, columna);
-            case "//": return verificarDivisionEnteraEstricta(tipo1, tipo2, linea, columna);
-            case "%": return verificarModuloEstricto(tipo1, tipo2, linea, columna);
-            case "^": return verificarPotenciaEstricta(tipo1, tipo2, linea, columna);
-            default: return true;
-        }
-    }
-
-    private boolean verificarSumaEstricta(String tipo1, String tipo2, int linea, int columna) {
-        if (!tipo1.equals(tipo2)) {
-            reportarError("Suma requiere tipos iguales: " + tipo1 + " + " + tipo2, linea, columna);
-            return false;
-        }
-        
-        if (tipo1.equals("string")) {
-            return true; 
-        }
-        
-        if (tipo1.equals("int") || tipo1.equals("float")) {
-            return true;
-        }
-        
-        reportarError("Suma no permitida para tipo: " + tipo1, linea, columna);
-        return false;
-    }
-
-    private boolean verificarRestaEstricta(String tipo1, String tipo2, int linea, int columna) {
-        if (!tipo1.equals(tipo2)) {
-            reportarError("Resta requiere tipos iguales: " + tipo1 + " - " + tipo2, linea, columna);
-            return false;
-        }
-        
-        if (tipo1.equals("int") || tipo1.equals("float")) {
-            return true;
-        }
-        
-        reportarError("Resta no permitida para tipo: " + tipo1, linea, columna);
-        return false;
-    }
-    private boolean verificarMultiplicacionEstricta(String tipo1, String tipo2, int linea, int columna) {
-        if (tipo1.equals("int") && tipo2.equals("int")) {
-            return true;
-        }
-        
-        if (tipo1.equals("float") && tipo2.equals("float")) {
-            return true;
-        }
-        
-        if (!tipo1.equals(tipo2)) {
-            reportarError("Tipos diferentes en multiplicación: " + tipo1 + " * " + tipo2, linea, columna);
-            return false;
-        }
-        
-        reportarError("Tipo no soportado para multiplicación: " + tipo1, linea, columna);
-        return false;
-    }
-
-    private boolean verificarDivisionEstricta(String tipo1, String tipo2, int linea, int columna) {
-        if (tipo1.equals("float") && tipo2.equals("float")) {
-            return true;
-        }
-        
-        if (!tipo1.equals(tipo2)) {
-            reportarError("Tipos diferentes en división: " + tipo1 + " / " + tipo2, linea, columna);
-            return false;
-        }
-        
-        reportarError("División '/' exclusiva para tipos float, recibió: " + tipo1, linea, columna);
-        return false;
-    }
-
-    private boolean verificarDivisionEnteraEstricta(String tipo1, String tipo2, int linea, int columna) {
-        if (tipo1.equals("int") && tipo2.equals("int")) {
-            return true;
-        }
-        
-        if (!tipo1.equals(tipo2)) {
-            reportarError("Tipos diferentes en división entera: " + tipo1 + " // " + tipo2, linea, columna);
-            return false;
-        }
-        
-        reportarError("División entera '//' exclusiva para tipos int, recibió: " + tipo1, linea, columna);
-        return false;
-    }
-
-    private boolean verificarModuloEstricto(String tipo1, String tipo2, int linea, int columna) {
-        if (!tipo1.equals(tipo2)) {
-            reportarError("Tipos diferentes en módulo: " + tipo1 + " % " + tipo2, linea, columna);
-            return false;
-        }
-        
-        if (!tipo1.equals("int") && !tipo1.equals("float")) {
-            reportarError("Operador módulo '%' solo permite int o float, recibió: " + tipo1, linea, columna);
-            return false;
-        }
-        
-        return true;
-    }
-
-    private boolean verificarPotenciaEstricta(String tipo1, String tipo2, int linea, int columna) {
-        if (tipo1.equals("float") && tipo2.equals("float")) {
-            return true;
-        }
-        
-        if (!tipo1.equals(tipo2)) {
-            reportarError("Tipos diferentes en potencia: " + tipo1 + " ^ " + tipo2, linea, columna);
-            return false;
-        }
-        
-        reportarError("Potencia '^' exclusiva para tipos float, recibió: " + tipo1, linea, columna);
-        return false;
     }
 
     // ==================== MÉTODOS PARA FUNCIONES ====================
@@ -953,29 +804,23 @@ public class ConstruirTablaSimbolos {
 
     // ==================== MÉTODOS PARA DETECTAR ARRAYS ====================
 
-    // Método para contar dimensiones del arreglo
     private int contarDimensionesArregloCompleto(Nodo arregloNode) {
         int dimensiones = 0;
         
-        // Recorrer todos los hijos buscando nodos "[]"
         for (Nodo h : arregloNode.hijos) {
             if (safe(h.lexema).equals("[]")) {
                 dimensiones++;
             }
-            // También revisar hijos recursivamente
             dimensiones += contarDimensionesArregloCompleto(h);
         }
         
         return dimensiones;
     }
 
-    // Método para verificar inicialización de arreglo 2D
     private void verificarInicializacionArreglo2D(Nodo initArray2D, String tipoEsperado) {
-        // Buscar la lista de filas
         for (Nodo h : initArray2D.hijos) {
             if (safe(h.lexema).equals("lista_filas")) {
         
-                // Revisar cada fila
                 for (Nodo fila : h.hijos) {
                     if (safe(fila.lexema).equals("fila")) {
                         verificarFilaArreglo(fila, tipoEsperado);
@@ -985,12 +830,9 @@ public class ConstruirTablaSimbolos {
         }
     }
 
-    // Método para verificar inicialización de arreglo 1D
     private void verificarInicializacionArreglo1D(Nodo initArray1D, String tipoEsperado) { 
-        // Buscar la lista de expresiones
         for (Nodo h : initArray1D.hijos) {
             if (safe(h.lexema).equals("lista_expresiones")) {
-                // Revisar cada expresión
                 for (Nodo expr : h.hijos) {
                     String lx = safe(expr.lexema);
                     if (!lx.equals(",")) {
@@ -1003,17 +845,14 @@ public class ConstruirTablaSimbolos {
         }
     }
 
-    // Método para verificar una fila del arreglo
+  
     private void verificarFilaArreglo(Nodo filaNode, String tipoEsperado) {
-        // Buscar la lista de expresiones
         for (Nodo h : filaNode.hijos) {
             if (safe(h.lexema).equals("lista_expresiones")) {
-                
-                // Revisar cada expresión en la fila
+          
                 for (Nodo expr : h.hijos) {
                     String lx = safe(expr.lexema);
-                    
-                    // Verificar tipo del elemento
+                
                     if (!lx.equals(",")) {
                         verificarTipoElemento(lx, tipoEsperado);
                     }
@@ -1022,7 +861,6 @@ public class ConstruirTablaSimbolos {
         }
     }
 
-    // Método para verificar tipo de un elemento
     private void verificarTipoElemento(String lexemaElemento, String tipoEsperado) {
         if (lexemaElemento.contains("Cadena")) {
             if (!tipoEsperado.equals("string")) {
@@ -1051,11 +889,11 @@ public class ConstruirTablaSimbolos {
         }
     }
 
-    // Método para procesar acceso a elementos de array
+ 
     private void procesarAccesoArray(Nodo accesoNode) {
         String id = "";
         
-        // Buscar el identificador
+
         for (Nodo h : accesoNode.hijos) {
             if (safe(h.lexema).startsWith("Ident(")) {
                 id = extraerIdentificador(h);
@@ -1064,7 +902,7 @@ public class ConstruirTablaSimbolos {
         }
         
         if (!id.isEmpty()) {
-            // Verificar que exista
+
             ts.usarIdentificador(id, -1, -1);
             
             Simbolo s = ts.buscarSimbolo(id);

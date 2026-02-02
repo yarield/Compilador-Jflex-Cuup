@@ -7,22 +7,6 @@ public final class FrameLayout {
 
     private final int frameSize;
 
-    // Con esta convención:
-    //   $fp = old $sp (tope del frame, justo donde estaban los args)
-    //
-    // Guardados:
-    //   -4($fp)  = saved $ra
-    //   -8($fp)  = saved $fp
-    //
-    // Locals/temps:
-    //   -12($fp), -16($fp), ...
-    //
-    // Params (en pila):
-    //   0($fp)   = último param empujado (top)
-    //   4($fp)   = anterior
-    // Por orden declarado (a,b,c...):
-    //   offset(param[i]) = (n-1-i)*4
-
     public FrameLayout(Collection<String> locals, Collection<String> temps, String[] paramsInOrder) {
 
         int n = paramsInOrder.length;
@@ -35,14 +19,14 @@ public final class FrameLayout {
         all.addAll(locals);
         all.addAll(temps);
 
-        int off = -12; // -4 ra, -8 fp, luego locals/temps
+        int off = -12; 
         for (String name : all) {
             localTempOffset.put(name, off);
             off -= 4;
         }
 
         int localsBytes = (-off) - 12;
-        int raw = 8 + localsBytes; // ra+fp + locals/temps
+        int raw = 8 + localsBytes;
 
         int aligned = ((raw + 15) / 16) * 16;
         frameSize = aligned;
