@@ -1,14 +1,23 @@
+world int globalpipipi = 2 endl
 
+gift int func ¿int valor?¡
+    local int suma = valor +  5 endl
+    return suma endl
+!
 coal navidad ¿? ¡
 
-    local int papasfritas = 155 endl
-    show¿papasfritas? endl
+    show ¿func ¿4?? endl
+
+    local int a = func¿6? endl
+    show ¿a? endl
+    decide of   a > 10 -> ¡
+        show ¿"mayor a 10"? endl
+    ! a > 5 -> ¡
+        show ¿"mayor a 5"? endl
+    ! else -> ¡
+        show ¿"menor a 5"? endl
+    ! end decide endl
 
 
-
-    for ¿ int i = 0 endl i < 5 endl ++i ? ¡ 
-        show¿i? endl
-    !
-
-
+    show ¿globalpipipi? endl
 !

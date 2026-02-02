@@ -1,33 +1,87 @@
 [
   {
-    "nombre": "Coal",
-    "valor": "coal",
-    "linea": 2,
+    "nombre": "World",
+    "valor": "world",
+    "linea": 1,
     "columna": 1
   },
   {
-    "nombre": "Navidad",
-    "valor": "navidad",
-    "linea": 2,
+    "nombre": "Int",
+    "valor": "int",
+    "linea": 1,
     "columna": 2
+  },
+  {
+    "nombre": "Identificador",
+    "valor": "globalpipipi",
+    "linea": 1,
+    "columna": 3
+  },
+  {
+    "nombre": "Igual",
+    "valor": "=",
+    "linea": 1,
+    "columna": 4
+  },
+  {
+    "nombre": "Entero",
+    "valor": "2",
+    "linea": 1,
+    "columna": 5
+  },
+  {
+    "nombre": "Endl",
+    "valor": "endl",
+    "linea": 1,
+    "columna": 6
+  },
+  {
+    "nombre": "Gift",
+    "valor": "gift",
+    "linea": 3,
+    "columna": 1
+  },
+  {
+    "nombre": "Int",
+    "valor": "int",
+    "linea": 3,
+    "columna": 2
+  },
+  {
+    "nombre": "Identificador",
+    "valor": "func",
+    "linea": 3,
+    "columna": 3
   },
   {
     "nombre": "S_pregunta_a",
     "valor": "¿",
-    "linea": 2,
-    "columna": 3
+    "linea": 3,
+    "columna": 4
+  },
+  {
+    "nombre": "Int",
+    "valor": "int",
+    "linea": 3,
+    "columna": 5
+  },
+  {
+    "nombre": "Identificador",
+    "valor": "valor",
+    "linea": 3,
+    "columna": 6
   },
   {
     "nombre": "S_pregunta_c",
     "valor": "?",
-    "linea": 2,
-    "columna": 4
+    "linea": 3,
+    "columna": 7
   },
   {
     "nombre": "S_exclamacion_a",
     "valor": "¡",
-    "linea": 2,
-    "columna": 5
+    "linea": 3,
+    "columna": 8
   },
   {
     "nombre": "Local",
@@ -43,7 +97,7 @@
   },
   {
     "nombre": "Identificador",
-    "valor": "papasfritas",
+    "valor": "suma",
     "linea": 4,
     "columna": 3
   },
@@ -54,177 +108,465 @@
     "columna": 4
   },
   {
-    "nombre": "Entero",
-    "valor": "155",
+    "nombre": "Identificador",
+    "valor": "valor",
     "linea": 4,
     "columna": 5
   },
   {
-    "nombre": "Endl",
-    "valor": "endl",
+    "nombre": "Suma",
+    "valor": "+",
     "linea": 4,
     "columna": 6
-  },
-  {
-    "nombre": "Show",
-    "valor": "show",
-    "linea": 5,
-    "columna": 1
-  },
-  {
-    "nombre": "S_pregunta_a",
-    "valor": "¿",
-    "linea": 5,
-    "columna": 2
-  },
-  {
-    "nombre": "Identificador",
-    "valor": "papasfritas",
-    "linea": 5,
-    "columna": 3
-  },
-  {
-    "nombre": "S_pregunta_c",
-    "valor": "?",
-    "linea": 5,
-    "columna": 4
-  },
-  {
-    "nombre": "Endl",
-    "valor": "endl",
-    "linea": 5,
-    "columna": 5
-  },
-  {
-    "nombre": "For",
-    "valor": "for",
-    "linea": 9,
-    "columna": 1
-  },
-  {
-    "nombre": "S_pregunta_a",
-    "valor": "¿",
-    "linea": 9,
-    "columna": 2
-  },
-  {
-    "nombre": "Int",
-    "valor": "int",
-    "linea": 9,
-    "columna": 3
-  },
-  {
-    "nombre": "Identificador",
-    "valor": "i",
-    "linea": 9,
-    "columna": 4
-  },
-  {
-    "nombre": "Igual",
-    "valor": "=",
-    "linea": 9,
-    "columna": 5
-  },
-  {
-    "nombre": "Entero",
-    "valor": "0",
-    "linea": 9,
-    "columna": 6
-  },
-  {
-    "nombre": "Endl",
-    "valor": "endl",
-    "linea": 9,
-    "columna": 7
-  },
-  {
-    "nombre": "Identificador",
-    "valor": "i",
-    "linea": 9,
-    "columna": 8
-  },
-  {
-    "nombre": "Menor",
-    "valor": "<",
-    "linea": 9,
-    "columna": 9
   },
   {
     "nombre": "Entero",
     "valor": "5",
-    "linea": 9,
-    "columna": 10
+    "linea": 4,
+    "columna": 7
   },
   {
     "nombre": "Endl",
     "valor": "endl",
-    "linea": 9,
-    "columna": 11
+    "linea": 4,
+    "columna": 8
   },
   {
-    "nombre": "Op_incremento",
-    "valor": "++",
-    "linea": 9,
-    "columna": 12
+    "nombre": "Return",
+    "valor": "return",
+    "linea": 5,
+    "columna": 1
   },
   {
     "nombre": "Identificador",
-    "valor": "i",
-    "linea": 9,
-    "columna": 13
+    "valor": "suma",
+    "linea": 5,
+    "columna": 2
   },
   {
-    "nombre": "S_pregunta_c",
-    "valor": "?",
-    "linea": 9,
-    "columna": 14
+    "nombre": "Endl",
+    "valor": "endl",
+    "linea": 5,
+    "columna": 3
   },
   {
-    "nombre": "S_exclamacion_a",
-    "valor": "¡",
-    "linea": 9,
-    "columna": 15
-  },
-  {
-    "nombre": "Show",
-    "valor": "show",
-    "linea": 10,
+    "nombre": "S_exclamacion_c",
+    "valor": "!",
+    "linea": 6,
     "columna": 1
+  },
+  {
+    "nombre": "Coal",
+    "valor": "coal",
+    "linea": 7,
+    "columna": 1
+  },
+  {
+    "nombre": "Navidad",
+    "valor": "navidad",
+    "linea": 7,
+    "columna": 2
   },
   {
     "nombre": "S_pregunta_a",
     "valor": "¿",
-    "linea": 10,
-    "columna": 2
-  },
-  {
-    "nombre": "Identificador",
-    "valor": "i",
-    "linea": 10,
+    "linea": 7,
     "columna": 3
   },
   {
     "nombre": "S_pregunta_c",
     "valor": "?",
-    "linea": 10,
+    "linea": 7,
+    "columna": 4
+  },
+  {
+    "nombre": "S_exclamacion_a",
+    "valor": "¡",
+    "linea": 7,
+    "columna": 5
+  },
+  {
+    "nombre": "Show",
+    "valor": "show",
+    "linea": 9,
+    "columna": 1
+  },
+  {
+    "nombre": "S_pregunta_a",
+    "valor": "¿",
+    "linea": 9,
+    "columna": 2
+  },
+  {
+    "nombre": "Identificador",
+    "valor": "func",
+    "linea": 9,
+    "columna": 3
+  },
+  {
+    "nombre": "S_pregunta_a",
+    "valor": "¿",
+    "linea": 9,
+    "columna": 4
+  },
+  {
+    "nombre": "Entero",
+    "valor": "4",
+    "linea": 9,
+    "columna": 5
+  },
+  {
+    "nombre": "S_pregunta_c",
+    "valor": "?",
+    "linea": 9,
+    "columna": 6
+  },
+  {
+    "nombre": "S_pregunta_c",
+    "valor": "?",
+    "linea": 9,
+    "columna": 7
+  },
+  {
+    "nombre": "Endl",
+    "valor": "endl",
+    "linea": 9,
+    "columna": 8
+  },
+  {
+    "nombre": "Local",
+    "valor": "local",
+    "linea": 11,
+    "columna": 1
+  },
+  {
+    "nombre": "Int",
+    "valor": "int",
+    "linea": 11,
+    "columna": 2
+  },
+  {
+    "nombre": "Identificador",
+    "valor": "a",
+    "linea": 11,
+    "columna": 3
+  },
+  {
+    "nombre": "Igual",
+    "valor": "=",
+    "linea": 11,
+    "columna": 4
+  },
+  {
+    "nombre": "Identificador",
+    "valor": "func",
+    "linea": 11,
+    "columna": 5
+  },
+  {
+    "nombre": "S_pregunta_a",
+    "valor": "¿",
+    "linea": 11,
+    "columna": 6
+  },
+  {
+    "nombre": "Entero",
+    "valor": "6",
+    "linea": 11,
+    "columna": 7
+  },
+  {
+    "nombre": "S_pregunta_c",
+    "valor": "?",
+    "linea": 11,
+    "columna": 8
+  },
+  {
+    "nombre": "Endl",
+    "valor": "endl",
+    "linea": 11,
+    "columna": 9
+  },
+  {
+    "nombre": "Show",
+    "valor": "show",
+    "linea": 12,
+    "columna": 1
+  },
+  {
+    "nombre": "S_pregunta_a",
+    "valor": "¿",
+    "linea": 12,
+    "columna": 2
+  },
+  {
+    "nombre": "Identificador",
+    "valor": "a",
+    "linea": 12,
+    "columna": 3
+  },
+  {
+    "nombre": "S_pregunta_c",
+    "valor": "?",
+    "linea": 12,
     "columna": 4
   },
   {
     "nombre": "Endl",
     "valor": "endl",
-    "linea": 10,
+    "linea": 12,
+    "columna": 5
+  },
+  {
+    "nombre": "Decide",
+    "valor": "decide",
+    "linea": 13,
+    "columna": 1
+  },
+  {
+    "nombre": "Of",
+    "valor": "of",
+    "linea": 13,
+    "columna": 2
+  },
+  {
+    "nombre": "Identificador",
+    "valor": "a",
+    "linea": 13,
+    "columna": 3
+  },
+  {
+    "nombre": "Mayor",
+    "valor": ">",
+    "linea": 13,
+    "columna": 4
+  },
+  {
+    "nombre": "Entero",
+    "valor": "10",
+    "linea": 13,
+    "columna": 5
+  },
+  {
+    "nombre": "Flecha",
+    "valor": "->",
+    "linea": 13,
+    "columna": 6
+  },
+  {
+    "nombre": "S_exclamacion_a",
+    "valor": "¡",
+    "linea": 13,
+    "columna": 7
+  },
+  {
+    "nombre": "Show",
+    "valor": "show",
+    "linea": 14,
+    "columna": 1
+  },
+  {
+    "nombre": "S_pregunta_a",
+    "valor": "¿",
+    "linea": 14,
+    "columna": 2
+  },
+  {
+    "nombre": "Cadena",
+    "valor": "\"mayor a 10\"",
+    "linea": 14,
+    "columna": 3
+  },
+  {
+    "nombre": "S_pregunta_c",
+    "valor": "?",
+    "linea": 14,
+    "columna": 4
+  },
+  {
+    "nombre": "Endl",
+    "valor": "endl",
+    "linea": 14,
     "columna": 5
   },
   {
     "nombre": "S_exclamacion_c",
     "valor": "!",
-    "linea": 11,
+    "linea": 15,
     "columna": 1
+  },
+  {
+    "nombre": "Identificador",
+    "valor": "a",
+    "linea": 15,
+    "columna": 2
+  },
+  {
+    "nombre": "Mayor",
+    "valor": ">",
+    "linea": 15,
+    "columna": 3
+  },
+  {
+    "nombre": "Entero",
+    "valor": "5",
+    "linea": 15,
+    "columna": 4
+  },
+  {
+    "nombre": "Flecha",
+    "valor": "->",
+    "linea": 15,
+    "columna": 5
+  },
+  {
+    "nombre": "S_exclamacion_a",
+    "valor": "¡",
+    "linea": 15,
+    "columna": 6
+  },
+  {
+    "nombre": "Show",
+    "valor": "show",
+    "linea": 16,
+    "columna": 1
+  },
+  {
+    "nombre": "S_pregunta_a",
+    "valor": "¿",
+    "linea": 16,
+    "columna": 2
+  },
+  {
+    "nombre": "Cadena",
+    "valor": "\"mayor a 5\"",
+    "linea": 16,
+    "columna": 3
+  },
+  {
+    "nombre": "S_pregunta_c",
+    "valor": "?",
+    "linea": 16,
+    "columna": 4
+  },
+  {
+    "nombre": "Endl",
+    "valor": "endl",
+    "linea": 16,
+    "columna": 5
   },
   {
     "nombre": "S_exclamacion_c",
     "valor": "!",
-    "linea": 14,
+    "linea": 17,
+    "columna": 1
+  },
+  {
+    "nombre": "Else",
+    "valor": "else",
+    "linea": 17,
+    "columna": 2
+  },
+  {
+    "nombre": "Flecha",
+    "valor": "->",
+    "linea": 17,
+    "columna": 3
+  },
+  {
+    "nombre": "S_exclamacion_a",
+    "valor": "¡",
+    "linea": 17,
+    "columna": 4
+  },
+  {
+    "nombre": "Show",
+    "valor": "show",
+    "linea": 18,
+    "columna": 1
+  },
+  {
+    "nombre": "S_pregunta_a",
+    "valor": "¿",
+    "linea": 18,
+    "columna": 2
+  },
+  {
+    "nombre": "Cadena",
+    "valor": "\"menor a 5\"",
+    "linea": 18,
+    "columna": 3
+  },
+  {
+    "nombre": "S_pregunta_c",
+    "valor": "?",
+    "linea": 18,
+    "columna": 4
+  },
+  {
+    "nombre": "Endl",
+    "valor": "endl",
+    "linea": 18,
+    "columna": 5
+  },
+  {
+    "nombre": "S_exclamacion_c",
+    "valor": "!",
+    "linea": 19,
+    "columna": 1
+  },
+  {
+    "nombre": "End",
+    "valor": "end",
+    "linea": 19,
+    "columna": 2
+  },
+  {
+    "nombre": "Decide",
+    "valor": "decide",
+    "linea": 19,
+    "columna": 3
+  },
+  {
+    "nombre": "Endl",
+    "valor": "endl",
+    "linea": 19,
+    "columna": 4
+  },
+  {
+    "nombre": "Show",
+    "valor": "show",
+    "linea": 22,
+    "columna": 1
+  },
+  {
+    "nombre": "S_pregunta_a",
+    "valor": "¿",
+    "linea": 22,
+    "columna": 2
+  },
+  {
+    "nombre": "Identificador",
+    "valor": "globalpipipi",
+    "linea": 22,
+    "columna": 3
+  },
+  {
+    "nombre": "S_pregunta_c",
+    "valor": "?",
+    "linea": 22,
+    "columna": 4
+  },
+  {
+    "nombre": "Endl",
+    "valor": "endl",
+    "linea": 22,
+    "columna": 5
+  },
+  {
+    "nombre": "S_exclamacion_c",
+    "valor": "!",
+    "linea": 23,
     "columna": 1
   }
 ]

@@ -2,9 +2,10 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -12,6 +13,8 @@ public class TacGenerator {
 
     private final TacEmitter out = new TacEmitter();
     private final TacContext ctx = new TacContext();
+    private final Map<String, String> funcionMap = new LinkedHashMap<>();
+    private final Set<String> globalesDeclaradas = new LinkedHashSet<>();
 
     // Para que locals "al inicio" no se repitan
     private final Set<String> localsEmitidos = new LinkedHashSet<>();
@@ -23,12 +26,6 @@ public class TacGenerator {
         return text;
     }
 
-    public String generate(Nodo raiz) {
-        if (raiz == null)
-            return "";
-        visitPrograma(raiz);
-        return out.build();
-    }
 
     // -------------------------
     // ESCRITURA DE ARCHIVO (TacWriter dentro)
@@ -46,25 +43,116 @@ public class TacGenerator {
     // VISITAS PRINCIPALES
     // -------------------------
 
-    private void visitPrograma(Nodo n) {
-        // Recorre hijos en orden
+    private void visitGlobales(Nodo n) {
+        // Buscar todos los elementos_del_programa que contengan declaraciones_globales
         for (Nodo h : n.getHijos()) {
             String lx = safe(h.getLexema());
-            if (lx.equals("elementos_del_programa")) {
-                visitElementosDelPrograma(h);
-            } else if (lx.equals("main")) {
-                visitMain(h);
-            } else {
-                // fallback
-                visit(h);
+            if (lx.equals("elemento_del_programa")) {
+                // Dentro de elemento_del_programa, buscar declaracion_global
+                Nodo decl = findFirst(h, "declaracion_global");
+                if (decl != null) {
+                    visitDeclaracionGlobal(decl);
+                }
             }
+        }
+}
+
+    private void collectFunctions(Nodo n) {
+        for (Nodo h : n.getHijos()) {
+            String lx = safe(h.getLexema());
+            if (lx.equals("funcion")) {
+                String tipo = extraerTipoFuncion(h);
+                String nombre = extraerNombreFuncion(h);
+                String labelFun = "function_" + tipo + "_" + nombre;
+                funcionMap.put(nombre, labelFun);
+            }
+            collectFunctions(h);
         }
     }
 
-    private void visitElementosDelPrograma(Nodo n) {
-        for (Nodo h : n.getHijos()) {
-            visit(h);
+private void generateFunctions(Nodo n) {
+    System.out.println("\nDEBUG generateFunctions: buscando funciones en " + safe(n.getLexema()));
+    
+    // Buscar funciones en elementos_del_programa
+    for (Nodo h : n.getHijos()) {
+        String lx = safe(h.getLexema());
+        System.out.println("  Revisando hijo: " + lx);
+        
+        if (lx.equals("elemento_del_programa")) {
+            // Dentro de elemento_del_programa, buscar funcion
+            Nodo funcion = findFirst(h, "funcion");
+            if (funcion != null) {
+                System.out.println("  ¡Encontrada función! Generando...");
+                visitFuncion(funcion);
+            }
         }
+    }
+}
+private void generateMain(Nodo mainNode) {
+    if (mainNode == null) {
+        System.err.println("ERROR: generateMain recibió nodo null");
+        return;
+    }
+    
+    String nodoName = safe(mainNode.getLexema());
+    if (!nodoName.equals("main")) {
+        System.err.println("ERROR: generateMain recibió nodo que no es 'main': " + nodoName);
+        System.out.println("DEBUG: Estructura del nodo recibido:");
+        printTree(mainNode, 0);
+        return;
+    }
+    
+    System.out.println("DEBUG generateMain: Procesando nodo main real");
+    
+    ctx.enterFunction("main");
+    localsEmitidos.clear();
+
+    out.label("main");
+
+    // Buscar el contenido del main
+    Nodo contenidoMain = findFirst(mainNode, "lista_elementos");
+    if (contenidoMain == null) {
+        contenidoMain = findFirst(mainNode, "bloque");
+    }
+    
+    if (contenidoMain != null) {
+        System.out.println("DEBUG: Contenido main encontrado: " + safe(contenidoMain.getLexema()));
+        
+        // Recolectar y emitir locales
+        Map<String, String> locals = collectLocals(contenidoMain);
+        emitLocals(locals);
+        
+        // Visitar el contenido
+        visit(contenidoMain);
+    } else {
+        System.err.println("ADVERTENCIA: No se encontró contenido dentro del main");
+        System.out.println("DEBUG: Estructura del main:");
+        printTree(mainNode, 0);
+    }
+
+    out.label("main_end");
+    out.blank();
+    
+    System.out.println("DEBUG: Main generado exitosamente");
+}
+// Método helper para debug
+private void printTree(Nodo n, int depth) {
+    if (n == null) return;
+    String indent = "  ".repeat(depth);
+    System.out.println(indent + "- " + safe(n.getLexema()));
+    for (Nodo h : n.getHijos()) {
+        printTree(h, depth + 1);
+    }
+}
+
+    private String extraerNombreFuncion(Nodo funcionNode) {
+        // primer Ident(...) que aparezca como hijo directo
+        for (Nodo h : funcionNode.getHijos()) {
+            String lx = safe(h.getLexema());
+            if (lx.startsWith("Ident("))
+                return extraerIdent(h);
+        }
+        return "anonima";
     }
 
     private void visit(Nodo n) {
@@ -75,6 +163,10 @@ public class TacGenerator {
         if (lx.equals("elemento_del_programa") || lx.equals("elemento") || lx.equals("lista_elementos")) {
             for (Nodo h : n.getHijos())
                 visit(h);
+            return;
+        }
+        if (lx.equals("declaracion_global")) { 
+            visitDeclaracionGlobal(n);
             return;
         }
 
@@ -90,6 +182,11 @@ public class TacGenerator {
 
         if (lx.equals("bloque")) {
             visitBloque(n);
+            return;
+        }
+
+        if (lx.equals("declaracion_local")) {
+            visitDeclaracionLocal(n);
             return;
         }
 
@@ -138,16 +235,139 @@ public class TacGenerator {
             visit(h);
     }
 
+    private String extraerValorLiteral(Nodo expr) {
+        if (expr == null) return null;
+        String lx = safe(expr.getLexema());
+        
+        if (lx.startsWith("Entero(") || lx.startsWith("Flotante(") || 
+            lx.startsWith("Caracter(") || lx.startsWith("Cadena(")) {
+            return literalRaw(lx);
+        }
+        if (lx.equals("True")) return "1";
+        if (lx.equals("False")) return "0";
+        
+        return null; // No es un literal simple
+    }
+    
+    // Clase para guardar inicializaciones complejas
+    private static class InicializacionGlobal {
+        String id;
+        Nodo expr;
+        
+        InicializacionGlobal(String id, Nodo expr) {
+            this.id = id;
+            this.expr = expr;
+        }
+    }
+    
+    private final List<InicializacionGlobal> inicializacionesGlobales = new ArrayList<>();
+    
+
+    public String generate(Nodo raiz) {
+        if (raiz == null) return "";
+        
+        System.out.println("\n=== INICIO GENERACIÓN TAC ===");
+        System.out.println("Nodo raíz: " + safe(raiz.getLexema()));
+        
+        // Buscar los nodos principales
+        Nodo elementos = null;
+        Nodo mainNode = null;
+        
+        for (Nodo h : raiz.getHijos()) {
+            String lx = safe(h.getLexema());
+            System.out.println("  Hijo: " + lx);
+            if (lx.equals("elementos_del_programa")) {
+                elementos = h;
+            } else if (lx.equals("main")) {
+                mainNode = h;
+            }
+        }
+        
+        System.out.println("DEBUG: elementos encontrado: " + (elementos != null));
+        System.out.println("DEBUG: main encontrado: " + (mainNode != null));
+        
+        // PRIMERO: Procesar globales
+        if (elementos != null) {
+            System.out.println("DEBUG: Procesando globales desde elementos");
+            visitGlobales(elementos);
+        } else {
+            System.out.println("DEBUG: Buscando globales directamente en raíz");
+            procesarGlobales(raiz);
+        }
+        
+        System.out.println("DEBUG: Globales procesadas: " + globalesDeclaradas.size());
+        
+        // Luego procesar inicializaciones complejas de globales
+        if (!inicializacionesGlobales.isEmpty()) {
+            for (InicializacionGlobal ig : inicializacionesGlobales) {
+                String temp = evalExpr(ig.expr);
+                out.emit(ig.id + " = " + temp);
+            }
+            out.blank();
+        }
+        
+        // SEGUNDO: Funciones
+        if (elementos != null) {
+            System.out.println("DEBUG: Recolectando funciones desde elementos");
+            collectFunctions(elementos);
+            generateFunctions(elementos);
+        } else {
+            System.out.println("DEBUG: Recolectando funciones desde raíz");
+            collectFunctions(raiz);
+            generateFunctions(raiz);
+        }
+        
+        // TERCERO: Main (¡IMPORTANTE! Usar el nodo correcto)
+        if (mainNode != null) {
+            System.out.println("DEBUG: Generando main desde nodo main real");
+            generateMain(mainNode);  // ¡Pasar el nodo main, NO elementos!
+        } else {
+            System.err.println("ERROR: No se encontró nodo main en la raíz");
+            // Buscar recursivamente
+            mainNode = findFirst(raiz, "main");
+            if (mainNode != null) {
+                System.out.println("DEBUG: Main encontrado recursivamente");
+                generateMain(mainNode);
+            } else {
+                System.err.println("ERROR CRÍTICO: No se pudo encontrar el main en ningún lugar");
+            }
+        }
+        
+        String result = out.build();
+        
+        System.out.println("\n=== TAC GENERADO COMPLETO ===");
+        System.out.println(result);
+        System.out.println("=============================\n");
+        
+        return result;
+    }
+
+    private void procesarGlobales(Nodo raiz) {
+        if (raiz == null) return;
+        
+        String lx = safe(raiz.getLexema());
+        if (lx.equals("declaracion_global")) {
+            visitDeclaracionGlobal(raiz);
+            return;
+        }
+        
+        for (Nodo h : raiz.getHijos()) {
+            procesarGlobales(h);
+        }
+    }
+
+
     // -------------------------
     // FUNCIONES Y MAIN
     // -------------------------
-
+    
     private void visitFuncion(Nodo funcion) {
-        // AST: funcion -> Gift, tipo:*, Ident(nombre), ¿, parametros?, ?, bloque
-        String tipo = extraerTipoFuncion(funcion);
+       String tipo = extraerTipoFuncion(funcion);
         String nombre = extraerNombreFuncion(funcion);
-
         String labelFun = "function_" + tipo + "_" + nombre;
+
+        funcionMap.put(nombre, labelFun);
+
         ctx.enterFunction(nombre);
         localsEmitidos.clear();
 
@@ -181,11 +401,19 @@ public class TacGenerator {
 
         out.label("main");
 
-        Nodo bloque = findFirst(main, "bloque");
-        if (bloque != null) {
-            Map<String, String> locals = collectLocals(bloque);
+    
+        Nodo contenidoMain = findFirst(main, "lista_elementos");
+        if (contenidoMain == null) {
+            contenidoMain = findFirst(main, "bloque");
+        }
+        
+        if (contenidoMain != null) {
+            
+            Map<String, String> locals = collectLocals(contenidoMain);
             emitLocals(locals);
-            visitBloque(bloque);
+            
+
+            visit(contenidoMain);
         }
 
         out.label("main_end");
@@ -193,16 +421,126 @@ public class TacGenerator {
     }
 
     private void visitBloque(Nodo bloque) {
-        // "bloque" contiene: ¡ ... !
-        // En el AST tus hijos incluyen tokens "¡" / "!" y quizá "lista_elementos"
+        
         for (Nodo h : bloque.getHijos()) {
             String lx = safe(h.getLexema());
-            if (lx.equals("¡") || lx.equals("!"))
-                continue;
-            visit(h);
+            
+            if (lx.equals("¡") || lx.equals("!")) continue;
+            
+            if (lx.equals("declaracion_local")) {
+                visitDeclaracionLocal(h);
+            } else {
+                visit(h);
+            }
         }
     }
 
+    private void visitDeclaracionLocal(Nodo decl) {
+        // Estructura: declaracion_local -> tipo:*, Ident(x), "=", expr, endl
+        
+        String tipo = "desconocido";
+        String id = "";
+        Nodo expr = null;
+        
+        for (Nodo h : decl.getHijos()) {
+            String hlx = safe(h.getLexema());
+            if (hlx.startsWith("tipo:")) {
+                tipo = hlx.substring("tipo:".length());
+            }
+            if (hlx.startsWith("Ident(")) {
+                id = extraerIdent(h);
+            }
+        }
+        
+        // Buscar la expresión de inicialización (último hijo que sea expr)
+        for (int i = decl.getHijos().size() - 1; i >= 0; i--) {
+            Nodo h = decl.getHijos().get(i);
+            String hlx = safe(h.getLexema());
+            if (hlx.equals("endl") || hlx.equals("=") || hlx.startsWith("tipo:") || hlx.startsWith("Ident(")) {
+                continue;
+            }
+            expr = h;
+            break;
+        }
+        
+        // Registrar como local si no está ya registrado
+        if (!id.isBlank() && !localsEmitidos.contains(id)) {
+            out.emit("local_data_" + tipo + " " + id);
+            localsEmitidos.add(id);
+        }
+        
+        // Generar asignación si hay expresión de inicialización
+        if (expr != null && !id.isBlank()) {
+            String place = evalExpr(expr);
+            out.emit(id + " = " + place);
+        }
+    }
+
+    private void visitDeclaracionGlobal(Nodo decl) {
+        System.out.println("\nDEBUG: visitDeclaracionGlobal llamado");
+        System.out.println("DEBUG: lexema nodo: " + safe(decl.getLexema()));
+        
+        boolean esGlobal = false;
+        for (Nodo h : decl.getHijos()) {
+            String hlx = safe(h.getLexema());
+            System.out.println("  Hijo: " + hlx);
+            if (hlx.equals("World")) {
+                esGlobal = true;
+                break;
+            }
+        }
+        System.out.println("DEBUG: esGlobal = " + esGlobal);
+        
+        if (!esGlobal) {
+            System.out.println("DEBUG: No es global, retornando");
+            return;
+        }
+        
+        
+        String tipo = "desconocido";
+        String id = "";
+        Nodo expr = null;
+        
+        for (Nodo h : decl.getHijos()) {
+            String hlx = safe(h.getLexema());
+            if (hlx.startsWith("tipo:")) {
+                tipo = hlx.substring("tipo:".length());
+            }
+            if (hlx.startsWith("Ident(")) {
+                id = extraerIdent(h);
+            }
+        }
+        
+        for (int i = decl.getHijos().size() - 1; i >= 0; i--) {
+            Nodo h = decl.getHijos().get(i);
+            String hlx = safe(h.getLexema());
+            if (hlx.equals("endl") || hlx.equals("=") || hlx.equals("World") || 
+                hlx.startsWith("tipo:") || hlx.startsWith("Ident(")) {
+                continue;
+            }
+            expr = h;
+            break;
+        }
+        
+        if (!id.isBlank() && !globalesDeclaradas.contains(id)) {
+            globalesDeclaradas.add(id);
+            
+            // CORRECCIÓN: Usar emitGlobal() para que vaya a la sección de globales
+            out.emitGlobal("global_data_" + tipo + " " + id);
+            
+            // Emitir inicialización si existe
+            if (expr != null) {
+                String valor = extraerValorLiteral(expr);
+                if (valor != null) {
+                    out.emitGlobal(id + " = " + valor);
+                } else {
+                    // Si es expresión compleja, guardar temporalmente
+                    inicializacionesGlobales.add(new InicializacionGlobal(id, expr));
+                }
+            }
+            out.blankGlobal();  // Usar blankGlobal() en lugar de blank()
+        }
+    }
     // -------------------------
     // CABECERAS: PARAMS Y LOCALS
     // -------------------------
@@ -254,27 +592,29 @@ public class TacGenerator {
     }
 
     private void collectLocalsRec(Nodo n, Map<String, String> locals) {
-        if (n == null)
-            return;
+        if (n == null) return;
         String lx = safe(n.getLexema());
-
+        
         if (lx.equals("declaracion_local")) {
             String tipo = "desconocido";
             String id = "";
             for (Nodo h : n.getHijos()) {
                 String hlx = safe(h.getLexema());
-                if (hlx.startsWith("tipo:"))
+                if (hlx.startsWith("tipo:")) {
                     tipo = hlx.substring("tipo:".length());
-                if (hlx.startsWith("Ident("))
+                }
+                if (hlx.startsWith("Ident(")) {
                     id = extraerIdent(h);
+                }
             }
             if (!id.isBlank()) {
                 locals.putIfAbsent(id, tipo);
             }
         }
-
-        for (Nodo h : n.getHijos())
+        
+        for (Nodo h : n.getHijos()) {
             collectLocalsRec(h, locals);
+        }
     }
 
     // -------------------------
@@ -616,7 +956,6 @@ public class TacGenerator {
     }
 
     private String emitCallAsExpr(Nodo callNode) {
-        // estructura: llamada_funcion -> Ident(f), ¿, args?, ?
         String fname = "";
         Nodo args = null;
 
@@ -630,7 +969,6 @@ public class TacGenerator {
 
         int count = 0;
         if (args != null) {
-            // argumentos: expr ( , expr )*
             for (Nodo h : args.getHijos()) {
                 String lx = safe(h.getLexema());
                 if (lx.equals(","))
@@ -642,10 +980,17 @@ public class TacGenerator {
         }
 
         String t = ctx.newTemp();
-        out.emit(t + " = call " + fname + "," + count);
+        
+        // Buscar nombre completo en el mapa
+        String nombreCompleto = funcionMap.get(fname);
+        if (nombreCompleto == null) {
+            // Intentar adivinar el tipo
+            nombreCompleto = "function_int_" + fname; // Fallback común
+        }
+        
+        out.emit(t + " = call " + nombreCompleto + "," + count);
         return t;
     }
-
     // -------------------------
     // SHOW / GET / BREAK
     // -------------------------
@@ -902,16 +1247,6 @@ public class TacGenerator {
     // -------------------------
     // EXTRACCIONES: TIPO / NOMBRE
     // -------------------------
-
-    private String extraerNombreFuncion(Nodo funcionNode) {
-        // primer Ident(...) que aparezca como hijo directo
-        for (Nodo h : funcionNode.getHijos()) {
-            String lx = safe(h.getLexema());
-            if (lx.startsWith("Ident("))
-                return extraerIdent(h);
-        }
-        return "anonima";
-    }
 
     private String extraerTipoFuncion(Nodo funcionNode) {
         for (Nodo h : funcionNode.getHijos()) {

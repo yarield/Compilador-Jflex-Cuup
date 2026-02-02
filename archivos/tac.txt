@@ -1,26 +1,57 @@
-main:
-local_data_int papasfritas
+global_data_int globalpipipi
+globalpipipi = 2
 
-t1 = papasfritas
-print t1
-main_for_1:
-main_for_1_ini:
-t2 = 0
-i = t2
-main_for_1_cond:
-t3 = i
-t4 = 5
-t5 = t3 < t4
-if t5 main_for_1_bloque
-goto main_for_1_end
-main_for_1_modif:
-t6 = i
-t7 = t6 + 1
-i = t7
-goto main_for_1_cond
-main_for_1_bloque:
-t8 = i
-print t8
-goto main_for_1_modif
-main_for_1_end:
+function_int_func:
+param_data_int valor
+local_data_int suma
+
+t1 = valor
+t2 = 5
+t3 = t1 + t2
+suma = t3
+t4 = suma
+return t4
+function_int_func_end:
+
+main:
+local_data_int a
+
+t1 = 4
+param t1
+t2 = call function_int_func,1
+print t2
+t3 = 6
+param t3
+t4 = call function_int_func,1
+a = t4
+t5 = a
+print t5
+main_decide_1:
+main_decide_1_cond_1:
+t6 = a
+t7 = 10
+t8 = t6 > t7
+if t8 main_decide_1_bloque_1
+goto main_decide_1_cond_2
+main_decide_1_bloque_1:
+t9 = "mayor a 10"
+print t9
+goto main_decide_1_end
+main_decide_1_cond_2:
+t10 = a
+t11 = 5
+t12 = t10 > t11
+if t12 main_decide_1_bloque_2
+goto main_decide_1_else
+main_decide_1_bloque_2:
+t13 = "mayor a 5"
+print t13
+goto main_decide_1_end
+main_decide_1_else:
+t14 = "menor a 5"
+print t14
+goto main_decide_1_end
+main_decide_1_end:
+t15 = globalpipipi
+print t15
 main_end:
