@@ -1,4 +1,58 @@
-main:
-local_data_int alocalo
+# Variables globales
+global_data_char letra_global = 'h'
+global_data_string texto_global = "12"
+global_data_int a_global
+# Inicializaciones globales complejas
+# (2 - 3)
+t_global1 = 2
+t_global2 = 3
+t_global3 = t_global1 - t_global2
 
-main_end:
+global_data_int abc_global = t_global3
+# ("soy un texto" + "hola")
+t_global4 = 0
+t_global5 = 0
+t_global6 = t_global4 + t_global5
+
+global_data_string testosrrr_global = t_global6
+
+function_void_Navidad:
+local_data_int a
+local_data_float b
+local_data_int c
+local_data_int d
+local_data_string testosrrr
+# b = (2.0 ^ 1.0)
+# Evaluando: (2.0 ^ 1.0)
+t1 = 2.0
+t2 = 1.0
+t3 = t1 ^ t2
+b = t3
+
+# c = (a + 2)
+# Evaluando: (a + 2)
+t4 = a
+t5 = 2
+t6 = t4 + t5
+c = t6
+
+# d = (-8 + -8)
+# Evaluando: (-8 + -8)
+# Negativo de: 8
+t7 = 8
+t8 = -t7
+# Negativo de: 8
+t9 = 8
+t10 = -t9
+t11 = t8 + t10
+d = t11
+
+# testosrrr = ("soy un texto" + "hola")
+# Evaluando: ("soy un texto" + "hola")
+t12 = "soy un texto"
+t13 = "hola"
+t14 = t12 + t13
+testosrrr = t14
+
+
+function_void_Navidad_end:

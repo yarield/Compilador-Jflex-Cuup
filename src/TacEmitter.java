@@ -9,6 +9,14 @@ public class TacEmitter {
         lines.add(line);
     }
 
+    public void comment(String comment) {
+        if (comment == null || comment.isEmpty()) return;
+        
+        String commentLine = comment.startsWith("#") ? comment : "# " + comment;
+        lines.add(commentLine);  
+    }
+
+
     public void label(String name) {
         if (name == null) return;
         lines.add(name + ":");

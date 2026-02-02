@@ -16,6 +16,8 @@ public final class TacParser {
     public static final class Program {
         public final List<Function> functions = new ArrayList<>();
         public final Map<String, String> simpleToFullFuncLabel = new LinkedHashMap<>();
+        public final LinkedHashMap<String, Type> globals = new LinkedHashMap<>();
+        public final LinkedHashMap<String, Operand> globalInitializers = new LinkedHashMap<>();
     }
 
     public static final class Function {
@@ -153,6 +155,7 @@ public final class TacParser {
     private static final Pattern P_PRINT      = Pattern.compile("^print\\s+(.+)$");
     private static final Pattern P_READ       = Pattern.compile("^read\\s+([A-Za-z_][A-Za-z0-9_]*)$");
     private static final Pattern P_RETURN     = Pattern.compile("^return(?:\\s+(.+))?$");
+    private static final Pattern P_GLOBAL_DECL = Pattern.compile("^global_data_([a-zA-Z]+)\\s+([A-Za-z_][A-Za-z0-9_]*)(?:\\s*=\\s*(.+))?$");
 
     private static final Pattern P_ARRAY_ANY = Pattern.compile(".*\\[[^\\]]+\\]\\[[^\\]]+\\].*");
     private static final Pattern P_TEMP = Pattern.compile("\\bt\\d+\\b");
@@ -161,14 +164,34 @@ public final class TacParser {
         List<String> lines = Files.readAllLines(tacPath, StandardCharsets.UTF_8);
 
         Program prog = new Program();
+        
         Function current = null;
 
+        
         for (String raw : lines) {
             String line = raw.trim();
             if (line.isEmpty()) continue;
 
             if (P_ARRAY_ANY.matcher(line).matches()) {
                 throw new UnsupportedOperationException("TAC contiene arreglos 2D. Soporte pendiente. Línea: " + line);
+            }
+            
+            if (line.startsWith("global_data_")) {
+                Matcher mg = P_GLOBAL_DECL.matcher(line);
+                if (mg.matches()) {
+                    Type t = parseType(mg.group(1));
+                    String name = mg.group(2);
+                    prog.globals.put(name, t);
+                    
+                    // Si tiene inicialización
+                    if (mg.group(3) != null) {
+                        // Crear función ficticia para parsear el operando
+                        Function tempFunc = new Function();
+                        Operand initValue = parseOperand(mg.group(3).trim(), tempFunc);
+                        prog.globalInitializers.put(name, initValue);
+                    }
+                    continue;
+                }
             }
 
             Matcher mLabel = P_LABEL.matcher(line);
