@@ -13,9 +13,8 @@ public class TacGenerator {
     private final TacEmitter out = new TacEmitter();
     private final TacContext ctx = new TacContext();
 
+    // Para que locals "al inicio" no se repitan
     private final Set<String> localsEmitidos = new LinkedHashSet<>();
-    private final Map<String, String> globales = new LinkedHashMap<>();
-    private final Map<String, String> globalInitializers = new LinkedHashMap<>();
 
     public String generateAndWrite(Nodo raiz, String outputFile) {
         generate(raiz);
@@ -27,247 +26,8 @@ public class TacGenerator {
     public String generate(Nodo raiz) {
         if (raiz == null)
             return "";
-        
-        // Limpiar todo
-        ctx.clearAll();
-        localsEmitidos.clear();
-        globales.clear();
-        globalInitializers.clear();
-        
-        collectGlobalsRec(raiz);
-        emitGlobales();
         visitPrograma(raiz);
         return out.build();
-    }
-
-    // ========== MÉTODOS PARA GLOBALES ==========
-
-    private void collectGlobalsRec(Nodo n) {
-        if (n == null) return;
-        String lx = safe(n.getLexema());
-        
-        if (lx.equals("declaracion_global")) {
-            procesarDeclaracionGlobal(n);
-        }
-        
-        for (Nodo h : n.getHijos()) {
-            collectGlobalsRec(h);
-        }
-    }
-
-    private void procesarDeclaracionGlobal(Nodo decl) {
-        String tipo = "";
-        String id = "";
-        Nodo exprInicializacion = null;
-        String valorInicialSimple = null;
-        boolean tieneInicializacion = false;
-        
-        for (int i = 0; i < decl.getHijos().size(); i++) {
-            Nodo h = decl.getHijos().get(i);
-            String hlx = safe(h.getLexema());
-            
-            if (hlx.equals("World")) continue; 
-            
-            if (hlx.startsWith("tipo:")) {
-                tipo = hlx.substring("tipo:".length());
-                if (tipo.equals("bool")) {
-                    tipo = "bool";
-                }
-            } else if (hlx.startsWith("Ident(")) {
-                id = extraerIdent(h);
-            } else if (hlx.equals("=")) {
-                tieneInicializacion = true;
-                // Verificar el siguiente nodo
-                if (i + 1 < decl.getHijos().size()) {
-                    Nodo siguiente = decl.getHijos().get(i + 1);
-                    String sigLex = safe(siguiente.getLexema());
-                    
-                    // ¿Es expresión compleja?
-                    if (sigLex.equals("op") || sigLex.equals("op_logico") || 
-                        sigLex.equals("negativo") || sigLex.equals("negacion")) {
-                        exprInicializacion = siguiente;
-                    } 
-                    // ¿Es literal simple?
-                    else if (sigLex.startsWith("Entero(") || sigLex.startsWith("Flotante(") ||
-                            sigLex.startsWith("Caracter(") || sigLex.startsWith("Cadena(") ||
-                            sigLex.equals("True") || sigLex.equals("False")) {
-                        valorInicialSimple = literalRaw(sigLex);
-                    }
-                }
-            }
-        }
-        
-        if (!id.isBlank()) {
-            globales.put(id, tipo);
-            
-            if (tieneInicializacion) {
-                if (exprInicializacion != null) {
-                    // Inicialización compleja (ej: abc = 2 - 3)
-                    ctx.globalInits.put(id, exprInicializacion);
-                } else if (valorInicialSimple != null) {
-                    // Inicialización simple (ej: letra = 'h')
-                    globalInitializers.put(id, valorInicialSimple);
-                }
-            }
-        }
-    }
-
-    private void procesarInicializacionesGlobalesComplejas() {
-        if (ctx.globalInits.isEmpty()) return;
-        
-        out.emit("# Inicializaciones globales complejas");
-        
-        for (Map.Entry<String, Nodo> entry : ctx.globalInits.entrySet()) {
-            String id = entry.getKey();
-            Nodo expr = entry.getValue();
-            
-            // Generar código para la expresión
-            String tempResult = generarCodigoGlobalInit(expr);
-            
-            // Emitir la declaración con inicialización
-            String tipo = globales.get(id);
-            out.emit("global_data_" + tipo + " " + id + "_global = " + tempResult);
-        }
-        
-        out.blank();
-    }
-
-    private String generarCodigoGlobalInit(Nodo expr) {
-        if (expr == null) return "0";
-        
-        String lx = safe(expr.getLexema());
-        
-        // Literales simples
-        if (lx.startsWith("Entero(") || lx.startsWith("Flotante(") || 
-            lx.startsWith("Caracter(") || lx.startsWith("Cadena(")) {
-            return literalRaw(lx);
-        }
-        
-        if (lx.equals("True")) return "1";
-        if (lx.equals("False")) return "0";
-        
-        // Para operaciones, usar un método similar a evalExpr pero con temporales globales
-        return evalExprGlobal(expr);
-    }
-
-    private String evalExprGlobal(Nodo expr) {
-        if (expr == null) {
-            String t = ctx.newGlobalTemp();
-            out.emit(t + " = 0");
-            return t;
-        }
-
-        String lx = safe(expr.getLexema());
-
-        // Operación binaria
-        if (lx.equals("op") || lx.equals("op_logico")) {
-            Nodo opNode = expr.getHijos().isEmpty() ? null : expr.getHijos().get(0);
-            Nodo e1 = expr.getHijos().size() > 1 ? expr.getHijos().get(1) : null;
-            Nodo e2 = expr.getHijos().size() > 2 ? expr.getHijos().get(2) : null;
-
-            String op = (opNode != null) ? safe(opNode.getLexema()) : "?";
-
-            String exprStr = exprToString(expr);
-            out.comment("# " + exprStr);
-
-            String p1 = evalExprGlobal(e1);
-            String p2 = evalExprGlobal(e2);
-
-            String t = ctx.newGlobalTemp();
-            out.emit(t + " = " + p1 + " " + op + " " + p2);
-            out.blank();
-            return t;
-        }
-
-        // Negativo unario
-        if (lx.equals("negativo")) {
-            Nodo inner = expr.getHijos().size() > 1 ? expr.getHijos().get(1) : null;
-            String innerStr = exprToString(inner);
-            out.comment("# Negativo de: " + innerStr);
-            
-            String p = evalExprGlobal(inner);
-            String t = ctx.newGlobalTemp();
-            out.emit(t + " = -" + p);
-            out.blank();
-            return t;
-        }
-
-        // Literales (ya manejados arriba, pero por si acaso)
-        if (lx.startsWith("Entero(") || lx.startsWith("Flotante(")) {
-            String t = ctx.newGlobalTemp();
-            String valor = literalRaw(lx);
-            out.emit(t + " = " + valor);
-            return t;
-        }
-
-        // Identificadores (no debería pasar en globales, pero por si acaso)
-        if (lx.startsWith("Ident(")) {
-            String id = extraerIdent(expr);
-            String t = ctx.newGlobalTemp();
-            out.comment("# ADVERTENCIA: Referencia a variable en inicialización global");
-            out.emit(t + " = 0");
-            return t;
-        }
-
-        // Valor por defecto
-        String t = ctx.newGlobalTemp();
-        out.emit(t + " = 0");
-        return t;
-}
-    private void emitGlobales() {
-        if (globales.isEmpty()) return;
-        
-        out.emit("# Variables globales");
-        
-        // 1. Variables sin inicialización o con inicialización simple
-        for (Map.Entry<String, String> entry : globales.entrySet()) {
-            String id = entry.getKey();
-            String tipo = entry.getValue();
-            
-            // Si tiene inicialización compleja, se procesa después
-            if (ctx.globalInits.containsKey(id)) {
-                continue;
-            }
-            
-            String init = globalInitializers.get(id);
-            String linea = "global_data_" + tipo + " " + id + "_global";
-            
-            if (init != null && !init.isEmpty()) {
-                linea += " = " + init;
-            }
-            out.emit(linea);
-        }
-        
-        // 2. Variables con inicialización compleja
-        if (!ctx.globalInits.isEmpty()) {
-            procesarInicializacionesGlobalesComplejas();
-        } else {
-            out.blank();
-        }
-    }
-
-    private String escapeTACLiteral(String value) {
-        if (value == null) return "";
-        
-        // Si es un string con comillas
-        if (value.startsWith("\"") && value.endsWith("\"")) {
-            String content = value.substring(1, value.length() - 1);
-            // Escapar comillas internas
-            content = content.replace("\\", "\\\\");
-            content = content.replace("\"", "\\\"");
-            return "\"" + content + "\"";
-        }
-        // Si es un char con comillas simples
-        else if (value.startsWith("'") && value.endsWith("'")) {
-            String content = value.substring(1, value.length() - 1);
-            // Escapar comilla simple interna
-            if (content.equals("'")) {
-                return "'\\''";
-            }
-            return "'" + content + "'";
-        }
-        
-        return value;
     }
 
     // -------------------------
@@ -287,31 +47,16 @@ public class TacGenerator {
     // -------------------------
 
     private void visitPrograma(Nodo n) {
+        // Recorre hijos en orden
         for (Nodo h : n.getHijos()) {
             String lx = safe(h.getLexema());
             if (lx.equals("elementos_del_programa")) {
-                visitElementosDelProgramaSinGlobales(h);
+                visitElementosDelPrograma(h);
             } else if (lx.equals("main")) {
                 visitMain(h);
-            }
-        }
-    }
-
-    private void visitElementosDelProgramaSinGlobales(Nodo elementos) {
-        for (Nodo h : elementos.getHijos()) {
-            String lx = safe(h.getLexema());
-            if (lx.equals("elemento_del_programa")) {
-                Nodo contenido = null;
-                for (Nodo hijo : h.getHijos()) {
-                    String hlx = safe(hijo.getLexema());
-                    if (hlx.equals("funcion")) {
-                        contenido = hijo;
-                        break;
-                    }
-                }
-                if (contenido != null) {
-                    visitFuncion(contenido);
-                }
+            } else {
+                // fallback
+                visit(h);
             }
         }
     }
@@ -431,40 +176,20 @@ public class TacGenerator {
     }
 
     private void visitMain(Nodo main) {
-        String nombreFuncion = extraerNombreFuncionMain(main);
-        
-        ctx.enterFunction(nombreFuncion);
+        ctx.enterFunction("main");
         localsEmitidos.clear();
-        
-        if (nombreFuncion.equals("main")) {
-            out.label("main");
-        } else {
-            out.label("function_void_" + nombreFuncion);
-        }
-        
+
+        out.label("main");
+
         Nodo bloque = findFirst(main, "bloque");
         if (bloque != null) {
             Map<String, String> locals = collectLocals(bloque);
-            emitLocals(locals);  // ¡Ahora emitirá las inicializaciones también!
+            emitLocals(locals);
             visitBloque(bloque);
         }
-        
-        if (nombreFuncion.equals("main")) {
-            out.label("main_end");
-        } else {
-            out.label("function_void_" + nombreFuncion + "_end");
-        }
-        out.blank();
-    }
 
-    private String extraerNombreFuncionMain(Nodo mainNode) {
-        for (Nodo h : mainNode.getHijos()) {
-            String lx = safe(h.getLexema());
-            if (lx.equals("Navidad") || lx.equals("main")) {
-                return lx;
-            }
-        }
-        return "main";
+        out.label("main_end");
+        out.blank();
     }
 
     private void visitBloque(Nodo bloque) {
@@ -508,8 +233,7 @@ public class TacGenerator {
         }
     }
 
-   private void emitLocals(Map<String, String> locals) {
-        // Primero emitir todas las declaraciones
+    private void emitLocals(Map<String, String> locals) {
         for (Map.Entry<String, String> e : locals.entrySet()) {
             String id = e.getKey();
             String tipo = e.getValue();
@@ -518,129 +242,34 @@ public class TacGenerator {
             localsEmitidos.add(id);
             out.emit("local_data_" + tipo + " " + id);
         }
-        
-        // Luego procesar inicializaciones CON COMENTARIOS
-        for (Map.Entry<String, Nodo> entry : ctx.varsConInicializacion.entrySet()) {
-            String id = entry.getKey();
-            Nodo declaracionNode = entry.getValue();
-            
-            // Buscar la expresión de inicialización
-            Nodo exprNode = null;
-            boolean encontradoIgual = false;
-            
-            for (Nodo h : declaracionNode.getHijos()) {
-                String lx = safe(h.getLexema());
-                
-                if (lx.equals("=")) {
-                    encontradoIgual = true;
-                    continue;
-                }
-                
-                if (encontradoIgual && exprNode == null) {
-                    exprNode = h;
-                    break;
-                }
-            }
-            
-            if (exprNode != null) {
-                String exprStr = exprToString(exprNode);
-                emitComment(id + " = " + exprStr);  // Comentar qué se está inicializando
-                
-                String temp = evalExpr(exprNode);
-                out.emit(id + " = " + temp);
-                out.blank();  // Línea en blanco para separar
-            }
-        }
-        
-        if (!locals.isEmpty() || !ctx.varsConInicializacion.isEmpty())
+        if (!locals.isEmpty())
             out.blank();
-        
-        ctx.clearInitializations();
     }
 
-    private String extraerInicializacionTAC(Nodo declaracionNode) {
-        // Buscar el nodo de expresión después del "="
-        Nodo exprNode = null;
-        boolean encontradoIgual = false;
-        
-        for (Nodo h : declaracionNode.getHijos()) {
-            String lx = safe(h.getLexema());
-            
-            if (lx.equals("=")) {
-                encontradoIgual = true;
-                continue;
-            }
-            
-            if (encontradoIgual && exprNode == null) {
-                // El primer nodo después del "=" es la expresión
-                exprNode = h;
-                break;
-            }
-        }
-        
-        if (exprNode != null) {
-            return evalExpr(exprNode);  // Usar tu método existente
-        }
-        
-        // Si no hay expresión, devolver valor por defecto
-        String tipo = "desconocido";
-        for (Nodo h : declaracionNode.getHijos()) {
-            String lx = safe(h.getLexema());
-            if (lx.startsWith("tipo:")) {
-                tipo = lx.substring("tipo:".length());
-                break;
-            }
-        }
-        
-        // Valores por defecto según tipo
-        switch (tipo) {
-            case "int": return "0";
-            case "float": return "0.0";
-            case "bool": return "0";
-            case "char": return "'\\0'";
-            case "string": return "\"\"";
-            default: return "0";
-        }
-    }
     private Map<String, String> collectLocals(Nodo root) {
+        // Recolecta "declaracion_local" en todo el subárbol
         Map<String, String> locals = new LinkedHashMap<>();
         collectLocalsRec(root, locals);
-        
-        // Actualizar el contexto con las locales detectadas
-        for (Map.Entry<String, String> entry : locals.entrySet()) {
-            ctx.agregarLocal(entry.getKey(), entry.getValue());
-        }
-        
         return locals;
     }
 
     private void collectLocalsRec(Nodo n, Map<String, String> locals) {
-        if (n == null) return;
+        if (n == null)
+            return;
         String lx = safe(n.getLexema());
 
         if (lx.equals("declaracion_local")) {
             String tipo = "desconocido";
             String id = "";
-            boolean tieneInicializacion = false;
-            
             for (Nodo h : n.getHijos()) {
                 String hlx = safe(h.getLexema());
                 if (hlx.startsWith("tipo:"))
                     tipo = hlx.substring("tipo:".length());
                 if (hlx.startsWith("Ident("))
                     id = extraerIdent(h);
-                if (hlx.equals("="))
-                    tieneInicializacion = true;
             }
-            
             if (!id.isBlank()) {
-                locals.put(id, tipo);
-                
-                // GUARDAR la información de inicialización
-                if (tieneInicializacion) {
-                    // Usar un mapa para trackear qué variables tienen inicialización
-                    ctx.varsConInicializacion.put(id, n);
-                }
+                locals.putIfAbsent(id, tipo);
             }
         }
 
@@ -663,7 +292,6 @@ public class TacGenerator {
         Nodo first = asig.getHijos().get(0);
         String lhsName = extraerIdent(first);
 
-        boolean esGlobal = globales.containsKey(lhsName);
         // Buscar si hay "arreglo" como segundo hijo (para A[i][j])
         Nodo arrNode = null;
         Nodo exprNode = null;
@@ -689,10 +317,6 @@ public class TacGenerator {
         if (arrNode == null) {
             // x = rhs
             out.emit(lhsName + " = " + rhsPlace);
-            if (esGlobal && !globalInitializers.containsKey(lhsName)) {
-                // Marcar que fue inicializada por asignación
-                globalInitializers.put(lhsName, null);
-            }
         } else {
             // A[i][j] = rhs
             String iPlace = evalArrayIndex(arrNode, 0);
@@ -876,44 +500,23 @@ public class TacGenerator {
         if (lx.startsWith("Entero(") || lx.startsWith("Flotante(") || lx.startsWith("Caracter(")
                 || lx.startsWith("Cadena(")) {
             String t = ctx.newTemp();
-            String valor = literalRaw(lx);
-            out.emit(t + " = " + valor);
+            out.emit(t + " = " + literalRaw(lx));
             return t;
         }
-         // Booleanos
-        if (lx.equals("True")) {
+        if (lx.equals("True") || lx.equals("False")) {
             String t = ctx.newTemp();
-            out.emit(t + " = 1");
+            out.emit(t + " = " + (lx.equals("True") ? "1" : "0"));
             return t;
         }
-        if (lx.equals("False")) {
-            String t = ctx.newTemp();
-            out.emit(t + " = 0");
-            return t;
-        }
-        // Ident(x) -> carga a temporal
+
+        // Ident(x) -> carga a temporal (estilo profe)
         if (lx.startsWith("Ident(")) {
-                String id = extraerIdent(expr);
-                
-                // REGLA DE SHADOWING: Local tiene precedencia sobre Global
-                if (ctx.localsActuales.containsKey(id)) {
-                    // Es variable LOCAL
-                    String t = ctx.newTemp();
-                    out.emit(t + " = " + id);
-                    return t;
-                } else if (globales.containsKey(id)) {
-                    // Es variable GLOBAL (no hay local con ese nombre)
-                    String t = ctx.newTemp();
-                    out.emit(t + " = " + id + "_global");
-                    return t;
-                } else {
-                    // Variable no declarada
-                    String t = ctx.newTemp();
-                    out.comment("ADVERTENCIA: Variable no declarada: " + id);
-                    out.emit(t + " = 0");
-                    return t;
-                }
-            }
+            String id = extraerIdent(expr);
+            String t = ctx.newTemp();
+            out.emit(t + " = " + id);
+            return t;
+        }
+
         // op binaria
         if (lx.equals("op") || lx.equals("op_logico")) {
             Nodo opNode = expr.getHijos().isEmpty() ? null : expr.getHijos().get(0);
@@ -921,11 +524,6 @@ public class TacGenerator {
             Nodo e2 = expr.getHijos().size() > 2 ? expr.getHijos().get(2) : null;
 
             String op = (opNode != null) ? safe(opNode.getLexema()) : "?";
-
-            String exprStr = exprToString(expr);
-            if (exprStr.length() < 50) {  // Solo para expresiones no muy largas
-                emitComment("Evaluando: " + exprStr);
-            }
 
             String p1 = evalExpr(e1);
             String p2 = evalExpr(e2);
@@ -937,10 +535,8 @@ public class TacGenerator {
 
         // negativo (unario)
         if (lx.equals("negativo")) {
+            // hijos: "-" , literal/expr
             Nodo inner = expr.getHijos().size() > 1 ? expr.getHijos().get(1) : null;
-            String innerStr = exprToString(inner);
-            emitComment("Negativo de: " + innerStr);
-            
             String p = evalExpr(inner);
             String t = ctx.newTemp();
             out.emit(t + " = -" + p);
@@ -1070,6 +666,7 @@ public class TacGenerator {
     }
 
     private void visitGet(Nodo n) {
+        // get -> "Get" "¿" expr "?" "endl"
         Nodo expr = null;
         for (Nodo h : n.getHijos()) {
             String lx = safe(h.getLexema());
@@ -1342,99 +939,15 @@ public class TacGenerator {
     }
 
     private String literalRaw(String lexema) {
+        // Entero(5) -> 5, Cadena("x") -> "x"
         int p = lexema.indexOf('(');
         int q = lexema.lastIndexOf(')');
-        if (p >= 0 && q > p) {
-            String contenido = lexema.substring(p + 1, q);
-            
-            if (lexema.startsWith("Caracter(")) {
-                if (contenido.startsWith("'") && contenido.endsWith("'")) {
-                    contenido = contenido.substring(1, contenido.length() - 1);
-                }
-                if (contenido.length() == 1) {
-                    return "'" + contenido + "'";
-                } else if (contenido.equals("\\n")) {
-                    return "'\\n'";
-                } else if (contenido.equals("\\t")) {
-                    return "'\\t'";
-                } else if (contenido.equals("\\'")) {
-                    return "'\\''";
-                } else {
-                    return "'" + contenido.charAt(0) + "'";
-                }
-            }
-            else if (lexema.startsWith("Cadena(")) {
-                if (contenido.startsWith("\"") && contenido.endsWith("\"")) {
-                    contenido = contenido.substring(1, contenido.length() - 1);
-                }
-                contenido = contenido.replace("\"", "\\\"");
-                return "\"" + contenido + "\"";
-            }
-            else if (lexema.equals("True")) {
-                return "1";
-            }
-            else if (lexema.equals("False")) {
-                return "0";
-            }
-            else {
-                return contenido;
-            }
-        }
+        if (p >= 0 && q > p)
+            return lexema.substring(p + 1, q);
         return lexema;
     }
 
-    private String exprToString(Nodo expr) {
-        if (expr == null) return "null";
-        
-        String lx = safe(expr.getLexema());
-        
-        // Literales
-        if (lx.startsWith("Entero(") || lx.startsWith("Flotante(") || 
-            lx.startsWith("Caracter(") || lx.startsWith("Cadena(")) {
-            return literalRaw(lx);
-        }
-        
-        if (lx.equals("True")) return "true";
-        if (lx.equals("False")) return "false";
-        
-        // Identificadores
-        if (lx.startsWith("Ident(")) {
-            return extraerIdent(expr);
-        }
-        
-        // Operaciones binarias
-        if (lx.equals("op") || lx.equals("op_logico")) {
-            if (expr.getHijos().size() >= 3) {
-                String op = safe(expr.getHijos().get(0).getLexema());
-                String left = exprToString(expr.getHijos().get(1));
-                String right = exprToString(expr.getHijos().get(2));
-                return "(" + left + " " + op + " " + right + ")";
-            }
-        }
-        
-        // Negativo
-        if (lx.equals("negativo")) {
-            Nodo inner = expr.getHijos().size() > 1 ? expr.getHijos().get(1) : null;
-            return "-" + exprToString(inner);
-        }
-        
-        // Negación
-        if (lx.equals("negacion")) {
-            Nodo inner = expr.getHijos().size() > 1 ? expr.getHijos().get(1) : null;
-            return "!" + exprToString(inner);
-        }
-        
-        return lx;
-    }
     private String safe(String s) {
         return (s == null) ? "" : s.trim();
-    }
-
-    private void emitComment(String comment) {
-        out.emit("# " + comment);
-    }
-
-    private void emitCommentBlank() {
-        out.emit("#");
     }
 }

@@ -1,16 +1,14 @@
-world char letra  = 'h' endl
-world string texto  = "12" endl
-world int a endl
-world int abc = 2 - 3 endl
-world string testosrrr = "soy un texto" + "hola" endl
 
 coal navidad ¿? ¡
-    local int a endl
-    local float b = 2.0 ^ 1.0 endl 
-    local int c = a + 2 endl
-    local int d = -8 + -8 endl
 
-    local string testosrrr = "soy un texto" + "hola" endl
+    local int papasfritas = 155 endl
+    show¿papasfritas? endl
+
+
+
+    for ¿ int i = 0 endl i < 5 endl ++i ? ¡ 
+        show¿i? endl
+    !
 
 
 !
