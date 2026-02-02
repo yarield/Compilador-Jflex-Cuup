@@ -16,6 +16,19 @@ public final class TacParser {
     public static final class Program {
         public final List<Function> functions = new ArrayList<>();
         public final Map<String, String> simpleToFullFuncLabel = new LinkedHashMap<>();
+        public List<GlobalAssignment> globalAssignments = new ArrayList<>(); 
+    }
+
+    public static final class GlobalAssignment {
+        public final String varName;
+        public final Operand value;
+        public final Type type;
+        
+        public GlobalAssignment(String varName, Operand value, Type type) {
+            this.varName = varName;
+            this.value = value;
+            this.type = type;
+        }
     }
 
     public static final class Function {
@@ -145,6 +158,7 @@ public final class TacParser {
     private static final Pattern P_LABEL      = Pattern.compile("^([A-Za-z_][A-Za-z0-9_]*)\\:$");
     private static final Pattern P_PARAM_DECL = Pattern.compile("^param_data_([a-zA-Z]+)\\s+([A-Za-z_][A-Za-z0-9_]*)$");
     private static final Pattern P_LOCAL_DECL = Pattern.compile("^local_data_([a-zA-Z]+)\\s+([A-Za-z_][A-Za-z0-9_]*)$");
+    private static final Pattern P_GLOBAL_DECL = Pattern.compile("^global_data_([a-zA-Z]+)\\s+([A-Za-z_][A-Za-z0-9_]*)$");
     private static final Pattern P_GOTO       = Pattern.compile("^goto\\s+([A-Za-z_][A-Za-z0-9_]*)$");
     private static final Pattern P_IF         = Pattern.compile("^if\\s+(.+)\\s+([A-Za-z_][A-Za-z0-9_]*)$");
     private static final Pattern P_ASSIGN     = Pattern.compile("^([A-Za-z_][A-Za-z0-9_]*)\\s*=\\s*(.+)$");
@@ -198,8 +212,82 @@ public final class TacParser {
                 continue;
             }
 
-            if (current == null) continue;
+            // NUEVO: Procesar declaraciones e inicializaciones globales (fuera de funciones)
+            if (current == null) {
+                // 1. Declaraciones globales
+                Matcher mGlobalDecl = P_GLOBAL_DECL.matcher(line);
+                if (mGlobalDecl.matches()) {
+                    Type t = parseType(mGlobalDecl.group(1));
+                    String name = mGlobalDecl.group(2);
+                    
+                    // Crear valor por defecto según el tipo
+                    Operand defaultValue;
+                    switch (t) {
+                        case INT:
+                            defaultValue = new OInt(0);
+                            break;
+                        case FLOAT:
+                            defaultValue = new OFloat("0.0", 0.0f);
+                            break;
+                        case BOOL:
+                            defaultValue = new OInt(0); // false
+                            break;
+                        case CHAR:
+                            defaultValue = new OChar(0);
+                            break;
+                        case STRING:
+                            defaultValue = new OString("\"\"");
+                            break;
+                        default:
+                            defaultValue = new OInt(0);
+                            break;
+                    }
+                    
+                    prog.globalAssignments.add(new GlobalAssignment(name, defaultValue, t));
+                    continue;
+                }
+                
+                // 2. Asignaciones a globales (inicializaciones)
+                Matcher mAssign = P_ASSIGN.matcher(line);
+                if (mAssign.matches()) {
+                    String varName = mAssign.group(1).trim();
+                    String rhs = mAssign.group(2).trim();
+                    
+                    // Verificar si esta variable ya fue declarada como global
+                    // Buscar en assignments existentes
+                    for (GlobalAssignment ga : prog.globalAssignments) {
+                        if (ga.varName.equals(varName)) {
+                            // Reemplazar el valor por defecto con el valor real
+                            prog.globalAssignments.remove(ga);
+                            Operand value = parseOperandOutsideFunction(rhs);
+                            prog.globalAssignments.add(new GlobalAssignment(varName, value, ga.type));
+                            break;
+                        }
+                    }
+                    
+                    // Si no se encontró declaración previa, asumir que es int
+                    boolean found = false;
+                    for (GlobalAssignment ga : prog.globalAssignments) {
+                        if (ga.varName.equals(varName)) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    
+                    if (!found) {
+                        // Variable global no declarada explícitamente, asumir int
+                        Operand value = parseOperandOutsideFunction(rhs);
+                        prog.globalAssignments.add(new GlobalAssignment(varName, value, Type.INT));
+                    }
+                    
+                    continue;
+                }
+                
+                // Si no es ninguna de las anteriores, continuar al siguiente ciclo
+                continue;
+            }
 
+            // Procesar instrucciones dentro de funciones (código existente)
             Matcher mp = P_PARAM_DECL.matcher(line);
             if (mp.matches()) {
                 Type t = parseType(mp.group(1));
@@ -317,6 +405,30 @@ public final class TacParser {
         }
 
         return prog;
+    }
+
+    private static Operand parseOperandOutsideFunction(String token) {
+        token = token.trim();
+
+        if (token.startsWith("\"") && token.endsWith("\"") && token.length() >= 2) {
+            return new OString(token);
+        }
+
+        if (token.startsWith("'") && token.endsWith("'") && token.length() >= 3) {
+            char c = token.charAt(1);
+            return new OChar((int) c);
+        }
+
+        if (token.matches("[-+]?\\d+\\.\\d+")) {
+            return new OFloat(token, Float.parseFloat(token));
+        }
+
+        if (token.matches("[-+]?\\d+")) {
+            return new OInt(Integer.parseInt(token));
+        }
+
+        // Para globales, si es otra variable, tratarla como OVar
+        return new OVar(token);
     }
 
     private static void addTempsFrom(String s, Function fn) {

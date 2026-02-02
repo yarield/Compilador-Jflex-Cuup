@@ -1,7 +1,7 @@
 .data
 nl: .asciiz "\n"
 
-globalpipipi: .word 0
+globalpipipi: .word 2
 str_0: .asciiz "mayor a 10"
 str_1: .asciiz "mayor a 5"
 str_2: .asciiz "menor a 5"

@@ -5,58 +5,117 @@ import java.util.*;
 public final class MipsBackend {
 
     public static void compile(Path tacPath, Path asmPath) throws IOException {
-        TacParser.Program prog = TacParser.parse(tacPath);
+    TacParser.Program prog = TacParser.parse(tacPath);
 
-        MipsEmitter out = new MipsEmitter();
-        StringPool strPool = new StringPool();
-        FloatPool fltPool = new FloatPool();
+    MipsEmitter out = new MipsEmitter();
+    StringPool strPool = new StringPool();
+    FloatPool fltPool = new FloatPool();
 
-        Set<String> globalScalars = new LinkedHashSet<>();
-        Map<String, TacParser.Type> globalTypes = new LinkedHashMap<>();
+    Set<String> globalScalars = new LinkedHashSet<>();
+    Map<String, TacParser.Type> globalTypes = new LinkedHashMap<>();
+    Map<String, TacParser.Operand> globalInitValues = new LinkedHashMap<>();
 
-        Map<String, String> funcMap = prog.simpleToFullFuncLabel;
+    Map<String, String> funcMap = prog.simpleToFullFuncLabel;
 
-        for (TacParser.Function fn : prog.functions) {
-            for (TacParser.Instr ins : fn.instrs) {
-                collectConstsAndGlobals(fn, ins, strPool, fltPool, globalScalars, globalTypes);
-            }
+    // Recolectar globales de funciones (para variables globales usadas en funciones)
+    for (TacParser.Function fn : prog.functions) {
+        for (TacParser.Instr ins : fn.instrs) {
+            collectConstsAndGlobals(fn, ins, strPool, fltPool, globalScalars, globalTypes);
         }
-
-        out.emit(".data");
-        out.emit("nl: .asciiz \"\\n\"");
-        out.blank();
-
-        for (String g : globalScalars) {
-            TacParser.Type t = globalTypes.getOrDefault(g, TacParser.Type.INT);
-            emitGlobal(out, g, t);
-        }
-
-        for (Map.Entry<String, String> e : strPool.entries().entrySet()) {
-            String raw = e.getKey();
-            String label = e.getValue();
-            String unesc = StringPool.unescapeTacString(raw);
-            out.emit(label + ": .asciiz " + StringPool.toAsciizLiteral(unesc));
-        }
-
-        for (Map.Entry<String, String> e : fltPool.entries().entrySet()) {
-            out.emit(e.getValue() + ": .float " + e.getKey());
-        }
-
-        out.blank();
-
-        out.emit(".text");
-        out.emit(".globl main");
-        out.blank();
-
-        for (TacParser.Function fn : prog.functions) {
-            compileFunction(out, fn, strPool, fltPool, funcMap);
-            out.blank();
-        }
-
-        out.writeTo(asmPath);
+    }
+    
+    // NUEVO: Procesar asignaciones globales del parser
+    for (TacParser.GlobalAssignment ga : prog.globalAssignments) {
+        String varName = ga.varName;
+        globalScalars.add(varName);
+        globalTypes.put(varName, ga.type);
+        globalInitValues.put(varName, ga.value);
     }
 
-    private static void emitGlobal(MipsEmitter out, String name, TacParser.Type t) {
+    out.emit(".data");
+    out.emit("nl: .asciiz \"\\n\"");
+    out.blank();
+
+    // Emitir globales con sus valores de inicialización
+    for (String g : globalScalars) {
+        TacParser.Type t = globalTypes.getOrDefault(g, TacParser.Type.INT);
+        TacParser.Operand initValue = globalInitValues.get(g);
+        
+        if (initValue != null) {
+            // Hay valor de inicialización
+            if (initValue instanceof TacParser.OInt) {
+                int val = ((TacParser.OInt) initValue).value;
+                out.emit(g + ": .word " + val);
+            } else if (initValue instanceof TacParser.OFloat) {
+                String floatVal = ((TacParser.OFloat) initValue).raw;
+                out.emit(g + ": .float " + floatVal);
+            } else if (initValue instanceof TacParser.OString) {
+                // Para strings, necesitamos manejar de manera especial
+                String strVal = ((TacParser.OString) initValue).rawWithQuotes;
+                String label = strPool.labelFor(strVal);
+                out.emit(g + ": .word " + label);
+            } else {
+                // Por defecto
+                emitDefaultGlobal(out, g, t);
+            }
+        } else {
+            // Sin inicialización
+            emitDefaultGlobal(out, g, t);
+        }
+    }
+
+    for (Map.Entry<String, String> e : strPool.entries().entrySet()) {
+        String raw = e.getKey();
+        String label = e.getValue();
+        String unesc = StringPool.unescapeTacString(raw);
+        out.emit(label + ": .asciiz " + StringPool.toAsciizLiteral(unesc));
+    }
+
+    for (Map.Entry<String, String> e : fltPool.entries().entrySet()) {
+        out.emit(e.getValue() + ": .float " + e.getKey());
+    }
+
+    out.blank();
+
+    out.emit(".text");
+    out.emit(".globl main");
+    out.blank();
+
+    // Si hay inicializaciones complejas que necesiten código, agregar aquí
+    boolean needsRuntimeInit = false;
+    for (Map.Entry<String, TacParser.Operand> entry : globalInitValues.entrySet()) {
+        TacParser.Operand value = entry.getValue();
+        if (value instanceof TacParser.OVar) {
+            needsRuntimeInit = true;
+            break;
+        }
+    }
+    
+    if (needsRuntimeInit) {
+        out.label("init_globals:");
+        for (Map.Entry<String, TacParser.Operand> entry : globalInitValues.entrySet()) {
+            String var = entry.getKey();
+            TacParser.Operand value = entry.getValue();
+            
+            if (value instanceof TacParser.OVar) {
+                String srcVar = ((TacParser.OVar) value).name;
+                out.emitIndented("lw $t0, " + srcVar);
+                out.emitIndented("sw $t0, " + var);
+            }
+        }
+        out.emitIndented("jr $ra");
+        out.blank();
+    }
+
+    for (TacParser.Function fn : prog.functions) {
+        compileFunction(out, fn, strPool, fltPool, funcMap);
+        out.blank();
+    }
+
+    out.writeTo(asmPath);
+}
+
+    private static void emitDefaultGlobal(MipsEmitter out, String name, TacParser.Type t) {
         switch (t) {
             case FLOAT:
                 out.emit(name + ": .float 0.0");
@@ -69,7 +128,6 @@ public final class MipsBackend {
                 break;
         }
     }
-
     private static void collectConstsAndGlobals(
             TacParser.Function fn,
             TacParser.Instr ins,
@@ -318,7 +376,7 @@ public final class MipsBackend {
         throw new UnsupportedOperationException("Unario no soportado: " + u.op);
     }
 
-    // ---- resto (SIN cambios) ----
+
 
     private static void emitAssign(
             MipsEmitter out,
@@ -339,18 +397,6 @@ public final class MipsBackend {
         loadOperandToIntReg(out, fn, frame, strPool, fltPool, src, "$t0");
         storeIntRegToVar(out, fn, frame, dst, "$t0");
     }
-
-    // (Tu emitBin, emitFloatArith, emitFloatCompareToBool, emitPrint, emitRead,
-    // loadOperandToIntReg, loadOperandToFloatReg, loadVar/storeVar, typeOfOperand)
-    // quedan EXACTAMENTE como los tienes actualmente en tu proyecto, porque ya
-    // estaban bien.
-    //
-    // Para no duplicar 300+ líneas aquí y evitar errores de copy/paste,
-    // copia esta clase completa desde arriba y deja tu resto intacto debajo.
-    //
-    // IMPORTANTE:
-    // - Solo se agregaron: caso IUn en collect/compileFunction + método emitUn.
-    // - No se toca tu lógica de prints (que ya arreglaste antes).
 
     private static void emitBin(
             MipsEmitter out,
